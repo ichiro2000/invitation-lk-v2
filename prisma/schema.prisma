@@ -1,0 +1,203 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ═══ AUTH ═══
+enum Role {
+  ADMIN
+  CUSTOMER
+}
+
+enum Plan {
+  FREE
+  BASIC
+  STANDARD
+  PREMIUM
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String?
+  yourName      String
+  partnerName   String
+  weddingDate   DateTime?
+  venue         String?
+  phone         String?
+  role          Role      @default(CUSTOMER)
+  plan          Plan      @default(FREE)
+  image         String?
+  emailVerified DateTime?
+
+  accounts   Account[]
+  sessions   Session[]
+  invitation Invitation?
+  guests     Guest[]
+  tasks      Task[]
+  vendors    Vendor[]
+  budgetItems BudgetItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  @@unique([identifier, token])
+}
+
+// ═══ INVITATION ═══
+model Invitation {
+  id         String  @id @default(cuid())
+  userId     String  @unique
+  templateSlug String
+  slug       String  @unique // URL: /w/slug
+
+  groomName   String
+  brideName   String
+  weddingDate DateTime
+  venue       String
+  venueAddress String?
+
+  isPublished Boolean @default(false)
+  isPaid      Boolean @default(false)
+
+  events     Event[]
+  pageViews  PageView[]
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Event {
+  id           String @id @default(cuid())
+  invitationId String
+  title        String
+  time         String
+  venue        String?
+  description  String?
+  sortOrder    Int    @default(0)
+  invitation   Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+}
+
+model PageView {
+  id           String @id @default(cuid())
+  invitationId String
+  viewedAt     DateTime @default(now())
+  invitation   Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  @@index([invitationId])
+}
+
+// ═══ GUEST MANAGEMENT ═══
+enum InviteType {
+  TO_YOU
+  TO_YOU_BOTH
+  TO_YOUR_FAMILY
+}
+
+enum RsvpStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  MAYBE
+}
+
+model Guest {
+  id        String     @id @default(cuid())
+  userId    String
+  name      String
+  whatsapp  String?
+  email     String?
+  inviteType InviteType @default(TO_YOU)
+  headCount  Int        @default(1)
+  rsvpStatus RsvpStatus @default(PENDING)
+  confirmedCount Int    @default(0)
+  message    String?    @db.Text
+  personalLink String?  @unique
+  linkOpened   Boolean  @default(false)
+  linkOpenedAt DateTime?
+  inviteSent   Boolean  @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([userId])
+}
+
+// ═══ WEDDING TOOLS ═══
+model Task {
+  id       String  @id @default(cuid())
+  userId   String
+  title    String
+  status   String  @default("TODO")
+  priority String  @default("MEDIUM")
+  dueDate  DateTime?
+  category String?
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@index([userId])
+}
+
+model Vendor {
+  id       String  @id @default(cuid())
+  userId   String
+  name     String
+  category String
+  phone    String?
+  email    String?
+  cost     Decimal? @db.Decimal(10, 2)
+  isPaid   Boolean @default(false)
+  notes    String? @db.Text
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@index([userId])
+}
+
+model BudgetItem {
+  id       String  @id @default(cuid())
+  userId   String
+  name     String
+  category String
+  estimated Decimal @db.Decimal(10, 2)
+  actual    Decimal? @db.Decimal(10, 2)
+  isPaid   Boolean @default(false)
+  notes    String?
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@index([userId])
+}
