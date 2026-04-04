@@ -24,10 +24,10 @@ export default function Hero() {
       />
       <div className="absolute inset-0 opacity-[0.018]" style={{ backgroundImage: "radial-gradient(circle, #94a3b8 1px, transparent 1px)", backgroundSize: "48px 48px" }} />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-5 sm:px-8 pt-28 pb-20">
-        <div className="grid lg:grid-cols-[1fr,auto] gap-16 xl:gap-24 items-center">
+      <div className="relative z-10 w-full max-w-[1200px] mx-auto px-6 sm:px-10 lg:px-16 pt-28 pb-20">
+        <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-20">
           {/* Content */}
-          <div className="text-center lg:text-left max-w-2xl mx-auto lg:mx-0">
+          <div className="text-center lg:text-left flex-1">
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ ease: [0.25, 0.46, 0.45, 0.94] as const }} className="badge mb-8">
               <Sparkles className="w-3.5 h-3.5" />
               Start free — no credit card needed
