@@ -5,7 +5,7 @@ const pg = require('pg');
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
 const sql = \`
 DO \\$\\$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'Role') THEN CREATE TYPE \"Role\" AS ENUM ('ADMIN', 'CUSTOMER'); END IF; END \\$\\$;
-DO \\$\\$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'Plan') THEN CREATE TYPE \"Plan\" AS ENUM ('FREE', 'BASIC', 'STANDARD', 'PREMIUM'); END IF; END \\$\\$;
+DO \\$\\$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'Plan') THEN CREATE TYPE \"Plan\" AS ENUM ('FREE', 'BASIC', 'STANDARD', 'PREMIUM'); ELSE BEGIN ALTER TYPE \"Plan\" ADD VALUE IF NOT EXISTS 'FREE'; EXCEPTION WHEN duplicate_object THEN NULL; END; END IF; END \\$\\$;
 DO \\$\\$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'InviteType') THEN CREATE TYPE \"InviteType\" AS ENUM ('TO_YOU', 'TO_YOU_BOTH', 'TO_YOUR_FAMILY'); END IF; END \\$\\$;
 DO \\$\\$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'RsvpStatus') THEN CREATE TYPE \"RsvpStatus\" AS ENUM ('PENDING', 'ACCEPTED', 'DECLINED', 'MAYBE'); END IF; END \\$\\$;
 CREATE TABLE IF NOT EXISTS \"User\" (id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, email TEXT NOT NULL UNIQUE, \"passwordHash\" TEXT, \"yourName\" TEXT DEFAULT '', \"partnerName\" TEXT DEFAULT '', \"weddingDate\" TIMESTAMP, venue TEXT, phone TEXT, role \"Role\" DEFAULT 'CUSTOMER', plan \"Plan\" DEFAULT 'FREE', image TEXT, \"emailVerified\" TIMESTAMP, \"createdAt\" TIMESTAMP DEFAULT NOW(), \"updatedAt\" TIMESTAMP DEFAULT NOW());
