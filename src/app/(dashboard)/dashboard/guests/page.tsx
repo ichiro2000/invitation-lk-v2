@@ -49,20 +49,43 @@ function Stepper({ value, onChange, min = 1, max = 20 }: { value: number; onChan
   );
 }
 
-/* ── Custom Select ── */
+/* ── Custom Dropdown ── */
 function CustomSelect({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
+  const [open, setOpen] = useState(false);
+  const selected = options.find(o => o.value === value);
+
   return (
     <div className="relative">
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="appearance-none w-full pl-3 pr-8 py-2 bg-white border border-gray-200 rounded-full text-sm text-gray-700 font-medium focus:outline-none focus:border-rose-400 focus:ring-1 focus:ring-rose-100 cursor-pointer hover:border-gray-300 transition-colors"
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between gap-2 pl-3 pr-2 py-2 bg-white border border-gray-200 rounded-full text-sm text-gray-700 font-medium hover:border-gray-300 transition-colors focus:outline-none focus:border-rose-400 focus:ring-1 focus:ring-rose-100"
       >
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>{opt.label}</option>
-        ))}
-      </select>
-      <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+        <span className="truncate">{selected?.label}</span>
+        <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
+          <div className="absolute z-40 mt-1 w-full min-w-[140px] bg-white border border-gray-200 rounded-xl shadow-lg shadow-black/8 py-1 animate-in fade-in slide-in-from-top-1">
+            {options.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => { onChange(opt.value); setOpen(false); }}
+                className={`w-full text-left px-3 py-2 text-sm transition-colors ${
+                  opt.value === value
+                    ? "text-rose-600 bg-rose-50 font-medium"
+                    : "text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
