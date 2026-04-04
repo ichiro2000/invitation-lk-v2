@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { UserPlus, Plus, Minus, Loader2, Check, ChevronDown } from "lucide-react";
 
 const emptyGuest = { name: "", whatsapp: "", inviteType: "TO_YOU", headCount: "1", category: "FRIENDS", side: "BOTH" };
@@ -49,26 +50,39 @@ function Stepper({ value, onChange, min = 1, max = 20 }: { value: number; onChan
   );
 }
 
-/* ── Custom Dropdown ── */
+/* ── Custom Dropdown (portaled to body) ── */
 function CustomSelect({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
   const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
+  const btnRef = useRef<HTMLButtonElement>(null);
   const selected = options.find(o => o.value === value);
 
+  useEffect(() => {
+    if (open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setPos({ top: rect.bottom + 4, left: rect.left, width: Math.max(rect.width, 140) });
+    }
+  }, [open]);
+
   return (
-    <div className="relative">
+    <div>
       <button
+        ref={btnRef}
         type="button"
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between gap-2 pl-3 pr-2 py-2 bg-white border border-gray-200 rounded-full text-sm text-gray-700 font-medium hover:border-gray-300 transition-colors focus:outline-none focus:border-rose-400 focus:ring-1 focus:ring-rose-100"
       >
         <span className="truncate">{selected?.label}</span>
-        <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform ${open ? "rotate-180" : ""}`} />
+        <ChevronDown className={`w-3.5 h-3.5 text-gray-400 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
 
-      {open && (
+      {open && typeof document !== "undefined" && createPortal(
         <>
-          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
-          <div className="absolute z-40 mt-1 w-full min-w-[140px] bg-white border border-gray-200 rounded-xl shadow-lg shadow-black/8 py-1 animate-in fade-in slide-in-from-top-1">
+          <div className="fixed inset-0 z-[9998]" onClick={() => setOpen(false)} />
+          <div
+            className="fixed z-[9999] bg-white border border-gray-200 rounded-xl shadow-xl py-1"
+            style={{ top: pos.top, left: pos.left, width: pos.width }}
+          >
             {options.map((opt) => (
               <button
                 key={opt.value}
@@ -84,7 +98,8 @@ function CustomSelect({ value, onChange, options }: { value: string; onChange: (
               </button>
             ))}
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );
