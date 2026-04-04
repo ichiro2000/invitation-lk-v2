@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { UserPlus, Plus, Loader2, Check } from "lucide-react";
 
+const emptyGuest = { name: "", whatsapp: "", inviteType: "TO_YOU", headCount: "1", category: "FRIENDS", side: "BOTH" };
+
 export default function AddGuestsPage() {
-  const [guests, setGuests] = useState([{ name: "", whatsapp: "", inviteType: "TO_YOU", headCount: "1" }]);
+  const [guests, setGuests] = useState([{ ...emptyGuest }]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const addRow = () => setGuests([...guests, { name: "", whatsapp: "", inviteType: "TO_YOU", headCount: "1" }]);
+  const addRow = () => setGuests([...guests, { ...emptyGuest }]);
   const removeRow = (i: number) => setGuests(guests.filter((_, idx) => idx !== i));
   const updateRow = (i: number, field: string, value: string) => {
     const updated = [...guests];
@@ -29,7 +31,7 @@ export default function AddGuestsPage() {
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
-    setGuests([{ name: "", whatsapp: "", inviteType: "TO_YOU", headCount: "1" }]);
+    setGuests([{ ...emptyGuest }]);
   };
 
   return (
@@ -56,35 +58,54 @@ export default function AddGuestsPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-100">
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3 w-8">#</th>
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3">Guest Name *</th>
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3">WhatsApp</th>
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3">Invite Type</th>
-                <th className="text-center text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3">Head Count</th>
-                <th className="w-10"></th>
+                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-3 py-3 w-8">#</th>
+                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-3 py-3">Guest Name *</th>
+                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-3 py-3">WhatsApp</th>
+                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-3 py-3">Invite Type</th>
+                <th className="text-center text-xs font-medium text-gray-400 uppercase tracking-wider px-3 py-3">Head Count</th>
+                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-3 py-3">Category</th>
+                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-3 py-3">Side</th>
+                <th className="w-8"></th>
               </tr>
             </thead>
             <tbody>
               {guests.map((guest, i) => (
                 <tr key={i} className="border-b border-gray-50">
-                  <td className="px-4 py-2 text-sm text-gray-300">{i + 1}</td>
-                  <td className="px-4 py-2">
+                  <td className="px-3 py-2 text-sm text-gray-300">{i + 1}</td>
+                  <td className="px-3 py-2">
                     <input type="text" value={guest.name} onChange={(e) => updateRow(i, "name", e.target.value)} placeholder="Full name" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-rose-500 bg-gray-50/50" />
                   </td>
-                  <td className="px-4 py-2">
+                  <td className="px-3 py-2">
                     <input type="tel" value={guest.whatsapp} onChange={(e) => updateRow(i, "whatsapp", e.target.value)} placeholder="+94 77 XXX XXXX" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-rose-500 bg-gray-50/50" />
                   </td>
-                  <td className="px-4 py-2">
+                  <td className="px-3 py-2">
                     <select value={guest.inviteType} onChange={(e) => updateRow(i, "inviteType", e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-rose-500 bg-gray-50/50">
                       <option value="TO_YOU">To You</option>
                       <option value="TO_YOU_BOTH">To You Both</option>
                       <option value="TO_YOUR_FAMILY">To Your Family</option>
                     </select>
                   </td>
-                  <td className="px-4 py-2">
-                    <input type="number" min="1" max="20" value={guest.headCount} onChange={(e) => updateRow(i, "headCount", e.target.value)} className="w-20 mx-auto px-3 py-2 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:border-rose-500 bg-gray-50/50" />
+                  <td className="px-3 py-2">
+                    <input type="number" min="1" max="20" value={guest.headCount} onChange={(e) => updateRow(i, "headCount", e.target.value)} className="w-16 mx-auto px-2 py-2 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:border-rose-500 bg-gray-50/50" />
                   </td>
-                  <td className="px-4 py-2">
+                  <td className="px-3 py-2">
+                    <select value={guest.category} onChange={(e) => updateRow(i, "category", e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-rose-500 bg-gray-50/50">
+                      <option value="FAMILY">Family</option>
+                      <option value="FRIENDS">Friends</option>
+                      <option value="OFFICE">Office</option>
+                      <option value="VIP">VIP</option>
+                      <option value="NEIGHBORS">Neighbors</option>
+                      <option value="OTHER">Other</option>
+                    </select>
+                  </td>
+                  <td className="px-3 py-2">
+                    <select value={guest.side} onChange={(e) => updateRow(i, "side", e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-rose-500 bg-gray-50/50">
+                      <option value="BRIDE">Bride Side</option>
+                      <option value="GROOM">Groom Side</option>
+                      <option value="BOTH">Both</option>
+                    </select>
+                  </td>
+                  <td className="px-3 py-2">
                     {guests.length > 1 && (
                       <button onClick={() => removeRow(i)} className="text-gray-300 hover:text-red-500 text-sm">✕</button>
                     )}

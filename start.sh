@@ -42,6 +42,8 @@ async function migrate() {
     \"ALTER TABLE \\\"Guest\\\" ADD COLUMN IF NOT EXISTS \\\"inviteSent\\\" BOOLEAN DEFAULT false\",
     \"ALTER TABLE \\\"Guest\\\" ADD COLUMN IF NOT EXISTS \\\"confirmedCount\\\" INT DEFAULT 0\",
     \"ALTER TABLE \\\"Guest\\\" ADD COLUMN IF NOT EXISTS \\\"userId\\\" TEXT\",
+    \"ALTER TABLE \\\"Guest\\\" ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'FRIENDS'\",
+    \"ALTER TABLE \\\"Guest\\\" ADD COLUMN IF NOT EXISTS side TEXT DEFAULT 'BOTH'\",
     \"CREATE TABLE IF NOT EXISTS \\\"Task\\\" (id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, \\\"userId\\\" TEXT NOT NULL, title TEXT NOT NULL, status TEXT DEFAULT 'TODO', priority TEXT DEFAULT 'MEDIUM', \\\"dueDate\\\" TIMESTAMP, category TEXT, \\\"createdAt\\\" TIMESTAMP DEFAULT NOW())\",
     \"CREATE TABLE IF NOT EXISTS \\\"Vendor\\\" (id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, \\\"userId\\\" TEXT NOT NULL, name TEXT NOT NULL, category TEXT NOT NULL, phone TEXT, email TEXT, cost DECIMAL(10,2), \\\"isPaid\\\" BOOLEAN DEFAULT false, notes TEXT, \\\"createdAt\\\" TIMESTAMP DEFAULT NOW())\",
     \"CREATE TABLE IF NOT EXISTS \\\"BudgetItem\\\" (id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, \\\"userId\\\" TEXT NOT NULL, name TEXT NOT NULL, category TEXT NOT NULL, estimated DECIMAL(10,2) NOT NULL, actual DECIMAL(10,2), \\\"isPaid\\\" BOOLEAN DEFAULT false, notes TEXT, \\\"createdAt\\\" TIMESTAMP DEFAULT NOW())\",

@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { name, whatsapp, inviteType, headCount } = await request.json();
+    const { name, whatsapp, inviteType, headCount, category, side } = await request.json();
     if (!name) return NextResponse.json({ error: "Name required" }, { status: 400 });
 
     const guest = await prisma.guest.create({
@@ -31,6 +31,8 @@ export async function POST(request: Request) {
         whatsapp: whatsapp || null,
         inviteType: inviteType || "TO_YOU",
         headCount: headCount ? parseInt(headCount) : 1,
+        category: category || "FRIENDS",
+        side: side || "BOTH",
       },
     });
 

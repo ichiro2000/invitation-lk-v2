@@ -144,6 +144,8 @@ model Guest {
   email     String?
   inviteType InviteType @default(TO_YOU)
   headCount  Int        @default(1)
+  category   String     @default("FRIENDS")
+  side       String     @default("BOTH")
   rsvpStatus RsvpStatus @default(PENDING)
   confirmedCount Int    @default(0)
   message    String?    @db.Text
