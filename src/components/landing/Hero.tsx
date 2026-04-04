@@ -7,23 +7,39 @@ import Link from "next/link";
 export default function Hero() {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
-      {/* Animated background */}
+      {/* Base gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-rose-50 via-white to-amber-50" />
+
+      {/* Animated floating gradient blobs */}
       <motion.div
-        className="absolute inset-0"
-        animate={{
-          background: [
-            "radial-gradient(ellipse at 20% 50%, rgba(254,205,211,0.4) 0%, transparent 50%), radial-gradient(ellipse at 80% 50%, rgba(253,230,138,0.2) 0%, transparent 50%), linear-gradient(to br, #fef2f2, #fff, #fffbeb)",
-            "radial-gradient(ellipse at 60% 30%, rgba(254,205,211,0.3) 0%, transparent 50%), radial-gradient(ellipse at 30% 70%, rgba(253,230,138,0.25) 0%, transparent 50%), linear-gradient(to br, #fff1f2, #fff, #fefce8)",
-            "radial-gradient(ellipse at 20% 50%, rgba(254,205,211,0.4) 0%, transparent 50%), radial-gradient(ellipse at 80% 50%, rgba(253,230,138,0.2) 0%, transparent 50%), linear-gradient(to br, #fef2f2, #fff, #fffbeb)",
-          ],
-        }}
-        transition={{ duration: 10, repeat: Infinity }}
+        className="absolute top-[-100px] left-[-100px] w-[600px] h-[600px] rounded-full blur-3xl opacity-60"
+        style={{ background: "rgba(254,205,211,0.5)" }}
+        animate={{ x: [0, 120, 0], y: [0, 80, 0], scale: [1, 1.1, 1] }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute bottom-[-100px] right-[-100px] w-[500px] h-[500px] rounded-full blur-3xl opacity-40"
+        style={{ background: "rgba(253,230,138,0.4)" }}
+        animate={{ x: [0, -100, 0], y: [0, -80, 0], scale: [1, 1.15, 1] }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+      />
+      <motion.div
+        className="absolute top-1/3 right-1/4 w-[350px] h-[350px] rounded-full blur-3xl opacity-30"
+        style={{ background: "rgba(244,114,182,0.3)" }}
+        animate={{ x: [0, -60, 0], y: [0, 40, 0] }}
+        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+      />
+      <motion.div
+        className="absolute bottom-1/4 left-1/3 w-[300px] h-[300px] rounded-full blur-3xl opacity-25"
+        style={{ background: "rgba(251,146,60,0.2)" }}
+        animate={{ x: [0, 50, 0], y: [0, -30, 0] }}
+        transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 3 }}
       />
 
       {/* Dot pattern */}
-      <div className="absolute inset-0 opacity-[0.015]" style={{ backgroundImage: "radial-gradient(circle, #e11d48 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
+      <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: "radial-gradient(circle, #e11d48 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 z-10">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <div className="text-center lg:text-left">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="inline-flex items-center gap-2 bg-rose-100/80 text-rose-700 px-4 py-1.5 rounded-full text-sm font-medium mb-8 border border-rose-200/50">
@@ -115,7 +131,7 @@ export default function Hero() {
         </div>
       </div>
 
-      <motion.div className="absolute bottom-8 left-1/2 -translate-x-1/2" animate={{ y: [0, 8, 0] }} transition={{ duration: 2, repeat: Infinity }}>
+      <motion.div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10" animate={{ y: [0, 8, 0] }} transition={{ duration: 2, repeat: Infinity }}>
         <ChevronDown className="w-5 h-5 text-gray-300" />
       </motion.div>
     </section>
