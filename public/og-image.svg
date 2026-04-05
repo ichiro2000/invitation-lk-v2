@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fdf2f8"/>
+      <stop offset="100%" style="stop-color:#fff1f2"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#e11d48"/>
+      <stop offset="100%" style="stop-color:#f43f5e"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="0" y="580" width="1200" height="50" fill="url(#accent)"/>
+  <!-- Heart -->
+  <path d="M600 200 C600 200 555 155 520 155 C485 155 460 180 460 210 C460 260 600 340 600 340 C600 340 740 260 740 210 C740 180 715 155 680 155 C645 155 600 200 600 200Z" fill="#e11d48"/>
+  <!-- Brand text -->
+  <text x="600" y="420" font-family="system-ui, -apple-system, sans-serif" font-size="56" font-weight="700" fill="#1f2937" text-anchor="middle">INVITATION<tspan fill="#e11d48">.LK</tspan></text>
+  <!-- Tagline -->
+  <text x="600" y="470" font-family="system-ui, -apple-system, sans-serif" font-size="22" fill="#6b7280" text-anchor="middle">Beautiful Digital Wedding Invitations in Sri Lanka</text>
+  <!-- Features -->
+  <text x="600" y="520" font-family="system-ui, -apple-system, sans-serif" font-size="16" fill="#9ca3af" text-anchor="middle">Sinhala &amp; Tamil Support  |  RSVP Tracking  |  WhatsApp Sharing  |  Guest Management</text>
+  <!-- Bottom bar text -->
+  <text x="600" y="612" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="600" fill="white" text-anchor="middle">invitation.lk  —  Trusted by 500+ Sri Lankan Couples</text>
+</svg>

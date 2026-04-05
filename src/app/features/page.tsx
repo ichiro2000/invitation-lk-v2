@@ -5,8 +5,15 @@ import Footer from "@/components/landing/Footer";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Features | INVITATION.LK",
-  description: "Discover all the features of INVITATION.LK — RSVP management, countdown timers, WhatsApp sharing, guest management, and more.",
+  title: "Features | RSVP, Countdown Timer, WhatsApp Sharing & More",
+  description:
+    "Discover all features of INVITATION.LK — RSVP tracking, countdown timers, WhatsApp sharing, guest management, personalized links, Google Maps, and Sinhala/Tamil support for Sri Lankan weddings.",
+  alternates: { canonical: "/features" },
+  openGraph: {
+    title: "Wedding Invitation Features | INVITATION.LK",
+    description: "RSVP, countdown, WhatsApp sharing, guest management & more for Sri Lankan weddings.",
+    url: "https://invitation.lk/features",
+  },
 };
 
 export default function FeaturesPage() {
