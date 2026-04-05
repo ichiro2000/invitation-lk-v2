@@ -247,15 +247,22 @@ export default function EditorPage() {
         <div className={`w-full lg:flex-1 lg:block overflow-hidden ${mobileTab === "preview" ? "block" : "hidden"}`}>
           <div className="flex items-center justify-center h-full bg-gradient-to-br from-gray-100 via-gray-50 to-gray-100 p-4 lg:p-8">
             {/* Phone Frame */}
-            <div className="relative flex-shrink-0 rounded-[2rem] overflow-hidden shadow-2xl shadow-gray-900/20 border-2 border-gray-200"
-              style={{ width: 300, height: 620 }}>
-              {/* iframe fills entirely */}
-              <iframe
-                key={templateSlug}
-                src={`/samples/${templateSlug}`}
-                className="w-full h-full border-0 bg-white"
-                title="Template Preview"
-              />
+            <div className="relative flex-shrink-0" style={{ width: 300, height: 620 }}>
+              {/* Phone body */}
+              <div className="absolute inset-0 bg-gray-900 rounded-[2.5rem] shadow-2xl shadow-gray-900/30" />
+              {/* Screen — iframe fills the visible area flush with bezel */}
+              <div className="absolute inset-[3px] rounded-[2.3rem] overflow-hidden">
+                <iframe
+                  key={templateSlug}
+                  src={`/samples/${templateSlug}`}
+                  className="w-full h-full border-0 bg-white"
+                  title="Template Preview"
+                />
+              </div>
+              {/* Notch overlay */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-5 bg-gray-900 rounded-b-xl z-10" />
+              {/* Home indicator */}
+              <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-20 h-1 bg-gray-600 rounded-full z-10" />
             </div>
           </div>
         </div>
