@@ -41,8 +41,11 @@ function CheckoutContent() {
         body: JSON.stringify({ plan: selectedPlan }),
       });
       const data = await res.json();
-      if (data.url) {
+      if (data.url && data.url.startsWith("https://checkout.stripe.com/")) {
         window.location.href = data.url;
+      } else if (data.url) {
+        setError("Invalid checkout URL");
+        setLoading(false);
       } else {
         setError(data.error || "Failed to create checkout session");
         setLoading(false);

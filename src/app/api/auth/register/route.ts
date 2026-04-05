@@ -2,9 +2,16 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/db";
 import { sendWelcomeEmail } from "@/lib/resend";
+import { authLimiter } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   try {
+    const ip = request.headers.get("x-forwarded-for") || "unknown";
+    const { success } = authLimiter.check(5, ip);
+    if (!success) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    }
+
     const { yourName, partnerName, weddingDate, venue, email, phone, password } = await request.json();
 
     if (!yourName || !partnerName || !email || !password) {
@@ -16,7 +23,7 @@ export async function POST(request: Request) {
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
-      return NextResponse.json({ error: "An account with this email already exists" }, { status: 409 });
+      return NextResponse.json({ error: "Unable to create account. Please try a different email or sign in." }, { status: 400 });
     }
 
     const passwordHash = await bcrypt.hash(password, 12);

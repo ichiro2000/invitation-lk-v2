@@ -5,8 +5,12 @@ import {
   passwordResetHtml,
 } from "./email-templates";
 
-function getResend() {
-  return new Resend(process.env.RESEND_API_KEY || "re_placeholder");
+function getResend(): Resend | null {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn("RESEND_API_KEY not configured, emails will not be sent");
+    return null;
+  }
+  return new Resend(process.env.RESEND_API_KEY);
 }
 
 const FROM = "INVITATION.LK <noreply@invitation.lk>";
@@ -14,7 +18,9 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://invitation.lk";
 
 export async function sendWelcomeEmail(email: string, name: string) {
   try {
-    await getResend().emails.send({
+    const resend = getResend();
+    if (!resend) return { success: false, error: "Email not configured" };
+    await resend.emails.send({
       from: FROM,
       to: email,
       subject: "Welcome to INVITATION.LK!",
@@ -35,7 +41,9 @@ export async function sendPaymentConfirmationEmail(
   method: string
 ) {
   try {
-    await getResend().emails.send({
+    const resend = getResend();
+    if (!resend) return { success: false, error: "Email not configured" };
+    await resend.emails.send({
       from: FROM,
       to: email,
       subject: `Payment Confirmed — ${plan}`,
@@ -51,7 +59,9 @@ export async function sendPaymentConfirmationEmail(
 export async function sendPasswordResetEmail(email: string, name: string, token: string) {
   const resetUrl = `${APP_URL}/reset-password?token=${token}`;
   try {
-    await getResend().emails.send({
+    const resend = getResend();
+    if (!resend) return { success: false, error: "Email not configured" };
+    await resend.emails.send({
       from: FROM,
       to: email,
       subject: "Reset Your Password — INVITATION.LK",

@@ -1,9 +1,14 @@
 import Stripe from "stripe";
 import type { Plan } from "@/generated/prisma/client";
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_placeholder", {
-  typescript: true,
-});
+let _stripe: Stripe | null = null;
+export function getStripe() {
+  if (!_stripe) {
+    if (!process.env.STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY not set");
+    _stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { typescript: true });
+  }
+  return _stripe;
+}
 
 export const PLAN_PRICES: Record<string, number> = {
   BASIC: 250000,     // Rs. 2,500 in cents
@@ -33,7 +38,7 @@ export async function createCheckoutSession(
   const price = PLAN_PRICES[plan];
   if (!price) throw new Error(`Invalid plan: ${plan}`);
 
-  const session = await stripe.checkout.sessions.create({
+  const session = await getStripe().checkout.sessions.create({
     mode: "payment",
     customer_email: userEmail,
     line_items: [

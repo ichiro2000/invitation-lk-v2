@@ -22,17 +22,48 @@ export async function POST(request: Request) {
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { name, whatsapp, inviteType, headCount, category, side } = await request.json();
-    if (!name) return NextResponse.json({ error: "Name required" }, { status: 400 });
+
+    // Validate name
+    if (!name || typeof name !== "string" || name.trim().length === 0 || name.trim().length > 200) {
+      return NextResponse.json({ error: "Name is required and must be under 200 characters" }, { status: 400 });
+    }
+
+    // Validate headCount
+    const parsedHeadCount = headCount ? Number(headCount) : 1;
+    if (!Number.isInteger(parsedHeadCount) || parsedHeadCount < 1 || parsedHeadCount > 100) {
+      return NextResponse.json({ error: "Head count must be between 1 and 100" }, { status: 400 });
+    }
+
+    // Validate inviteType
+    const validInviteTypes = ["TO_YOU", "TO_YOU_BOTH", "TO_YOUR_FAMILY"];
+    const safeInviteType = inviteType || "TO_YOU";
+    if (!validInviteTypes.includes(safeInviteType)) {
+      return NextResponse.json({ error: "Invalid invite type" }, { status: 400 });
+    }
+
+    // Validate category
+    const validCategories = ["FRIENDS", "FAMILY", "WORK", "OTHER"];
+    const safeCategory = category || "FRIENDS";
+    if (!validCategories.includes(safeCategory)) {
+      return NextResponse.json({ error: "Invalid category" }, { status: 400 });
+    }
+
+    // Validate side
+    const validSides = ["BRIDE", "GROOM", "BOTH"];
+    const safeSide = side || "BOTH";
+    if (!validSides.includes(safeSide)) {
+      return NextResponse.json({ error: "Invalid side" }, { status: 400 });
+    }
 
     const guest = await prisma.guest.create({
       data: {
         userId: session.user.id,
-        name,
-        whatsapp: whatsapp || null,
-        inviteType: inviteType || "TO_YOU",
-        headCount: headCount ? parseInt(headCount) : 1,
-        category: category || "FRIENDS",
-        side: side || "BOTH",
+        name: name.trim(),
+        whatsapp: whatsapp ? String(whatsapp).trim() : null,
+        inviteType: safeInviteType,
+        headCount: parsedHeadCount,
+        category: safeCategory,
+        side: safeSide,
       },
     });
 

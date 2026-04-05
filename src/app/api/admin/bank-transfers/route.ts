@@ -23,6 +23,11 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
 
+    const validStatuses = ["PENDING_REVIEW", "APPROVED", "REJECTED"];
+    if (status && !validStatuses.includes(status)) {
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    }
+
     const where = status
       ? { status: status as BankTransferStatus }
       : {};

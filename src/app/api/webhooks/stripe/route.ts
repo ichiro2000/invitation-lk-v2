@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
-import { stripe, PLAN_NAMES, PLAN_AMOUNTS } from "@/lib/stripe";
+import { getStripe, PLAN_NAMES, PLAN_AMOUNTS, PLAN_PRICES } from "@/lib/stripe";
 import { sendPaymentConfirmationEmail } from "@/lib/resend";
 import type { Plan } from "@/generated/prisma/client";
 
 export async function POST(request: Request) {
   try {
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });
+    }
+
     const body = await request.text();
     const signature = request.headers.get("stripe-signature");
 
@@ -13,28 +18,35 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing signature" }, { status: 400 });
     }
 
-    const event = stripe.webhooks.constructEvent(
+    const event = getStripe().webhooks.constructEvent(
       body,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET || ""
+      webhookSecret
     );
 
     if (event.type === "checkout.session.completed") {
-      const session = event.data.object;
-      const userId = session.metadata?.userId;
-      const plan = session.metadata?.plan as Plan;
+      const checkoutSession = event.data.object;
+      const userId = checkoutSession.metadata?.userId;
+      const plan = checkoutSession.metadata?.plan as Plan;
 
       if (!userId || !plan) {
-        console.error("Missing metadata in Stripe session:", session.id);
+        console.error("Missing metadata in Stripe session:", checkoutSession.id);
         return NextResponse.json({ error: "Missing metadata" }, { status: 400 });
+      }
+
+      // Verify payment amount matches expected plan price
+      const expectedPrice = PLAN_PRICES[plan];
+      if (expectedPrice && checkoutSession.amount_total !== expectedPrice) {
+        console.error("Amount mismatch for session:", checkoutSession.id, "expected:", expectedPrice, "got:", checkoutSession.amount_total);
+        return NextResponse.json({ error: "Amount mismatch" }, { status: 400 });
       }
 
       // Update Order
       await prisma.order.updateMany({
-        where: { stripeSessionId: session.id },
+        where: { stripeSessionId: checkoutSession.id },
         data: {
           paymentStatus: "COMPLETED",
-          stripePaymentIntentId: session.payment_intent as string,
+          stripePaymentIntentId: checkoutSession.payment_intent as string,
         },
       });
 

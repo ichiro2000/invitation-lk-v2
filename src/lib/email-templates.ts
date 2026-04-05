@@ -1,4 +1,14 @@
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export function welcomeEmailHtml(name: string): string {
+  const safeName = escapeHtml(name);
   return `
 <!DOCTYPE html>
 <html>
@@ -9,7 +19,7 @@ export function welcomeEmailHtml(name: string): string {
       <h1 style="color: #fff; margin: 0; font-size: 24px;">Welcome to INVITATION.LK</h1>
     </div>
     <div style="padding: 32px;">
-      <p style="font-size: 16px; color: #374151; margin: 0 0 16px;">Hi ${name},</p>
+      <p style="font-size: 16px; color: #374151; margin: 0 0 16px;">Hi ${safeName},</p>
       <p style="font-size: 14px; color: #6b7280; line-height: 1.6; margin: 0 0 24px;">
         Your account has been created successfully! You can now start building your beautiful digital wedding invitation.
       </p>
@@ -32,6 +42,10 @@ export function paymentConfirmationHtml(
   amount: string,
   method: string
 ): string {
+  const safeName = escapeHtml(name);
+  const safePlan = escapeHtml(plan);
+  const safeAmount = escapeHtml(amount);
+  const safeMethod = escapeHtml(method);
   return `
 <!DOCTYPE html>
 <html>
@@ -42,15 +56,15 @@ export function paymentConfirmationHtml(
       <h1 style="color: #fff; margin: 0; font-size: 24px;">Payment Confirmed!</h1>
     </div>
     <div style="padding: 32px;">
-      <p style="font-size: 16px; color: #374151; margin: 0 0 16px;">Hi ${name},</p>
+      <p style="font-size: 16px; color: #374151; margin: 0 0 16px;">Hi ${safeName},</p>
       <p style="font-size: 14px; color: #6b7280; line-height: 1.6; margin: 0 0 24px;">
         Your payment has been confirmed. Here are the details:
       </p>
       <div style="background: #fdf2f8; border-radius: 12px; padding: 20px; margin: 0 0 24px;">
         <table style="width: 100%; border-collapse: collapse;">
-          <tr><td style="padding: 6px 0; font-size: 13px; color: #6b7280;">Plan</td><td style="padding: 6px 0; font-size: 13px; color: #374151; font-weight: 600; text-align: right;">${plan}</td></tr>
-          <tr><td style="padding: 6px 0; font-size: 13px; color: #6b7280;">Amount</td><td style="padding: 6px 0; font-size: 13px; color: #374151; font-weight: 600; text-align: right;">Rs. ${amount}</td></tr>
-          <tr><td style="padding: 6px 0; font-size: 13px; color: #6b7280;">Method</td><td style="padding: 6px 0; font-size: 13px; color: #374151; font-weight: 600; text-align: right;">${method}</td></tr>
+          <tr><td style="padding: 6px 0; font-size: 13px; color: #6b7280;">Plan</td><td style="padding: 6px 0; font-size: 13px; color: #374151; font-weight: 600; text-align: right;">${safePlan}</td></tr>
+          <tr><td style="padding: 6px 0; font-size: 13px; color: #6b7280;">Amount</td><td style="padding: 6px 0; font-size: 13px; color: #374151; font-weight: 600; text-align: right;">Rs. ${safeAmount}</td></tr>
+          <tr><td style="padding: 6px 0; font-size: 13px; color: #6b7280;">Method</td><td style="padding: 6px 0; font-size: 13px; color: #374151; font-weight: 600; text-align: right;">${safeMethod}</td></tr>
         </table>
       </div>
       <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://invitation.lk"}/dashboard"
@@ -64,6 +78,7 @@ export function paymentConfirmationHtml(
 }
 
 export function passwordResetHtml(name: string, resetUrl: string): string {
+  const safeName = escapeHtml(name);
   return `
 <!DOCTYPE html>
 <html>
@@ -74,7 +89,7 @@ export function passwordResetHtml(name: string, resetUrl: string): string {
       <h1 style="color: #fff; margin: 0; font-size: 24px;">Reset Your Password</h1>
     </div>
     <div style="padding: 32px;">
-      <p style="font-size: 16px; color: #374151; margin: 0 0 16px;">Hi ${name},</p>
+      <p style="font-size: 16px; color: #374151; margin: 0 0 16px;">Hi ${safeName},</p>
       <p style="font-size: 14px; color: #6b7280; line-height: 1.6; margin: 0 0 24px;">
         We received a request to reset your password. Click the button below to set a new password. This link expires in 1 hour.
       </p>

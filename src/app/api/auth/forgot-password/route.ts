@@ -2,10 +2,17 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { sendPasswordResetEmail } from "@/lib/resend";
 import crypto from "crypto";
+import { emailLimiter } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   try {
+    const ip = request.headers.get("x-forwarded-for") || "unknown";
     const { email } = await request.json();
+
+    const { success } = emailLimiter.check(3, email || ip);
+    if (!success) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    }
 
     if (!email) {
       return NextResponse.json({ error: "Email is required" }, { status: 400 });
@@ -21,7 +28,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true });
     }
 
-    const token = crypto.randomUUID();
+    const token = crypto.randomBytes(32).toString("hex");
 
     // Delete any existing tokens for this email
     await prisma.passwordResetToken.deleteMany({

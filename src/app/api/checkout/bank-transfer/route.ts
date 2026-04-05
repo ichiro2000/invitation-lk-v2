@@ -23,9 +23,26 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!receiptImage) {
+    if (!receiptImage || typeof receiptImage !== "string") {
       return NextResponse.json(
         { error: "Receipt image is required" },
+        { status: 400 }
+      );
+    }
+
+    if (
+      !receiptImage.startsWith("data:image/jpeg;base64,") &&
+      !receiptImage.startsWith("data:image/png;base64,")
+    ) {
+      return NextResponse.json(
+        { error: "Receipt must be a JPEG or PNG image" },
+        { status: 400 }
+      );
+    }
+
+    if (receiptImage.length > 7_000_000) {
+      return NextResponse.json(
+        { error: "Receipt image must be less than 5MB" },
         { status: 400 }
       );
     }

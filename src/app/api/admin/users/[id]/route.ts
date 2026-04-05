@@ -30,6 +30,10 @@ export async function PATCH(
     const body = await request.json();
     const { plan, role } = body;
 
+    if (id === session.user.id && role !== undefined) {
+      return NextResponse.json({ error: "Cannot modify your own role" }, { status: 400 });
+    }
+
     const data: { plan?: Plan; role?: Role } = {};
 
     if (plan !== undefined) {
