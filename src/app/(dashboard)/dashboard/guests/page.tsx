@@ -157,16 +157,16 @@ export default function AddGuestsPage() {
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full table-fixed">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/50">
                 <th className="text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider px-3 py-3 w-8">#</th>
                 <th className="text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider px-3 py-3">Guest Name *</th>
                 <th className="text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider px-3 py-3 w-[170px]">WhatsApp</th>
-                <th className="text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider px-3 py-3">Invite Type</th>
-                <th className="text-center text-[11px] font-medium text-gray-400 uppercase tracking-wider px-3 py-3">Head Count</th>
-                <th className="text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider px-3 py-3">Category</th>
-                <th className="text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider px-3 py-3">Side</th>
+                <th className="text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider px-3 py-3 w-[160px]">Invite Type</th>
+                <th className="text-center text-[11px] font-medium text-gray-400 uppercase tracking-wider px-3 py-3 w-[120px]">Head Count</th>
+                <th className="text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider px-3 py-3 w-[140px]">Category</th>
+                <th className="text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider px-3 py-3 w-[130px]">Side</th>
                 <th className="w-8"></th>
               </tr>
             </thead>
