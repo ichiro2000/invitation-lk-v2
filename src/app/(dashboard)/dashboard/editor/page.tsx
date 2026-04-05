@@ -483,16 +483,26 @@ export default function EditorPage() {
       {/* Phone frame */}
       <div
         className="relative bg-white rounded-[2.5rem] border-[6px] border-gray-800 shadow-2xl flex-shrink-0"
-        style={{ width: 375, height: 750 }}
+        style={{ width: 390, height: 750 }}
       >
         {/* Notch */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-36 h-7 bg-gray-800 rounded-b-2xl z-10" />
         {/* Home indicator */}
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-28 h-1 bg-gray-300 rounded-full z-10" />
-        {/* Template content — scrollable iframe-like container */}
+        {/* Template preview — rendered directly with overflow scroll */}
         <div className="absolute inset-0 rounded-[2rem] overflow-hidden">
-          <div className="w-full h-full overflow-y-auto pt-7">
-            <TemplateComponent data={previewData} />
+          <div
+            className="origin-top-left overflow-y-auto"
+            style={{
+              width: 1440,
+              height: "100%",
+              transform: `scale(${378 / 1440})`,
+              transformOrigin: "top left",
+            }}
+          >
+            <div style={{ width: 1440, minHeight: "100%" }}>
+              <TemplateComponent data={previewData} />
+            </div>
           </div>
         </div>
       </div>
