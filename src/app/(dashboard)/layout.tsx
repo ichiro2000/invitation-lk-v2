@@ -4,11 +4,12 @@ import { useSession, signOut } from "next-auth/react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Heart, LayoutDashboard, Palette, Users, UserPlus, ListTodo, DollarSign, Store, Settings, LogOut, CreditCard, ShieldCheck } from "lucide-react";
+import { Heart, LayoutDashboard, Palette, Pencil, Users, UserPlus, ListTodo, DollarSign, Store, Settings, LogOut, CreditCard, ShieldCheck } from "lucide-react";
 
 const sidebarLinks = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-  { href: "/dashboard/templates", label: "Template", icon: Palette },
+  { href: "/dashboard/templates", label: "Select Template", icon: Palette },
+  { href: "/dashboard/editor", label: "Edit Invitation", icon: Pencil },
   { href: "/dashboard/guests", label: "Add Guests", icon: UserPlus },
   { href: "/dashboard/guests/links", label: "Guest List & Links", icon: Users },
   { href: "/dashboard/tools/tasks", label: "Task Checklist", icon: ListTodo },
@@ -36,9 +37,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
 
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {/* Main */}
-          <p className="text-[10px] text-gray-400 uppercase tracking-wider px-4 pt-2 pb-1">Dashboard</p>
-          {sidebarLinks.slice(0, 2).map((link) => (
+          {/* Invitation */}
+          <p className="text-[10px] text-gray-400 uppercase tracking-wider px-4 pt-2 pb-1">Invitation</p>
+          {sidebarLinks.slice(0, 3).map((link) => (
             <Link key={link.href} href={link.href} className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${pathname === link.href ? "bg-rose-50 text-rose-600" : "text-gray-600 hover:bg-gray-50 hover:text-rose-600"}`}>
               <link.icon className="w-4 h-4" /> {link.label}
             </Link>
@@ -46,7 +47,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           {/* Guest Management */}
           <p className="text-[10px] text-gray-400 uppercase tracking-wider px-4 pt-4 pb-1">Guest Management</p>
-          {sidebarLinks.slice(2, 4).map((link) => (
+          {sidebarLinks.slice(3, 5).map((link) => (
             <Link key={link.href} href={link.href} className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${pathname === link.href ? "bg-rose-50 text-rose-600" : "text-gray-600 hover:bg-gray-50 hover:text-rose-600"}`}>
               <link.icon className="w-4 h-4" /> {link.label}
             </Link>
@@ -54,7 +55,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           {/* Wedding Tools */}
           <p className="text-[10px] text-gray-400 uppercase tracking-wider px-4 pt-4 pb-1">Wedding Plan Tools</p>
-          {sidebarLinks.slice(4).map((link) => {
+          {sidebarLinks.slice(5).map((link) => {
             const planRequired = true; // Standard+ only
             const userPlan = session.user?.plan;
             const hasAccess = userPlan === "STANDARD" || userPlan === "PREMIUM" || userPlan === "ADMIN";

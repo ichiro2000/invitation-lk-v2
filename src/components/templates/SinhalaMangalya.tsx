@@ -5,6 +5,7 @@ import { Heart, MapPin, Mail, Phone, Camera, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import Countdown from "./shared/Countdown";
 import { useState, useRef } from "react";
+import type { InvitationData } from "@/types/invitation";
 
 /* ── Detailed Mandala SVG ── */
 function DetailedMandala({ size = 400, className = "", animate = true }: { size?: number; className?: string; animate?: boolean }) {
@@ -194,7 +195,18 @@ function GlowParticles() {
   );
 }
 
-export default function SinhalaMangalya() {
+export default function SinhalaMangalya({ data }: { data?: InvitationData } = {}) {
+  const groom = data?.groomName || "කනේෂ්ක";
+  const bride = data?.brideName || "දිනුෂා";
+  const date = data?.weddingDate || "2026-08-18";
+  const time = data?.weddingTime || "9:00 AM";
+  const venue = data?.venue || "හොටෙල් සිහාරනම්";
+  const venueAddr = data?.venueAddress || "පුත්තලම් පාර, ගොට්ටිනාපහම, අනුරාධපුර";
+  const events = data?.events || [
+    { title: "පොරුව උත්සවය", time: "පෙ.ව. 09:00 - පෙ.ව. 10:30", venue: "හොටෙල් සිහාරනම්", description: "සම්ප්‍රදායික පොරුව උත්සවය" },
+    { title: "මංගල උත්සවය", time: "පෙ.ව. 10:30 - ප.ව. 03:30", venue: "හොටෙල් සිහාරනම්", description: "මංගල උත්සවය සහ සාද භෝජනය" },
+  ];
+
   const [rsvpSent, setRsvpSent] = useState(false);
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
@@ -292,7 +304,7 @@ export default function SinhalaMangalya() {
               className="text-center"
             >
               <p className="text-sm text-gray-600 mb-2 leading-relaxed">ආනන්ද රත්නායක මහතාගේ සහ<br />එම මැතිනියගේ ආදරණීය දියණිය</p>
-              <h2 className="text-4xl sm:text-5xl font-bold text-pink-700">දිනුෂා</h2>
+              <h2 className="text-4xl sm:text-5xl font-bold text-pink-700">{bride}</h2>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, x: 40 }}
@@ -301,7 +313,7 @@ export default function SinhalaMangalya() {
               className="text-center"
             >
               <p className="text-sm text-gray-600 mb-2 leading-relaxed">චන්දසිරි කුමාරසිංහ මහතාගේ සහ<br />එම මැතිනියගේ ආදරණීය පුත්</p>
-              <h2 className="text-4xl sm:text-5xl font-bold text-pink-700">කනේෂ්ක</h2>
+              <h2 className="text-4xl sm:text-5xl font-bold text-pink-700">{groom}</h2>
             </motion.div>
           </div>
 
@@ -328,8 +340,8 @@ export default function SinhalaMangalya() {
             <div className="bg-white/90 backdrop-blur-md rounded-2xl px-8 py-6 border border-pink-200 shadow-xl shadow-pink-200/30">
               <p className="text-sm text-pink-600 mb-1 font-medium">සමග අබියස ගයිමේ ප්‍රීතිය හිමිකරගන්න</p>
               <p className="text-2xl sm:text-3xl font-bold text-gray-800 mb-1">2026 අගෝස්තු මස 18 වන දින</p>
-              <p className="text-pink-700 font-semibold text-lg">හොටෙල් සිහාරනම්</p>
-              <p className="text-sm text-gray-600 mt-1">පුත්තලම් පාර, ගොට්ටිනාපහම, අනුරාධපුර</p>
+              <p className="text-pink-700 font-semibold text-lg">{venue}</p>
+              <p className="text-sm text-gray-600 mt-1">{venueAddr}</p>
               <p className="text-sm text-gray-600 mt-1">උත්සව සැලසුම් පෙරවරය 09.00 සිට පස්වරු 03:30 දක්වා</p>
             </div>
             <div className="absolute -inset-4 bg-pink-200/15 rounded-3xl blur-xl -z-10" />
@@ -351,7 +363,7 @@ export default function SinhalaMangalya() {
         <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="relative z-10">
           <p className="tracking-[0.4em] uppercase text-xs mb-10 text-pink-100">විවාහ දිනය දක්වා</p>
           <Countdown
-            targetDate="2026-08-18T09:00:00"
+            targetDate={`${date}T09:00:00`}
             valueClassName="text-5xl sm:text-6xl font-light text-white"
             labelClassName="text-[10px] text-pink-200 tracking-[0.2em] uppercase mt-3"
             boxClassName="flex flex-col items-center bg-white/10 backdrop-blur-sm rounded-2xl px-6 py-5 min-w-[85px]"
@@ -429,9 +441,9 @@ export default function SinhalaMangalya() {
             <h2 className="text-3xl sm:text-4xl font-bold text-pink-700 mb-4">Wedding Venue</h2>
             <div className="flex items-center justify-center gap-2 mb-2">
               <MapPin className="w-5 h-5 text-pink-600" />
-              <h3 className="text-xl font-semibold text-gray-800">හොටෙල් සිහාරනම්</h3>
+              <h3 className="text-xl font-semibold text-gray-800">{venue}</h3>
             </div>
-            <p className="text-gray-600 mb-8">පුත්තලම් පාර, ගොට්ටිනාපහම, අනුරාධපුර</p>
+            <p className="text-gray-600 mb-8">{venueAddr}</p>
             <motion.div
               whileHover={{ scale: 1.01 }}
               className="bg-gradient-to-br from-pink-50 to-rose-50 rounded-2xl h-64 flex items-center justify-center border border-pink-200 shadow-inner"
@@ -490,7 +502,7 @@ export default function SinhalaMangalya() {
           <motion.div animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }}>
             <Heart className="w-6 h-6 text-pink-500 fill-pink-500 mx-auto mb-4" />
           </motion.div>
-          <p className="text-pink-700 text-xl font-bold">දිනුෂා & කනේෂ්ක</p>
+          <p className="text-pink-700 text-xl font-bold">{bride} & {groom}</p>
           <p className="text-gray-600 text-sm mt-1">2026 අගෝස්තු 18 &middot; අනුරාධපුර</p>
           <div className="flex justify-center gap-3 mt-6 mb-6">
             {[Phone, Mail].map((Icon, i) => (

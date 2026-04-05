@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Heart, MapPin, Clock, Calendar, Mail, Phone, Camera, ChevronDown } from "lucide-react";
 import Countdown from "./shared/Countdown";
 import { useState, useRef } from "react";
+import type { InvitationData } from "@/types/invitation";
 
 /* ── Floating flower petals ── */
 function FloatingPetals({ count = 20 }: { count?: number }) {
@@ -66,7 +67,20 @@ function WatercolorBlob({ className, color, delay = 0 }: { className: string; co
   );
 }
 
-export default function ModernBloom() {
+export default function ModernBloom({ data }: { data?: InvitationData } = {}) {
+  const groom = data?.groomName || "Kavinda";
+  const bride = data?.brideName || "Sachini";
+  const date = data?.weddingDate || "2026-08-22";
+  const time = data?.weddingTime || "3:00 PM";
+  const venue = data?.venue || "Hikkaduwa Beach Resort";
+  const venueAddr = data?.venueAddress || "124 Galle Road, Hikkaduwa, Sri Lanka";
+  const events = data?.events || [
+    { title: "Beach Ceremony", time: "3:00 PM", description: "Exchange of vows on the golden sands with the Indian Ocean as our backdrop" },
+    { title: "Cocktail Hour", time: "4:30 PM", description: "Enjoy refreshing cocktails, canapes, and ocean breezes on the seaside terrace" },
+    { title: "Reception Dinner", time: "6:00 PM", description: "A beautiful sit-down dinner under fairy lights with music and speeches" },
+    { title: "Dance & Celebration", time: "8:30 PM", description: "Dance the night away under the stars with live music and DJ" },
+  ];
+
   const [rsvpSent, setRsvpSent] = useState(false);
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
@@ -124,7 +138,7 @@ export default function ModernBloom() {
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             transition={{ duration: 1.2, delay: 0.3 }}
           >
-            Sachini
+            {bride}
           </motion.h1>
 
           <motion.p
@@ -142,7 +156,7 @@ export default function ModernBloom() {
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             transition={{ duration: 1.2, delay: 0.6 }}
           >
-            Kavinda
+            {groom}
           </motion.h1>
 
           <motion.div
@@ -191,7 +205,7 @@ export default function ModernBloom() {
         >
           <p className="text-pink-400 tracking-[0.3em] uppercase text-xs mb-8">Counting the days</p>
           <Countdown
-            targetDate="2026-08-22T15:00:00"
+            targetDate={`${date}T15:00:00`}
             valueClassName="text-5xl sm:text-6xl font-extralight text-gray-800"
             labelClassName="text-[10px] text-pink-400 tracking-[0.2em] uppercase mt-3"
             boxClassName="flex flex-col items-center bg-white rounded-2xl shadow-lg shadow-pink-100/50 px-6 py-5 min-w-[90px] sm:min-w-[100px]"
@@ -353,8 +367,8 @@ export default function ModernBloom() {
             viewport={{ once: true }}
           >
             <p className="text-pink-400 tracking-[0.3em] uppercase text-xs mb-4">Venue</p>
-            <h2 className="text-4xl sm:text-5xl font-extralight text-gray-800 mb-2">Hikkaduwa Beach Resort</h2>
-            <p className="text-gray-400 mb-10">124 Galle Road, Hikkaduwa, Sri Lanka</p>
+            <h2 className="text-4xl sm:text-5xl font-extralight text-gray-800 mb-2">{venue}</h2>
+            <p className="text-gray-400 mb-10">{venueAddr}</p>
             <div className="bg-gradient-to-br from-pink-100/40 to-rose-100/40 rounded-2xl h-72 sm:h-80 flex items-center justify-center shadow-inner">
               <MapPin className="w-10 h-10 text-pink-200" />
             </div>
@@ -420,7 +434,7 @@ export default function ModernBloom() {
       {/* ═══ FOOTER ═══ */}
       <footer className="py-14 text-center bg-pink-50/30 px-4">
         <Heart className="w-5 h-5 text-pink-400 fill-pink-400 mx-auto mb-3" />
-        <p className="text-gray-800 font-extralight text-xl">Sachini & Kavinda</p>
+        <p className="text-gray-800 font-extralight text-xl">{bride} & {groom}</p>
         <p className="text-gray-300 text-sm mt-2">August 22, 2026 &middot; Hikkaduwa, Sri Lanka</p>
         <div className="flex justify-center gap-3 mt-6 mb-6">
           {[Phone, Mail].map((Icon, i) => (

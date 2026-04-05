@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Heart, MapPin, Mail, Phone, Music, Camera, ChevronDown } from "lucide-react";
 import Countdown from "./shared/Countdown";
 import { useState, useRef } from "react";
+import type { InvitationData } from "@/types/invitation";
 
 /* ── Floating golden sparkles ── */
 function GoldParticles({ count = 30 }: { count?: number }) {
@@ -106,7 +107,19 @@ function GoldenDivider() {
   );
 }
 
-export default function RoyalElegance() {
+export default function RoyalElegance({ data }: { data?: InvitationData } = {}) {
+  const groom = data?.groomName || "Tharaka";
+  const bride = data?.brideName || "Nadeesha";
+  const date = data?.weddingDate || "2026-06-15";
+  const time = data?.weddingTime || "4:00 PM";
+  const venue = data?.venue || "Cinnamon Grand Colombo";
+  const venueAddr = data?.venueAddress || "77 Galle Road, Colombo 03, Sri Lanka";
+  const events = data?.events || [
+    { title: "Poruwa Ceremony", time: "4:00 PM - 5:30 PM", venue: "Grand Ballroom", description: "Traditional Sinhalese wedding ceremony on the beautifully decorated Poruwa" },
+    { title: "Wedding Reception", time: "6:30 PM - 11:00 PM", venue: "Royal Garden", description: "Dinner, dancing, and celebration with family and friends" },
+    { title: "After Party", time: "11:00 PM onwards", venue: "Poolside Lounge", description: "Continue the celebration with music, drinks, and memories" },
+  ];
+
   const [rsvpSent, setRsvpSent] = useState(false);
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
@@ -171,7 +184,7 @@ export default function RoyalElegance() {
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             transition={{ duration: 1, delay: 0.3 }}
           >
-            Nadeesha
+            {bride}
           </motion.h1>
 
           <GoldenDivider />
@@ -182,7 +195,7 @@ export default function RoyalElegance() {
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             transition={{ duration: 1, delay: 0.6 }}
           >
-            Tharaka
+            {groom}
           </motion.h1>
 
           <motion.div
@@ -232,7 +245,7 @@ export default function RoyalElegance() {
         >
           <p className="text-[#c9a96e] tracking-[0.4em] uppercase text-xs mb-10">Counting Down To Our Big Day</p>
           <Countdown
-            targetDate="2026-06-15T16:00:00"
+            targetDate={`${date}T16:00:00`}
             valueClassName="text-5xl sm:text-6xl font-light text-white"
             labelClassName="text-[10px] text-[#c9a96e] tracking-[0.3em] uppercase mt-3"
             boxClassName="flex flex-col items-center min-w-[80px] sm:min-w-[100px]"
@@ -402,9 +415,9 @@ export default function RoyalElegance() {
             <h2 className="text-4xl sm:text-5xl font-light text-[#5c2828] mb-4">Wedding Venue</h2>
             <div className="flex items-center justify-center gap-2 mb-2">
               <MapPin className="w-5 h-5 text-[#c9a96e]" />
-              <h3 className="text-xl font-semibold text-[#5c2828]">Cinnamon Grand Colombo</h3>
+              <h3 className="text-xl font-semibold text-[#5c2828]">{venue}</h3>
             </div>
-            <p className="text-[#8b5e5e] mb-10">77 Galle Road, Colombo 03, Sri Lanka</p>
+            <p className="text-[#8b5e5e] mb-10">{venueAddr}</p>
             <motion.div
               whileHover={{ scale: 1.01 }}
               className="bg-gradient-to-br from-[#c9a96e]/10 to-[#5c2828]/10 rounded-2xl h-72 sm:h-80 flex items-center justify-center border border-[#c9a96e]/10 shadow-inner"
@@ -498,7 +511,7 @@ export default function RoyalElegance() {
           <motion.div animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }}>
             <Heart className="w-6 h-6 text-[#c9a96e] fill-[#c9a96e] mx-auto mb-4" />
           </motion.div>
-          <p className="text-[#5c2828] text-xl font-light mb-2">Nadeesha & Tharaka</p>
+          <p className="text-[#5c2828] text-xl font-light mb-2">{bride} & {groom}</p>
           <p className="text-[#8b5e5e] text-sm mb-8">June 15, 2026 &middot; Colombo, Sri Lanka</p>
           <div className="flex items-center justify-center gap-4 mb-8">
             {[Phone, Mail].map((Icon, idx) => (

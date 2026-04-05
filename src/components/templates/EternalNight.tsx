@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Heart, MapPin, Mail, Phone, Camera, ChevronDown, Star, Sparkles, Moon } from "lucide-react";
 import Countdown from "./shared/Countdown";
 import { useState, useRef } from "react";
+import type { InvitationData } from "@/types/invitation";
 
 /* ── Animated starfield with shooting stars ── */
 function StarField() {
@@ -122,7 +123,21 @@ function Constellation() {
   );
 }
 
-export default function EternalNight() {
+export default function EternalNight({ data }: { data?: InvitationData } = {}) {
+  const groom = data?.groomName || "Nuwan";
+  const bride = data?.brideName || "Chamari";
+  const date = data?.weddingDate || "2026-12-31";
+  const time = data?.weddingTime || "8:00 PM";
+  const venue = data?.venue || "Vivanta Bentota";
+  const venueAddr = data?.venueAddress || "National Holiday Resort, Bentota, Sri Lanka";
+  const events = data?.events || [
+    { title: "Guests Arrive", time: "6:00 PM", description: "Welcome cocktails and stargazing on the garden terrace" },
+    { title: "Ceremony Under the Stars", time: "7:30 PM", description: "Exchange of vows in the moonlit garden with fairy lights" },
+    { title: "Grand Dinner", time: "8:30 PM", description: "An exquisite five-course dinner paired with the finest wines" },
+    { title: "Dancing & Celebrations", time: "10:30 PM", description: "Live band and DJ take us into the new year" },
+    { title: "Midnight Fireworks", time: "12:00 AM", description: "Ring in 2027 with a spectacular fireworks display and champagne toast" },
+  ];
+
   const [rsvpSent, setRsvpSent] = useState(false);
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
@@ -161,7 +176,7 @@ export default function EternalNight() {
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             transition={{ duration: 1.2, delay: 0.8 }}
           >
-            Chamari
+            {bride}
           </motion.h1>
 
           <motion.div
@@ -191,7 +206,7 @@ export default function EternalNight() {
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             transition={{ duration: 1.2, delay: 1 }}
           >
-            Nuwan
+            {groom}
           </motion.h1>
 
           <motion.div
@@ -240,7 +255,7 @@ export default function EternalNight() {
         >
           <p className="text-[#c4a35a] tracking-[0.4em] uppercase text-xs mb-10">The Night Begins In</p>
           <Countdown
-            targetDate="2026-12-31T20:00:00"
+            targetDate={`${date}T20:00:00`}
             valueClassName="text-5xl sm:text-6xl font-extralight text-white"
             labelClassName="text-[10px] text-[#c4a35a]/50 tracking-[0.3em] uppercase mt-3"
             boxClassName="flex flex-col items-center bg-white/[0.03] border border-white/5 rounded-2xl px-6 py-5 min-w-[90px] sm:min-w-[110px] backdrop-blur-sm"
@@ -386,8 +401,8 @@ export default function EternalNight() {
             viewport={{ once: true }}
           >
             <p className="text-[#c4a35a] tracking-[0.4em] uppercase text-xs mb-4">Venue</p>
-            <h2 className="text-4xl sm:text-5xl font-extralight text-white mb-2">Vivanta Bentota</h2>
-            <p className="text-white/25 mb-10">National Holiday Resort, Bentota, Sri Lanka</p>
+            <h2 className="text-4xl sm:text-5xl font-extralight text-white mb-2">{venue}</h2>
+            <p className="text-white/25 mb-10">{venueAddr}</p>
             <div className="bg-gradient-to-br from-[#1a2744] to-[#0a0e1a] rounded-2xl h-72 sm:h-80 flex items-center justify-center border border-white/5">
               <MapPin className="w-10 h-10 text-[#c4a35a]/15" />
             </div>
@@ -468,7 +483,7 @@ export default function EternalNight() {
             <Star className="w-3 h-3 text-[#c4a35a] fill-[#c4a35a]" />
           </motion.div>
         </div>
-        <p className="text-white font-extralight text-xl">Chamari & Nuwan</p>
+        <p className="text-white font-extralight text-xl">{bride} & {groom}</p>
         <p className="text-white/15 text-sm mt-2">December 31, 2026 &middot; Bentota, Sri Lanka</p>
         <div className="flex justify-center gap-4 mt-6 mb-6">
           {[Phone, Mail].map((Icon, i) => (

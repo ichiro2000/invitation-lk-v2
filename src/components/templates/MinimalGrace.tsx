@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Heart, MapPin, Mail, Phone, Camera, ArrowDown } from "lucide-react";
 import Countdown from "./shared/Countdown";
 import { useState, useRef } from "react";
+import type { InvitationData } from "@/types/invitation";
 
 /* ── Dramatic text reveal animation ── */
 function RevealText({ children, delay = 0, className = "" }: { children: string; delay?: number; className?: string }) {
@@ -33,7 +34,20 @@ function DiamondOrnament({ className = "" }: { className?: string }) {
 }
 
 
-export default function MinimalGrace() {
+export default function MinimalGrace({ data }: { data?: InvitationData } = {}) {
+  const groom = data?.groomName || "Ruwan";
+  const bride = data?.brideName || "Amaya";
+  const date = data?.weddingDate || "2026-09-12";
+  const time = data?.weddingTime || "10:00 AM";
+  const venue = data?.venue || "Trinity College Chapel";
+  const venueAddr = data?.venueAddress || "Chapel Road, Kandy, Sri Lanka";
+  const events = data?.events || [
+    { title: "Church Ceremony", time: "10:00 AM", venue: "Trinity College Chapel, Kandy" },
+    { title: "Lunch Reception", time: "12:30 PM", venue: "The Radh Hotel, Peradeniya Road" },
+    { title: "Garden Party", time: "4:00 PM", venue: "Royal Botanical Gardens" },
+    { title: "Dinner & Dancing", time: "7:00 PM", venue: "The Radh Hotel, Grand Hall" },
+  ];
+
   const [rsvpSent, setRsvpSent] = useState(false);
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
@@ -61,7 +75,7 @@ export default function MinimalGrace() {
           </motion.p>
 
           <RevealText delay={0.3} className="text-7xl sm:text-9xl lg:text-[10rem] font-extralight tracking-tight text-gray-900 leading-none">
-            Amaya
+            {bride}
           </RevealText>
 
           <motion.p
@@ -74,7 +88,7 @@ export default function MinimalGrace() {
           </motion.p>
 
           <RevealText delay={0.6} className="text-7xl sm:text-9xl lg:text-[10rem] font-extralight tracking-tight text-gray-900 leading-none">
-            Ruwan
+            {groom}
           </RevealText>
 
           {/* Animated vertical line */}
@@ -120,7 +134,7 @@ export default function MinimalGrace() {
         >
           <DiamondOrnament className="mb-10" />
           <Countdown
-            targetDate="2026-09-12T10:00:00"
+            targetDate={`${date}T10:00:00`}
             valueClassName="text-6xl sm:text-7xl font-extralight text-gray-900"
             labelClassName="text-[9px] text-stone-500 tracking-[0.4em] uppercase mt-4"
             boxClassName="flex flex-col items-center min-w-[80px] sm:min-w-[110px]"
@@ -257,8 +271,8 @@ export default function MinimalGrace() {
             viewport={{ once: true }}
           >
             <p className="text-stone-500 text-[10px] tracking-[0.7em] uppercase mb-10">Venue</p>
-            <h2 className="text-2xl sm:text-3xl font-extralight text-gray-900 mb-2">Trinity College Chapel</h2>
-            <p className="text-stone-500 text-sm mb-12">Chapel Road, Kandy, Sri Lanka</p>
+            <h2 className="text-2xl sm:text-3xl font-extralight text-gray-900 mb-2">{venue}</h2>
+            <p className="text-stone-500 text-sm mb-12">{venueAddr}</p>
             <div className="h-64 sm:h-72 flex items-center justify-center border border-stone-200" style={{ backgroundColor: "#eeede8" }}>
               <MapPin className="w-6 h-6 text-stone-400" />
             </div>
@@ -340,7 +354,7 @@ export default function MinimalGrace() {
           viewport={{ once: true }}
         >
           <DiamondOrnament className="mb-8" />
-          <p className="text-gray-900 text-xl font-extralight tracking-widest">Amaya & Ruwan</p>
+          <p className="text-gray-900 text-xl font-extralight tracking-widest">{bride} & {groom}</p>
           <p className="text-stone-500 text-[10px] tracking-[0.5em] mt-3">12.09.2026</p>
           <div className="flex justify-center gap-6 mt-10 mb-10">
             {[Phone, Mail].map((Icon, i) => (

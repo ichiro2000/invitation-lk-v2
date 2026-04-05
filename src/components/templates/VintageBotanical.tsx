@@ -5,6 +5,7 @@ import { Heart, MapPin, Mail, Phone, Camera, ChevronDown, Leaf } from "lucide-re
 import Link from "next/link";
 import Countdown from "./shared/Countdown";
 import { useState } from "react";
+import type { InvitationData } from "@/types/invitation";
 
 /* ── Floating leaves ── */
 function FloatingLeaves() {
@@ -34,7 +35,18 @@ function FloatingLeaves() {
   );
 }
 
-export default function VintageBotanical() {
+export default function VintageBotanical({ data }: { data?: InvitationData } = {}) {
+  const groom = data?.groomName || "කසුන් දීපානායක";
+  const bride = data?.brideName || "නයෝමි දීපානායක";
+  const date = data?.weddingDate || "2026-12-21";
+  const time = data?.weddingTime || "9:00 AM";
+  const venue = data?.venue || "දේශානි උත්සව ශාලාව";
+  const venueAddr = data?.venueAddress || "බටුගෙදර, රත්නපුර";
+  const events = data?.events || [
+    { title: "පොරුව උත්සවය", time: "10:50 AM", venue: "දේශානි උත්සව ශාලාව", description: "පෝරුව චාරිත්‍ර" },
+    { title: "මංගල උත්සවය", time: "පෙ.ව. 09.00 - ප.ව. 03.30", venue: "දේශානි උත්සව ශාලාව", description: "මංගල උත්සවය සහ සාද භෝජනය" },
+  ];
+
   const [rsvpSent, setRsvpSent] = useState(false);
 
   return (
@@ -71,7 +83,7 @@ export default function VintageBotanical() {
           </motion.p>
 
           <motion.h1 className="text-4xl sm:text-5xl font-bold text-green-800 mb-4" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
-            නයෝමි දීපානායක
+            {bride}
           </motion.h1>
 
           <motion.p className="text-xs text-gray-400 leading-relaxed mb-2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }}>
@@ -79,7 +91,7 @@ export default function VintageBotanical() {
           </motion.p>
 
           <motion.h1 className="text-4xl sm:text-5xl font-bold text-green-800 mb-8" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }}>
-            කසුන් දීපානායක
+            {groom}
           </motion.h1>
 
           {/* Wedding details */}
@@ -94,7 +106,7 @@ export default function VintageBotanical() {
             <p className="text-sm text-gray-500">පෙ.ව. 09.00 සිට ප.ව. 03.30 දක්වා</p>
             <p className="text-sm text-gray-400 mt-2">(පෝරුව චාරිත්‍ර පෙරවරය 10.50 ට)</p>
             <div className="w-16 h-px bg-green-200 mx-auto my-4" />
-            <p className="text-green-700 font-semibold">රත්නපුර බටුගෙදර දේශානි උත්සව ශාලාවේදී</p>
+            <p className="text-green-700 font-semibold">{venue}</p>
           </motion.div>
 
           {/* Invite type */}
@@ -119,7 +131,7 @@ export default function VintageBotanical() {
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
           <p className="tracking-[0.3em] uppercase text-xs mb-8 text-green-100">Counting Down</p>
           <Countdown
-            targetDate="2026-12-21T09:00:00"
+            targetDate={`${date}T09:00:00`}
             valueClassName="text-5xl sm:text-6xl font-light text-white"
             labelClassName="text-[10px] text-green-200 tracking-wider uppercase mt-2"
             boxClassName="flex flex-col items-center bg-white/10 backdrop-blur-sm rounded-2xl px-5 py-4 min-w-[85px]"
@@ -159,9 +171,9 @@ export default function VintageBotanical() {
             <h2 className="text-3xl font-bold text-green-800 mb-4">Venue</h2>
             <div className="flex items-center justify-center gap-2 mb-2">
               <MapPin className="w-5 h-5 text-green-500" />
-              <h3 className="text-xl font-semibold text-gray-800">දේශානි උත්සව ශාලාව</h3>
+              <h3 className="text-xl font-semibold text-gray-800">{venue}</h3>
             </div>
-            <p className="text-gray-400 mb-8">බටුගෙදර, රත්නපුර</p>
+            <p className="text-gray-400 mb-8">{venueAddr}</p>
             <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl h-64 flex items-center justify-center border border-green-100">
               <MapPin className="w-10 h-10 text-green-200" />
             </div>
@@ -204,7 +216,7 @@ export default function VintageBotanical() {
       {/* Contact & Footer */}
       <footer className="py-10 text-center px-4 bg-[#fefdf9]">
         <Heart className="w-5 h-5 text-green-500 fill-green-500 mx-auto mb-3" />
-        <p className="text-green-800 text-lg font-bold">නයෝමි & කසුන්</p>
+        <p className="text-green-800 text-lg font-bold">{bride} & {groom}</p>
         <p className="text-gray-400 text-sm mt-1">2026 දෙසැම්බර් 21 &middot; රත්නපුර</p>
         <p className="text-sm text-gray-500 mt-4">නයෝමි - 07X XXX XXXX</p>
         <div className="flex justify-center gap-3 mt-4 mb-4">

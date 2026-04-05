@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Heart, MapPin, Mail, Phone, Camera, ChevronDown, Flame } from "lucide-react";
 import Countdown from "./shared/Countdown";
 import { useState, useRef } from "react";
+import type { InvitationData } from "@/types/invitation";
 
 /* ── Rotating SVG Mandala ── */
 function Mandala({ size = 500, className = "" }: { size?: number; className?: string }) {
@@ -87,7 +88,20 @@ function FloatingEmbers({ count = 20 }: { count?: number }) {
   );
 }
 
-export default function GoldenLotus() {
+export default function GoldenLotus({ data }: { data?: InvitationData } = {}) {
+  const groom = data?.groomName || "Aravind";
+  const bride = data?.brideName || "Priya";
+  const date = data?.weddingDate || "2026-10-10";
+  const time = data?.weddingTime || "9:00 AM";
+  const venue = data?.venue || "Nallur Kandaswamy Kovil";
+  const venueAddr = data?.venueAddress || "Main Street, Nallur, Jaffna, Sri Lanka";
+  const events = data?.events || [
+    { title: "Nichayathartham", time: "10:00 AM", venue: "Nallur Kandaswamy Kovil", description: "Formal engagement ceremony with exchange of rings and blessings from elders" },
+    { title: "Mehendi & Sangeet", time: "6:00 PM", venue: "Bride's Residence", description: "An evening of henna, music, and dance celebrating the bride-to-be" },
+    { title: "Muhurtham", time: "9:00 AM", venue: "Nallur Kandaswamy Kovil", description: "The sacred Hindu wedding ceremony with tying of the Thali at the auspicious hour" },
+    { title: "Wedding Reception", time: "7:00 PM", venue: "Jaffna Heritage Hotel", description: "Grand reception dinner with traditional feast, music, and celebrations" },
+  ];
+
   const [rsvpSent, setRsvpSent] = useState(false);
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
@@ -151,7 +165,7 @@ export default function GoldenLotus() {
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             transition={{ duration: 1.2, delay: 0.3 }}
           >
-            Priya
+            {bride}
           </motion.h1>
 
           <motion.div
@@ -181,7 +195,7 @@ export default function GoldenLotus() {
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             transition={{ duration: 1.2, delay: 0.6 }}
           >
-            Aravind
+            {groom}
           </motion.h1>
 
           <motion.div
@@ -224,7 +238,7 @@ export default function GoldenLotus() {
         >
           <p className="tracking-[0.4em] uppercase text-xs mb-10 text-[#1a0a0a]/50">The Celebration Begins In</p>
           <Countdown
-            targetDate="2026-10-10T09:00:00"
+            targetDate={`${date}T09:00:00`}
             valueClassName="text-5xl sm:text-6xl font-light text-[#1a0a0a]"
             labelClassName="text-[10px] text-[#1a0a0a]/40 tracking-[0.3em] uppercase mt-3"
             boxClassName="flex flex-col items-center bg-white/20 backdrop-blur-sm rounded-2xl px-6 py-5 min-w-[90px]"
@@ -346,8 +360,8 @@ export default function GoldenLotus() {
             viewport={{ once: true }}
           >
             <p className="text-[#d4a853] tracking-[0.4em] uppercase text-xs mb-4">Venue</p>
-            <h2 className="text-4xl sm:text-5xl font-light text-[#d4a853] mb-2">Nallur Kandaswamy Kovil</h2>
-            <p className="text-[#f5e6d3]/40 mb-10">Main Street, Nallur, Jaffna, Sri Lanka</p>
+            <h2 className="text-4xl sm:text-5xl font-light text-[#d4a853] mb-2">{venue}</h2>
+            <p className="text-[#f5e6d3]/40 mb-10">{venueAddr}</p>
             <div className="bg-gradient-to-br from-[#d4a853]/10 to-[#1a0a0a] rounded-2xl h-72 sm:h-80 flex items-center justify-center border border-[#d4a853]/10">
               <MapPin className="w-10 h-10 text-[#d4a853]/20" />
             </div>
@@ -418,7 +432,7 @@ export default function GoldenLotus() {
         <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 2, repeat: Infinity }}>
           <Flame className="w-5 h-5 text-[#d4a853] mx-auto mb-4" />
         </motion.div>
-        <p className="text-[#d4a853] text-xl font-light">Priya & Aravind</p>
+        <p className="text-[#d4a853] text-xl font-light">{bride} & {groom}</p>
         <p className="text-[#f5e6d3]/20 text-sm mt-2">October 10, 2026 &middot; Jaffna, Sri Lanka</p>
         <div className="flex justify-center gap-3 mt-6 mb-6">
           {[Phone, Mail].map((Icon, i) => (

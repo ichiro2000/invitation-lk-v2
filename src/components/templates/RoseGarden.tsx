@@ -5,6 +5,7 @@ import { Heart, MapPin, Mail, Phone, Camera, ChevronDown, Calendar as CalendarIc
 import Link from "next/link";
 import Countdown from "./shared/Countdown";
 import { useState, useRef, useEffect } from "react";
+import type { InvitationData } from "@/types/invitation";
 
 /* ── CSS Rose decoration (pure CSS floral) ── */
 function CSSRose({ size = 60, className = "" }: { size?: number; className?: string }) {
@@ -236,7 +237,20 @@ function CountdownTimer() {
   );
 }
 
-export default function RoseGarden() {
+export default function RoseGarden({ data }: { data?: InvitationData } = {}) {
+  const groom = data?.groomName || "Susantha";
+  const bride = data?.brideName || "Nadee";
+  const date = data?.weddingDate || "2026-11-05";
+  const time = data?.weddingTime || "6:00 PM";
+  const venue = data?.venue || "583, Singharupagama, Bentota";
+  const venueAddr = data?.venueAddress || "Southern Province, Sri Lanka";
+  const events = data?.events || [
+    { title: "Welcome Drinks", time: "6:00 PM", description: "Arrival and welcome cocktails" },
+    { title: "Dinner", time: "7:00 PM", description: "Elegant sit-down dinner" },
+    { title: "Entertainment", time: "8:30 PM", description: "Live music and performances" },
+    { title: "Dance Floor", time: "10:00 PM", description: "Dancing under the stars" },
+  ];
+
   const [rsvpSent, setRsvpSent] = useState(false);
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
@@ -309,7 +323,7 @@ export default function RoseGarden() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.5, duration: 0.8 }}
             >
-              Susantha
+              {groom}
             </motion.h1>
 
             <motion.div
@@ -335,7 +349,7 @@ export default function RoseGarden() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.5, duration: 0.8 }}
             >
-              Nadee
+              {bride}
             </motion.h1>
           </div>
 
@@ -548,9 +562,9 @@ export default function RoseGarden() {
             <VineDivider />
             <div className="flex items-center justify-center gap-2 mb-2 mt-6">
               <MapPin className="w-5 h-5 text-rose-500" />
-              <h3 className="text-xl font-semibold text-gray-800">583, Singharupagama, Bentota</h3>
+              <h3 className="text-xl font-semibold text-gray-800">{venue}</h3>
             </div>
-            <p className="text-gray-500 mb-8">Southern Province, Sri Lanka</p>
+            <p className="text-gray-500 mb-8">{venueAddr}</p>
             <div className="bg-gradient-to-br from-rose-50 to-red-50 rounded-2xl h-64 sm:h-72 flex items-center justify-center border border-rose-200 shadow-inner">
               <MapPin className="w-10 h-10 text-rose-300" />
             </div>
@@ -633,7 +647,7 @@ export default function RoseGarden() {
           <CSSRose size={40} className="mx-auto mb-4" />
           <p className="text-rose-700 text-2xl font-bold"
             style={{ fontFamily: "'Dancing Script', cursive, serif" }}>
-            Susantha & Nadee
+            {groom} & {bride}
           </p>
           <p className="text-gray-500 text-sm mt-2">November 5, 2026 &middot; Bentota, Sri Lanka</p>
           <VineDivider />

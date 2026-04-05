@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Heart, MapPin, Mail, Phone, Camera, ChevronDown, Sun, Waves } from "lucide-react";
 import Countdown from "./shared/Countdown";
 import { useState, useRef } from "react";
+import type { InvitationData } from "@/types/invitation";
 
 /* ── CSS-based ocean waves (lightweight, no SVG animation) ── */
 function OceanWaves({ variant = "light" }: { variant?: "light" | "dark" }) {
@@ -110,7 +111,20 @@ function PalmSilhouette({ className }: { className: string }) {
   );
 }
 
-export default function TropicalParadise() {
+export default function TropicalParadise({ data }: { data?: InvitationData } = {}) {
+  const groom = data?.groomName || "Dinesh";
+  const bride = data?.brideName || "Ishara";
+  const date = data?.weddingDate || "2026-03-28";
+  const time = data?.weddingTime || "4:00 PM";
+  const venue = data?.venue || "Mirissa Beach Resort";
+  const venueAddr = data?.venueAddress || "Mirissa, Southern Province, Sri Lanka";
+  const events = data?.events || [
+    { title: "Beach Ceremony", time: "4:00 PM", description: "Vows on the sand as the sun begins to set" },
+    { title: "Sunset Cocktails", time: "5:30 PM", description: "Drinks and canapes on the beach deck" },
+    { title: "Seafood Feast", time: "7:00 PM", description: "Fresh Sri Lankan seafood dinner under the stars" },
+    { title: "Bonfire Party", time: "9:00 PM", description: "Live music, dancing, and a bonfire on the beach" },
+  ];
+
   const [rsvpSent, setRsvpSent] = useState(false);
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
@@ -161,7 +175,7 @@ export default function TropicalParadise() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.2, delay: 0.3 }}
           >
-            Ishara
+            {bride}
           </motion.h1>
 
           <motion.div
@@ -183,7 +197,7 @@ export default function TropicalParadise() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.2, delay: 0.6 }}
           >
-            Dinesh
+            {groom}
           </motion.h1>
 
           <motion.div
@@ -218,7 +232,7 @@ export default function TropicalParadise() {
         >
           <p className="tracking-[0.3em] uppercase text-xs mb-8 text-teal-100">Toes in the sand in</p>
           <Countdown
-            targetDate="2026-03-28T16:00:00"
+            targetDate={`${date}T16:00:00`}
             valueClassName="text-5xl sm:text-6xl font-light text-white"
             labelClassName="text-[10px] text-teal-200 tracking-[0.2em] uppercase mt-3"
             boxClassName="flex flex-col items-center bg-white/10 rounded-2xl px-6 py-5 min-w-[90px] backdrop-blur-sm"
@@ -338,8 +352,8 @@ export default function TropicalParadise() {
             viewport={{ once: true }}
           >
             <p className="text-teal-500 tracking-[0.3em] uppercase text-xs mb-4">Location</p>
-            <h2 className="text-4xl sm:text-5xl font-light text-teal-800 mb-2">Mirissa Beach Resort</h2>
-            <p className="text-gray-500 mb-10">Mirissa, Southern Province, Sri Lanka</p>
+            <h2 className="text-4xl sm:text-5xl font-light text-teal-800 mb-2">{venue}</h2>
+            <p className="text-gray-500 mb-10">{venueAddr}</p>
             <div className="bg-gradient-to-br from-teal-100/60 to-cyan-50 rounded-2xl h-72 sm:h-80 flex items-center justify-center">
               <MapPin className="w-10 h-10 text-teal-200" />
             </div>
@@ -417,7 +431,7 @@ export default function TropicalParadise() {
           </motion.div>
           <Waves className="w-4 h-4 text-teal-300" />
         </div>
-        <p className="text-teal-800 text-xl font-light">Ishara & Dinesh</p>
+        <p className="text-teal-800 text-xl font-light">{bride} & {groom}</p>
         <p className="text-gray-400 text-sm mt-2">March 28, 2026 &middot; Mirissa, Sri Lanka</p>
         <div className="flex justify-center gap-3 mt-6 mb-6">
           {[Phone, Mail].map((Icon, i) => (
