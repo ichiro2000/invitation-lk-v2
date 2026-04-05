@@ -28,6 +28,9 @@ export async function POST(request: Request) {
 
     const passwordHash = await bcrypt.hash(password, 12);
 
+    // Generate unique invitation code
+    const code = Math.random().toString(36).slice(2, 8);
+
     const user = await prisma.user.create({
       data: {
         yourName,
@@ -39,6 +42,22 @@ export async function POST(request: Request) {
         venue: venue || null,
         role: "CUSTOMER",
         plan: "FREE",
+        invitation: {
+          create: {
+            templateSlug: "royal-elegance",
+            slug: code,
+            groomName: yourName,
+            brideName: partnerName,
+            weddingDate: weddingDate ? new Date(weddingDate) : new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
+            venue: venue || "Wedding Venue",
+            events: {
+              create: [
+                { title: "Wedding Ceremony", time: "4:00 PM", sortOrder: 0 },
+                { title: "Reception", time: "7:00 PM", sortOrder: 1 },
+              ],
+            },
+          },
+        },
       },
     });
 

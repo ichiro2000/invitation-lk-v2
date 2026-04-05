@@ -99,6 +99,7 @@ export default function EditorPage() {
   ]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [existingId, setExistingId] = useState<string | null>(null);
+  const [invitationSlug, setInvitationSlug] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -113,6 +114,7 @@ export default function EditorPage() {
         if (json.invitation) {
           const inv = json.invitation;
           setExistingId(inv.id);
+          setInvitationSlug(inv.slug || null);
           setTemplateSlug(inv.templateSlug || "royal-elegance");
           setGroomName(inv.groomName || "");
           setBrideName(inv.brideName || "");
@@ -138,7 +140,7 @@ export default function EditorPage() {
       const method = existingId ? "PATCH" : "POST";
       const res = await fetch("/api/invitations", { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const json = await res.json();
-      if (res.ok) { if (json.invitation?.id) setExistingId(json.invitation.id); setSaveMessage("success"); }
+      if (res.ok) { if (json.invitation?.id) { setExistingId(json.invitation.id); setInvitationSlug(json.invitation.slug); } setSaveMessage("success"); }
       else setSaveMessage(json.error || "Failed to save");
     } catch { setSaveMessage("Network error"); }
     finally { setSaving(false); setTimeout(() => setSaveMessage(""), 3000); }
@@ -256,6 +258,27 @@ export default function EditorPage() {
               </button>
             </Section>
 
+            {/* Your Invitation Link */}
+            {invitationSlug && (
+              <div className="rounded-2xl border border-rose-100 bg-rose-50/50 p-4">
+                <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-2">Your Invitation Link</p>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-full text-sm text-gray-700 truncate">
+                    invitation.lk/i/{invitationSlug}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { navigator.clipboard.writeText(`https://invitation.lk/i/${invitationSlug}`); setSaveMessage("copied"); setTimeout(() => setSaveMessage(""), 2000); }}
+                    className="px-3 py-2 bg-rose-600 text-white text-xs font-semibold rounded-full hover:bg-rose-700 transition-colors shrink-0">
+                    Copy
+                  </button>
+                </div>
+                {saveMessage === "copied" && (
+                  <p className="text-[11px] text-rose-600 mt-1.5 font-medium">Link copied!</p>
+                )}
+              </div>
+            )}
+
             {/* Actions */}
             <div className="flex gap-2 pt-2 pb-4">
               <button onClick={handleSave} disabled={saving}
@@ -263,7 +286,7 @@ export default function EditorPage() {
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 Save Draft
               </button>
-              <a href={`/samples/${templateSlug}`} target="_blank" rel="noopener noreferrer"
+              <a href={invitationSlug ? `/i/${invitationSlug}` : `/samples/${templateSlug}`} target="_blank" rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 px-4 py-3 border border-gray-200 text-gray-700 text-sm font-semibold rounded-full hover:bg-gray-50 transition-colors">
                 <Eye className="w-4 h-4" /> Preview
               </a>
