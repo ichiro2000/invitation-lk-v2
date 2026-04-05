@@ -29,7 +29,7 @@ export default function DashboardPage() {
             </p>
           </div>
           {!isPaid && (
-            <Link href="/pricing" className="bg-rose-600 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-rose-700 transition-colors shadow-lg shadow-rose-600/20 flex items-center gap-2">
+            <Link href="/dashboard/checkout" className="bg-rose-600 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-rose-700 transition-colors shadow-lg shadow-rose-600/20 flex items-center gap-2">
               Upgrade <ArrowRight className="w-4 h-4" />
             </Link>
           )}

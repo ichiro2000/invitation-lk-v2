@@ -110,7 +110,7 @@ export default function Pricing() {
                     </li>
                   ))}
                 </ul>
-                <Link href="/onboard" className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-medium text-sm transition-all hover:-translate-y-0.5 ${plan.popular ? "bg-white text-rose-600 hover:bg-rose-50 shadow-lg" : "bg-gray-900 text-white hover:bg-gray-800 shadow-lg shadow-gray-900/10"}`}>
+                <Link href={`/dashboard/checkout?plan=${plan.name.toUpperCase()}`} className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-medium text-sm transition-all hover:-translate-y-0.5 ${plan.popular ? "bg-white text-rose-600 hover:bg-rose-50 shadow-lg" : "bg-gray-900 text-white hover:bg-gray-800 shadow-lg shadow-gray-900/10"}`}>
                   Get Started
                   <ArrowRight className="w-4 h-4" />
                 </Link>

@@ -41,6 +41,7 @@ model User {
   tasks      Task[]
   vendors    Vendor[]
   budgetItems BudgetItem[]
+  orders     Order[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -202,4 +203,69 @@ model BudgetItem {
   user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   @@index([userId])
+}
+
+// ═══ PAYMENTS ═══
+enum PaymentMethod {
+  STRIPE
+  BANK_TRANSFER
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum BankTransferStatus {
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+}
+
+model Order {
+  id                    String        @id @default(cuid())
+  userId                String
+  plan                  Plan
+  amount                Decimal       @db.Decimal(10, 2)
+  currency              String        @default("LKR")
+  paymentMethod         PaymentMethod
+  paymentStatus         PaymentStatus @default(PENDING)
+  stripeSessionId       String?       @unique
+  stripePaymentIntentId String?       @unique
+
+  bankTransfer BankTransfer?
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([userId])
+}
+
+model BankTransfer {
+  id            String             @id @default(cuid())
+  orderId       String             @unique
+  receiptImage  String             @db.Text
+  bankReference String?
+  status        BankTransferStatus @default(PENDING_REVIEW)
+  adminNotes    String?
+  reviewedBy    String?
+  reviewedAt    DateTime?
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ═══ PASSWORD RESET ═══
+model PasswordResetToken {
+  id      String   @id @default(cuid())
+  email   String
+  token   String   @unique
+  expires DateTime
+
+  createdAt DateTime @default(now())
+  @@unique([email, token])
 }

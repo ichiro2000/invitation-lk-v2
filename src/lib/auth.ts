@@ -35,11 +35,22 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
         token.role = (user as unknown as { role: string }).role;
         token.plan = (user as unknown as { plan: string }).plan;
+      }
+      // Refresh plan from DB when client calls update()
+      if (trigger === "update" && token.id) {
+        const freshUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { plan: true, role: true },
+        });
+        if (freshUser) {
+          token.plan = freshUser.plan;
+          token.role = freshUser.role;
+        }
       }
       return token;
     },

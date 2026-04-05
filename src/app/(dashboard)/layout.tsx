@@ -4,7 +4,7 @@ import { useSession, signOut } from "next-auth/react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Heart, LayoutDashboard, Palette, Users, UserPlus, ListTodo, DollarSign, Store, Settings, LogOut } from "lucide-react";
+import { Heart, LayoutDashboard, Palette, Users, UserPlus, ListTodo, DollarSign, Store, Settings, LogOut, CreditCard, ShieldCheck } from "lucide-react";
 
 const sidebarLinks = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -65,6 +65,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </Link>
             );
           })}
+
+          {/* Billing */}
+          {session.user?.plan === "FREE" && (
+            <>
+              <p className="text-[10px] text-gray-400 uppercase tracking-wider px-4 pt-4 pb-1">Billing</p>
+              <Link href="/dashboard/checkout" className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${pathname === "/dashboard/checkout" ? "bg-rose-50 text-rose-600" : "text-gray-600 hover:bg-gray-50 hover:text-rose-600"}`}>
+                <CreditCard className="w-4 h-4" /> Upgrade Plan
+              </Link>
+            </>
+          )}
+
+          {/* Admin */}
+          {session.user?.role === "ADMIN" && (
+            <>
+              <p className="text-[10px] text-gray-400 uppercase tracking-wider px-4 pt-4 pb-1">Admin</p>
+              <Link href="/admin/bank-transfers" className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${pathname === "/admin/bank-transfers" ? "bg-rose-50 text-rose-600" : "text-gray-600 hover:bg-gray-50 hover:text-rose-600"}`}>
+                <ShieldCheck className="w-4 h-4" /> Bank Transfers
+              </Link>
+            </>
+          )}
         </nav>
 
         <div className="p-4 border-t border-gray-100">
