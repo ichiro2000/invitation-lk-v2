@@ -162,12 +162,15 @@ export default function OnboardPage() {
                     {calendarOpen && (
                       <>
                         <div className="fixed inset-0 z-40" onClick={() => setCalendarOpen(false)} />
-                        <div className="absolute left-0 top-full mt-1 z-50 rounded-xl border border-gray-200 bg-white shadow-lg">
+                        <div className="absolute left-0 top-full mt-1 z-50 rounded-2xl border border-gray-200 bg-white shadow-lg overflow-hidden">
                           <Calendar
                             mode="single"
+                            captionLayout="dropdown"
                             selected={weddingDate}
                             onSelect={(date) => { setWeddingDate(date); setCalendarOpen(false); }}
                             disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                            startMonth={new Date()}
+                            endMonth={new Date(new Date().getFullYear() + 3, 11)}
                             autoFocus
                           />
                         </div>
