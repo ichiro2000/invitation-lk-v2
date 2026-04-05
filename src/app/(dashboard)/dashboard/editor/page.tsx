@@ -489,10 +489,12 @@ export default function EditorPage() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-36 h-7 bg-gray-800 rounded-b-2xl z-10" />
         {/* Home indicator */}
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-28 h-1 bg-gray-300 rounded-full z-10" />
-        {/* Template preview — mobile width, scrollable */}
+        {/* Template preview — zoomed down, scrollable */}
         <div className="absolute inset-0 rounded-[2rem] overflow-hidden">
           <div className="w-full h-full overflow-y-auto overflow-x-hidden">
-            <TemplateComponent data={previewData} />
+            <div style={{ zoom: 0.28, width: `${100 / 0.28}%` }}>
+              <TemplateComponent data={previewData} />
+            </div>
           </div>
         </div>
       </div>
