@@ -6,7 +6,31 @@ import {
   Heart, Calendar, Clock, Plus, X, Save, Eye, Pencil, Smartphone,
   ChevronDown, Loader2, Sparkles,
 } from "lucide-react";
-import type { InvitationEvent } from "@/types/invitation";
+import type { InvitationData, InvitationEvent } from "@/types/invitation";
+import dynamic from "next/dynamic";
+
+const RoyalElegance = dynamic(() => import("@/components/templates/RoyalElegance"), { ssr: false });
+const ModernBloom = dynamic(() => import("@/components/templates/ModernBloom"), { ssr: false });
+const GoldenLotus = dynamic(() => import("@/components/templates/GoldenLotus"), { ssr: false });
+const MinimalGrace = dynamic(() => import("@/components/templates/MinimalGrace"), { ssr: false });
+const TropicalParadise = dynamic(() => import("@/components/templates/TropicalParadise"), { ssr: false });
+const EternalNight = dynamic(() => import("@/components/templates/EternalNight"), { ssr: false });
+const SinhalaMangalya = dynamic(() => import("@/components/templates/SinhalaMangalya"), { ssr: false });
+const VintageBotanical = dynamic(() => import("@/components/templates/VintageBotanical"), { ssr: false });
+const RoseGarden = dynamic(() => import("@/components/templates/RoseGarden"), { ssr: false });
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const templateComponents: Record<string, React.ComponentType<any>> = {
+  "royal-elegance": RoyalElegance,
+  "modern-bloom": ModernBloom,
+  "golden-lotus": GoldenLotus,
+  "minimal-grace": MinimalGrace,
+  "tropical-paradise": TropicalParadise,
+  "eternal-night": EternalNight,
+  "sinhala-mangalya": SinhalaMangalya,
+  "vintage-botanical": VintageBotanical,
+  "rose-garden": RoseGarden,
+};
 
 const templateOptions = [
   { slug: "royal-elegance", name: "Royal Elegance", color: "bg-[#5c2828]" },
@@ -131,6 +155,19 @@ export default function EditorPage() {
   );
 
   const selectedTemplate = templateOptions.find((t) => t.slug === templateSlug);
+  const TemplateComponent = templateComponents[templateSlug] || RoyalElegance;
+
+  const previewData: InvitationData = {
+    groomName: groomName || "Groom",
+    brideName: brideName || "Bride",
+    weddingDate: weddingDate || new Date().toISOString().split("T")[0],
+    weddingTime: weddingTime
+      ? (() => { try { return new Date(`2000-01-01T${weddingTime}`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }); } catch { return "4:00 PM"; } })()
+      : "4:00 PM",
+    venue: venue || "Wedding Venue",
+    venueAddress: venueAddress || "",
+    events: events.length ? events : [{ title: "Ceremony", time: "4:00 PM" }],
+  };
 
   return (
     <div className="-m-6 lg:-m-8 h-[calc(100vh-0px)] flex flex-col">
@@ -255,13 +292,12 @@ export default function EditorPage() {
             <div className="absolute inset-[4px] rounded-[2.7rem] overflow-hidden bg-white">
               {/* Dynamic Island */}
               <div className="absolute top-2 left-1/2 -translate-x-1/2 w-[90px] h-[22px] bg-black rounded-full z-20" />
-              {/* iframe content */}
-              <iframe
-                key={templateSlug}
-                src={`/samples/${templateSlug}`}
-                className="w-full h-full border-0"
-                title="Template Preview"
-              />
+              {/* Live template render */}
+              <div className="w-full h-full overflow-y-auto overflow-x-hidden">
+                <div style={{ zoom: 0.26, width: `${100 / 0.26}%` }}>
+                  <TemplateComponent data={previewData} />
+                </div>
+              </div>
             </div>
             {/* Home indicator */}
             <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-28 h-[5px] bg-white/80 rounded-full z-20" />
