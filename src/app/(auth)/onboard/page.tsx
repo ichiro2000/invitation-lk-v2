@@ -233,7 +233,7 @@ export default function OnboardPage() {
         {/* Navigation Buttons */}
         <div className="flex gap-3 mt-8">
           {step > 1 && (
-            <button onClick={() => setStep(step - 1)} className="px-6 py-3 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors flex items-center gap-2">
+            <button onClick={() => setStep(step - 1)} className="px-4 py-3 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors flex items-center gap-1.5 shrink-0">
               <ArrowLeft className="w-4 h-4" /> Back
             </button>
           )}
