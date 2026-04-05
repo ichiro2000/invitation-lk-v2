@@ -21,6 +21,17 @@ function RevealText({ children, delay = 0, className = "" }: { children: string;
   );
 }
 
+/* ── Thin decorative diamond ornament ── */
+function DiamondOrnament({ className = "" }: { className?: string }) {
+  return (
+    <div className={`flex items-center justify-center gap-3 ${className}`}>
+      <div className="w-16 h-px bg-gradient-to-r from-transparent to-stone-300" />
+      <div className="w-2 h-2 border border-stone-400 rotate-45" />
+      <div className="w-16 h-px bg-gradient-to-l from-transparent to-stone-300" />
+    </div>
+  );
+}
+
 
 export default function MinimalGrace() {
   const [rsvpSent, setRsvpSent] = useState(false);
@@ -30,18 +41,18 @@ export default function MinimalGrace() {
   const heroScale = useTransform(scrollYProgress, [0, 0.6], [1, 0.95]);
 
   return (
-    <div className="bg-white text-gray-900 font-sans overflow-hidden">
+    <div className="text-gray-900 font-sans overflow-hidden" style={{ backgroundColor: "#faf9f6" }}>
       {/* ═══ HERO — Split screen reveal ═══ */}
       <section ref={heroRef} className="min-h-screen flex flex-col items-center justify-center text-center px-4 relative">
         {/* Subtle grid pattern */}
-        <div className="absolute inset-0 opacity-[0.02]" style={{
-          backgroundImage: "linear-gradient(gray 1px, transparent 1px), linear-gradient(90deg, gray 1px, transparent 1px)",
+        <div className="absolute inset-0 opacity-[0.04]" style={{
+          backgroundImage: "linear-gradient(#c5c0b8 1px, transparent 1px), linear-gradient(90deg, #c5c0b8 1px, transparent 1px)",
           backgroundSize: "60px 60px",
         }} />
 
         <motion.div style={{ opacity: heroOpacity, scale: heroScale }} className="relative z-10">
           <motion.p
-            className="text-gray-300 text-[10px] tracking-[0.7em] uppercase mb-16"
+            className="text-stone-500 text-[10px] tracking-[0.7em] uppercase mb-16"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 2, delay: 1.5 }}
@@ -54,7 +65,7 @@ export default function MinimalGrace() {
           </RevealText>
 
           <motion.p
-            className="text-gray-200 text-5xl font-extralight my-4"
+            className="text-stone-400 text-5xl font-extralight my-4"
             initial={{ opacity: 0, scale: 0 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 1, type: "spring" }}
@@ -69,7 +80,7 @@ export default function MinimalGrace() {
           {/* Animated vertical line */}
           <div className="flex justify-center my-14">
             <motion.div
-              className="w-px bg-gray-200"
+              className="w-px bg-stone-300"
               initial={{ height: 0 }}
               animate={{ height: 80 }}
               transition={{ duration: 1.5, delay: 1.2 }}
@@ -81,10 +92,10 @@ export default function MinimalGrace() {
             animate={{ opacity: 1 }}
             transition={{ delay: 2 }}
           >
-            <p className="text-gray-300 text-sm tracking-[0.4em]">
+            <p className="text-stone-500 text-sm tracking-[0.4em]">
               12 &middot; 09 &middot; 2026
             </p>
-            <p className="text-gray-200 text-[10px] tracking-[0.5em] mt-3">
+            <p className="text-stone-400 text-[10px] tracking-[0.5em] mt-3">
               KANDY, SRI LANKA
             </p>
           </motion.div>
@@ -95,25 +106,27 @@ export default function MinimalGrace() {
           transition={{ duration: 3, repeat: Infinity }}
           className="absolute bottom-10"
         >
-          <ArrowDown className="w-4 h-4 text-gray-200" />
+          <ArrowDown className="w-4 h-4 text-stone-400" />
         </motion.div>
       </section>
 
       {/* ═══ COUNTDOWN — Ultra clean ═══ */}
-      <section className="py-24 border-y border-gray-100 text-center">
+      <section className="py-24 border-y border-stone-200 text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 1 }}
         >
+          <DiamondOrnament className="mb-10" />
           <Countdown
             targetDate="2026-09-12T10:00:00"
             valueClassName="text-6xl sm:text-7xl font-extralight text-gray-900"
-            labelClassName="text-[9px] text-gray-300 tracking-[0.4em] uppercase mt-4"
+            labelClassName="text-[9px] text-stone-500 tracking-[0.4em] uppercase mt-4"
             boxClassName="flex flex-col items-center min-w-[80px] sm:min-w-[110px]"
-            separatorClassName="text-4xl font-extralight text-gray-100 mx-4 self-start"
+            separatorClassName="text-4xl font-extralight text-stone-300 mx-4 self-start"
           />
+          <DiamondOrnament className="mt-10" />
         </motion.div>
       </section>
 
@@ -126,7 +139,7 @@ export default function MinimalGrace() {
           className="text-center"
         >
           <motion.p
-            className="text-gray-200 text-[10px] tracking-[0.7em] uppercase mb-12"
+            className="text-stone-500 text-[10px] tracking-[0.7em] uppercase mb-12"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
@@ -135,7 +148,7 @@ export default function MinimalGrace() {
           </motion.p>
 
           <motion.p
-            className="text-gray-400 text-xl sm:text-2xl leading-loose font-extralight"
+            className="text-gray-600 text-xl sm:text-2xl leading-loose font-extralight"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -145,14 +158,14 @@ export default function MinimalGrace() {
           </motion.p>
 
           <motion.div
-            className="w-px h-16 bg-gray-100 mx-auto my-14"
+            className="w-px h-16 bg-stone-300 mx-auto my-14"
             initial={{ height: 0 }}
             whileInView={{ height: 64 }}
             viewport={{ once: true }}
           />
 
           <motion.p
-            className="text-gray-400 text-xl sm:text-2xl leading-loose font-extralight"
+            className="text-gray-600 text-xl sm:text-2xl leading-loose font-extralight"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -164,16 +177,17 @@ export default function MinimalGrace() {
       </section>
 
       {/* ═══ EVENTS — Clean list with animated lines ═══ */}
-      <section className="py-28 bg-gray-50 px-4">
+      <section className="py-28 px-4" style={{ backgroundColor: "#f5f4f0" }}>
         <div className="max-w-2xl mx-auto">
           <motion.p
-            className="text-gray-200 text-[10px] tracking-[0.7em] uppercase text-center mb-16"
+            className="text-stone-500 text-[10px] tracking-[0.7em] uppercase text-center mb-4"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
           >
             Schedule
           </motion.p>
+          <DiamondOrnament className="mb-14" />
 
           <div className="space-y-0">
             {[
@@ -188,13 +202,13 @@ export default function MinimalGrace() {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: i * 0.1 }}
-                whileHover={{ x: 8, backgroundColor: "rgba(0,0,0,0.01)" }}
-                className="flex items-baseline gap-8 py-7 border-b border-gray-100 cursor-default transition-all"
+                whileHover={{ x: 8, backgroundColor: "rgba(0,0,0,0.02)" }}
+                className="flex items-baseline gap-8 py-7 border-b border-stone-200 cursor-default transition-all"
               >
-                <span className="text-gray-200 text-sm font-light w-24 flex-shrink-0 tracking-wider">{event.time}</span>
+                <span className="text-stone-500 text-sm font-light w-24 flex-shrink-0 tracking-wider">{event.time}</span>
                 <div>
                   <h3 className="text-gray-900 font-medium text-lg">{event.title}</h3>
-                  <p className="text-gray-300 text-sm mt-1">{event.venue}</p>
+                  <p className="text-stone-500 text-sm mt-1">{event.venue}</p>
                 </div>
               </motion.div>
             ))}
@@ -206,13 +220,14 @@ export default function MinimalGrace() {
       <section className="py-28 px-4">
         <div className="max-w-5xl mx-auto">
           <motion.p
-            className="text-gray-200 text-[10px] tracking-[0.7em] uppercase text-center mb-16"
+            className="text-stone-500 text-[10px] tracking-[0.7em] uppercase text-center mb-4"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
           >
             Gallery
           </motion.p>
+          <DiamondOrnament className="mb-14" />
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -223,9 +238,10 @@ export default function MinimalGrace() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.06 }}
                 whileHover={{ scale: 1.03, zIndex: 10 }}
-                className={`${i === 0 || i === 7 ? "col-span-2 aspect-[2/1]" : "aspect-square"} bg-gray-50 flex items-center justify-center cursor-pointer group`}
+                className={`${i === 0 || i === 7 ? "col-span-2 aspect-[2/1]" : "aspect-square"} flex items-center justify-center cursor-pointer group border border-stone-200`}
+                style={{ backgroundColor: "#f5f4f0" }}
               >
-                <Camera className="w-5 h-5 text-gray-150 group-hover:text-gray-400 transition-colors" />
+                <Camera className="w-5 h-5 text-stone-300 group-hover:text-stone-500 transition-colors" />
               </motion.div>
             ))}
           </div>
@@ -233,18 +249,18 @@ export default function MinimalGrace() {
       </section>
 
       {/* ═══ VENUE ═══ */}
-      <section className="py-28 bg-gray-50 px-4">
+      <section className="py-28 px-4" style={{ backgroundColor: "#f5f4f0" }}>
         <div className="max-w-3xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
           >
-            <p className="text-gray-200 text-[10px] tracking-[0.7em] uppercase mb-10">Venue</p>
+            <p className="text-stone-500 text-[10px] tracking-[0.7em] uppercase mb-10">Venue</p>
             <h2 className="text-2xl sm:text-3xl font-extralight text-gray-900 mb-2">Trinity College Chapel</h2>
-            <p className="text-gray-300 text-sm mb-12">Chapel Road, Kandy, Sri Lanka</p>
-            <div className="bg-gray-100 h-64 sm:h-72 flex items-center justify-center">
-              <MapPin className="w-6 h-6 text-gray-200" />
+            <p className="text-stone-500 text-sm mb-12">Chapel Road, Kandy, Sri Lanka</p>
+            <div className="h-64 sm:h-72 flex items-center justify-center border border-stone-200" style={{ backgroundColor: "#eeede8" }}>
+              <MapPin className="w-6 h-6 text-stone-400" />
             </div>
           </motion.div>
         </div>
@@ -258,8 +274,9 @@ export default function MinimalGrace() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <p className="text-gray-200 text-[10px] tracking-[0.7em] uppercase mb-10">RSVP</p>
-            <h2 className="text-3xl font-extralight text-gray-900 mb-12">Will you join us?</h2>
+            <p className="text-stone-500 text-[10px] tracking-[0.7em] uppercase mb-10">RSVP</p>
+            <h2 className="text-3xl font-extralight text-gray-900 mb-4">Will you join us?</h2>
+            <DiamondOrnament className="mb-12" />
 
             {rsvpSent ? (
               <motion.div
@@ -270,36 +287,36 @@ export default function MinimalGrace() {
                   animate={{ scale: [1, 1.1, 1] }}
                   transition={{ duration: 2, repeat: 2 }}
                 >
-                  <Heart className="w-8 h-8 text-gray-200 mx-auto mb-6" />
+                  <Heart className="w-8 h-8 text-stone-400 mx-auto mb-6" />
                 </motion.div>
-                <p className="text-gray-400 font-extralight text-lg">Thank you for your response.</p>
+                <p className="text-gray-600 font-extralight text-lg">Thank you for your response.</p>
               </motion.div>
             ) : (
               <form onSubmit={(e) => { e.preventDefault(); setRsvpSent(true); }} className="space-y-8">
                 <motion.input
                   type="text" placeholder="Name" required
                   whileFocus={{ borderColor: "#111" }}
-                  className="w-full border-b border-gray-100 py-4 text-center text-sm focus:outline-none bg-transparent transition-colors"
+                  className="w-full border-b border-stone-300 py-4 text-center text-sm focus:outline-none bg-transparent transition-colors text-gray-800 placeholder:text-stone-400"
                 />
                 <motion.input
                   type="email" placeholder="Email"
                   whileFocus={{ borderColor: "#111" }}
-                  className="w-full border-b border-gray-100 py-4 text-center text-sm focus:outline-none bg-transparent transition-colors"
+                  className="w-full border-b border-stone-300 py-4 text-center text-sm focus:outline-none bg-transparent transition-colors text-gray-800 placeholder:text-stone-400"
                 />
                 <div className="flex gap-8 justify-center py-2">
                   <label className="flex items-center gap-3 cursor-pointer group">
                     <input type="radio" name="attending" value="yes" className="accent-gray-900 w-4 h-4" />
-                    <span className="text-sm text-gray-400 group-hover:text-gray-900 transition-colors">Accept</span>
+                    <span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">Accept</span>
                   </label>
                   <label className="flex items-center gap-3 cursor-pointer group">
                     <input type="radio" name="attending" value="no" className="accent-gray-900 w-4 h-4" />
-                    <span className="text-sm text-gray-400 group-hover:text-gray-900 transition-colors">Decline</span>
+                    <span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">Decline</span>
                   </label>
                 </div>
                 <motion.input
                   type="number" min="1" max="4" placeholder="Guests"
                   whileFocus={{ borderColor: "#111" }}
-                  className="w-full border-b border-gray-100 py-4 text-center text-sm focus:outline-none bg-transparent transition-colors"
+                  className="w-full border-b border-stone-300 py-4 text-center text-sm focus:outline-none bg-transparent transition-colors text-gray-800 placeholder:text-stone-400"
                 />
                 <motion.button
                   type="submit"
@@ -316,23 +333,24 @@ export default function MinimalGrace() {
       </section>
 
       {/* ═══ FOOTER ═══ */}
-      <footer className="py-20 text-center border-t border-gray-50 px-4">
+      <footer className="py-20 text-center border-t border-stone-200 px-4">
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
         >
+          <DiamondOrnament className="mb-8" />
           <p className="text-gray-900 text-xl font-extralight tracking-widest">Amaya & Ruwan</p>
-          <p className="text-gray-200 text-[10px] tracking-[0.5em] mt-3">12.09.2026</p>
+          <p className="text-stone-500 text-[10px] tracking-[0.5em] mt-3">12.09.2026</p>
           <div className="flex justify-center gap-6 mt-10 mb-10">
             {[Phone, Mail].map((Icon, i) => (
               <motion.div key={i} whileHover={{ scale: 1.2 }}>
-                <Icon className="w-4 h-4 text-gray-200 hover:text-gray-900 transition-colors cursor-pointer" />
+                <Icon className="w-4 h-4 text-stone-400 hover:text-gray-900 transition-colors cursor-pointer" />
               </motion.div>
             ))}
           </div>
-          <p className="text-[9px] text-gray-150 tracking-[0.3em] uppercase">
-            <Link href="/" className="hover:text-gray-400 transition-colors">INVITATION.LK</Link>
+          <p className="text-[9px] text-stone-400 tracking-[0.3em] uppercase">
+            <Link href="/" className="hover:text-stone-600 transition-colors">INVITATION.LK</Link>
           </p>
         </motion.div>
       </footer>

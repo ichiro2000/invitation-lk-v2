@@ -6,36 +6,65 @@ import { Heart, MapPin, Mail, Phone, Camera, ChevronDown, Sun, Waves } from "luc
 import Countdown from "./shared/Countdown";
 import { useState, useRef } from "react";
 
-/* ── Animated ocean waves ── */
-function OceanWaves() {
+/* ── CSS-based ocean waves (lightweight, no SVG animation) ── */
+function OceanWaves({ variant = "light" }: { variant?: "light" | "dark" }) {
+  const baseColor = variant === "dark" ? "rgba(255,255,255,0.08)" : "rgba(13,148,136,0.08)";
+  const midColor = variant === "dark" ? "rgba(255,255,255,0.05)" : "rgba(13,148,136,0.05)";
+  const topColor = variant === "dark" ? "rgba(255,255,255,0.03)" : "rgba(13,148,136,0.03)";
+
   return (
-    <div className="absolute bottom-0 left-0 right-0 h-40 overflow-hidden pointer-events-none">
-      {[0, 1, 2].map((i) => (
-        <motion.svg
-          key={i}
-          className="absolute bottom-0 w-[200%] left-0"
-          style={{ bottom: i * 8 }}
-          viewBox="0 0 1440 100"
-          preserveAspectRatio="none"
-          animate={{ x: [0, i % 2 === 0 ? -720 : 720] }}
-          transition={{ duration: 8 + i * 3, repeat: Infinity, ease: "linear" }}
-        >
-          <path
-            d={`M0 ${40 + i * 10} Q180 ${20 + i * 5} 360 ${40 + i * 10} Q540 ${60 + i * 5} 720 ${40 + i * 10} Q900 ${20 + i * 5} 1080 ${40 + i * 10} Q1260 ${60 + i * 5} 1440 ${40 + i * 10} L1440 100 L0 100 Z`}
-            fill={`rgba(13,148,136,${0.08 - i * 0.02})`}
-          />
-        </motion.svg>
-      ))}
+    <div className="absolute bottom-0 left-0 right-0 h-32 overflow-hidden pointer-events-none">
+      {/* Wave 1 - front */}
+      <div
+        className="absolute bottom-0 left-0 w-full h-16"
+        style={{
+          background: baseColor,
+          borderRadius: "100% 100% 0 0",
+          animation: "waveMove1 8s ease-in-out infinite",
+        }}
+      />
+      {/* Wave 2 - middle */}
+      <div
+        className="absolute bottom-2 left-0 w-full h-20"
+        style={{
+          background: midColor,
+          borderRadius: "60% 80% 0 0",
+          animation: "waveMove2 10s ease-in-out infinite",
+        }}
+      />
+      {/* Wave 3 - back */}
+      <div
+        className="absolute bottom-4 left-0 w-full h-24"
+        style={{
+          background: topColor,
+          borderRadius: "80% 60% 0 0",
+          animation: "waveMove3 12s ease-in-out infinite",
+        }}
+      />
+      <style>{`
+        @keyframes waveMove1 {
+          0%, 100% { border-radius: 100% 100% 0 0; transform: translateX(0); }
+          50% { border-radius: 60% 80% 0 0; transform: translateX(-2%); }
+        }
+        @keyframes waveMove2 {
+          0%, 100% { border-radius: 60% 80% 0 0; transform: translateX(0); }
+          50% { border-radius: 100% 60% 0 0; transform: translateX(2%); }
+        }
+        @keyframes waveMove3 {
+          0%, 100% { border-radius: 80% 60% 0 0; transform: translateX(0); }
+          50% { border-radius: 50% 100% 0 0; transform: translateX(-1%); }
+        }
+      `}</style>
     </div>
   );
 }
 
-/* ── Floating bubbles ── */
-function Bubbles({ count = 15 }: { count?: number }) {
+/* ── Floating bubbles (reduced count) ── */
+function Bubbles({ count = 8 }: { count?: number }) {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
       {Array.from({ length: count }).map((_, i) => {
-        const size = 4 + (i % 6) * 3;
+        const size = 4 + (i % 5) * 3;
         return (
           <motion.div
             key={i}
@@ -46,15 +75,14 @@ function Bubbles({ count = 15 }: { count?: number }) {
               bottom: -20,
             }}
             animate={{
-              y: [0, -(600 + i * 40)],
-              x: [0, Math.sin(i) * 40],
-              opacity: [0, 0.4, 0.3, 0],
-              scale: [0.5, 1, 1.2, 0],
+              y: [0, -(500 + i * 30)],
+              x: [0, Math.sin(i) * 30],
+              opacity: [0, 0.3, 0.2, 0],
             }}
             transition={{
-              duration: 8 + (i % 5) * 2,
+              duration: 10 + (i % 4) * 2,
               repeat: Infinity,
-              delay: (i * 1.3) % 8,
+              delay: (i * 1.5) % 8,
               ease: "easeOut",
             }}
           />
@@ -64,23 +92,21 @@ function Bubbles({ count = 15 }: { count?: number }) {
   );
 }
 
-/* ── Palm tree silhouette SVG ── */
+/* ── Palm tree silhouette SVG (static, no animation) ── */
 function PalmSilhouette({ className }: { className: string }) {
   return (
-    <motion.svg
+    <svg
       className={`absolute pointer-events-none ${className}`}
       viewBox="0 0 100 200"
       width="120"
-      animate={{ rotate: [0, 2, -2, 0] }}
-      transition={{ duration: 6, repeat: Infinity }}
     >
-      <path d="M50 200 Q48 150 50 100 Q52 80 55 60" stroke="rgba(13,148,136,0.08)" fill="none" strokeWidth="3" />
-      <path d="M55 60 Q30 40 10 55" stroke="rgba(13,148,136,0.06)" fill="none" strokeWidth="2" />
-      <path d="M55 60 Q80 35 95 45" stroke="rgba(13,148,136,0.06)" fill="none" strokeWidth="2" />
-      <path d="M55 60 Q40 30 20 30" stroke="rgba(13,148,136,0.06)" fill="none" strokeWidth="2" />
-      <path d="M55 60 Q70 25 90 20" stroke="rgba(13,148,136,0.06)" fill="none" strokeWidth="2" />
-      <path d="M55 60 Q55 20 60 10" stroke="rgba(13,148,136,0.06)" fill="none" strokeWidth="2" />
-    </motion.svg>
+      <path d="M50 200 Q48 150 50 100 Q52 80 55 60" stroke="rgba(13,148,136,0.1)" fill="none" strokeWidth="3" />
+      <path d="M55 60 Q30 40 10 55" stroke="rgba(13,148,136,0.07)" fill="none" strokeWidth="2" />
+      <path d="M55 60 Q80 35 95 45" stroke="rgba(13,148,136,0.07)" fill="none" strokeWidth="2" />
+      <path d="M55 60 Q40 30 20 30" stroke="rgba(13,148,136,0.07)" fill="none" strokeWidth="2" />
+      <path d="M55 60 Q70 25 90 20" stroke="rgba(13,148,136,0.07)" fill="none" strokeWidth="2" />
+      <path d="M55 60 Q55 20 60 10" stroke="rgba(13,148,136,0.07)" fill="none" strokeWidth="2" />
+    </svg>
   );
 }
 
@@ -99,8 +125,8 @@ export default function TropicalParadise() {
 
         <PalmSilhouette className="top-0 left-0" />
         <PalmSilhouette className="bottom-20 right-0 scale-x-[-1]" />
-        <Bubbles count={10} />
-        <OceanWaves />
+        <Bubbles count={8} />
+        <OceanWaves variant="light" />
 
         <motion.div style={{ y: heroY, opacity: heroOpacity }} className="relative z-10">
           <motion.div
@@ -131,8 +157,8 @@ export default function TropicalParadise() {
 
           <motion.h1
             className="text-6xl sm:text-8xl lg:text-9xl font-light text-teal-800 leading-none"
-            initial={{ opacity: 0, y: 50, filter: "blur(12px)" }}
-            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.2, delay: 0.3 }}
           >
             Ishara
@@ -153,8 +179,8 @@ export default function TropicalParadise() {
 
           <motion.h1
             className="text-6xl sm:text-8xl lg:text-9xl font-light text-teal-800 leading-none"
-            initial={{ opacity: 0, y: 50, filter: "blur(12px)" }}
-            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.2, delay: 0.6 }}
           >
             Dinesh
@@ -183,7 +209,7 @@ export default function TropicalParadise() {
 
       {/* ═══ COUNTDOWN ═══ */}
       <section className="relative py-20 bg-gradient-to-r from-teal-500 to-teal-600 text-center text-white overflow-hidden">
-        <Bubbles count={8} />
+        <Bubbles count={6} />
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -216,10 +242,10 @@ export default function TropicalParadise() {
           </motion.div>
           <h2 className="text-4xl sm:text-5xl font-light text-teal-800 mb-10">Our Story</h2>
 
-          <p className="text-gray-400 text-lg leading-loose mb-8">
+          <p className="text-gray-600 text-lg leading-loose mb-8">
             Ishara and Dinesh met during a surfing class in Arugam Bay. She was the fearless one who rode every wave; he was the one who kept falling off the board. She offered to teach him, and by the end of that golden afternoon, he had learned two things: how to stand on a surfboard, and that he had found someone extraordinary.
           </p>
-          <p className="text-gray-400 text-lg leading-loose">
+          <p className="text-gray-600 text-lg leading-loose">
             Three years of beach sunsets, road trips through Sri Lanka&apos;s southern coast, and one unforgettable proposal at Mirissa whale watching (yes, a whale breached at the exact moment!) later, they are ready to say &quot;I do&quot; with their feet in the sand.
           </p>
         </motion.div>
@@ -227,7 +253,7 @@ export default function TropicalParadise() {
 
       {/* ═══ EVENTS ═══ */}
       <section className="relative py-28 bg-teal-50/50 px-4 overflow-hidden">
-        <Bubbles count={5} />
+        <Bubbles count={4} />
         <div className="max-w-5xl mx-auto relative z-10">
           <motion.div
             initial={{ opacity: 0 }}
@@ -255,15 +281,12 @@ export default function TropicalParadise() {
                 whileHover={{ y: -8, boxShadow: "0 20px 40px -12px rgba(13,148,136,0.12)" }}
                 className="bg-white rounded-2xl p-6 text-center shadow-sm transition-all"
               >
-                <motion.div
-                  className="w-14 h-14 bg-teal-50 rounded-2xl flex items-center justify-center mx-auto mb-4"
-                  whileHover={{ rotate: 12 }}
-                >
+                <div className="w-14 h-14 bg-teal-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <event.icon className={`w-6 h-6 ${event.color}`} />
-                </motion.div>
+                </div>
                 <p className="text-orange-400 text-sm font-medium mb-1">{event.time}</p>
                 <h3 className="text-teal-800 font-semibold mb-2">{event.title}</h3>
-                <p className="text-gray-400 text-sm">{event.desc}</p>
+                <p className="text-gray-500 text-sm">{event.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -316,7 +339,7 @@ export default function TropicalParadise() {
           >
             <p className="text-teal-500 tracking-[0.3em] uppercase text-xs mb-4">Location</p>
             <h2 className="text-4xl sm:text-5xl font-light text-teal-800 mb-2">Mirissa Beach Resort</h2>
-            <p className="text-gray-400 mb-10">Mirissa, Southern Province, Sri Lanka</p>
+            <p className="text-gray-500 mb-10">Mirissa, Southern Province, Sri Lanka</p>
             <div className="bg-gradient-to-br from-teal-100/60 to-cyan-50 rounded-2xl h-72 sm:h-80 flex items-center justify-center">
               <MapPin className="w-10 h-10 text-teal-200" />
             </div>
@@ -324,9 +347,9 @@ export default function TropicalParadise() {
               whileHover={{ y: -2 }}
               className="mt-8 bg-white rounded-xl p-6 inline-block shadow-sm"
             >
-              <p className="text-gray-400 text-sm mb-2">Dress Code</p>
+              <p className="text-gray-500 text-sm mb-2">Dress Code</p>
               <p className="text-teal-700 font-medium text-lg">Beach Formal &middot; Light Colors Encouraged</p>
-              <p className="text-gray-300 text-xs mt-1">Flat shoes or bare feet recommended for the sand ceremony!</p>
+              <p className="text-gray-400 text-xs mt-1">Flat shoes or bare feet recommended for the sand ceremony!</p>
             </motion.div>
           </motion.div>
         </div>
@@ -334,8 +357,8 @@ export default function TropicalParadise() {
 
       {/* ═══ RSVP ═══ */}
       <section className="relative py-28 bg-gradient-to-b from-teal-500 to-teal-600 text-white px-4 overflow-hidden">
-        <Bubbles count={12} />
-        <OceanWaves />
+        <Bubbles count={6} />
+        <OceanWaves variant="dark" />
         <div className="max-w-md mx-auto text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -395,7 +418,7 @@ export default function TropicalParadise() {
           <Waves className="w-4 h-4 text-teal-300" />
         </div>
         <p className="text-teal-800 text-xl font-light">Ishara & Dinesh</p>
-        <p className="text-gray-300 text-sm mt-2">March 28, 2026 &middot; Mirissa, Sri Lanka</p>
+        <p className="text-gray-400 text-sm mt-2">March 28, 2026 &middot; Mirissa, Sri Lanka</p>
         <div className="flex justify-center gap-3 mt-6 mb-6">
           {[Phone, Mail].map((Icon, i) => (
             <motion.div key={i} whileHover={{ scale: 1.15 }} className="w-10 h-10 rounded-full border border-teal-200 flex items-center justify-center cursor-pointer">
@@ -403,7 +426,7 @@ export default function TropicalParadise() {
             </motion.div>
           ))}
         </div>
-        <p className="text-xs text-gray-200">
+        <p className="text-xs text-gray-400">
           Created with <Heart className="w-3 h-3 inline text-orange-400 fill-orange-400" /> by{" "}
           <Link href="/" className="text-teal-400 hover:underline">INVITATION.LK</Link>
         </p>
