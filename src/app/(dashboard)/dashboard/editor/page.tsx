@@ -241,7 +241,7 @@ export default function EditorPage() {
         </div>
 
         {/* ── Live Preview Panel ── */}
-        <div className={`w-full lg:w-1/2 xl:w-[55%] lg:flex overflow-hidden bg-gradient-to-b from-gray-50 to-gray-100 items-center justify-center ${mobileTab === "preview" ? "flex" : "hidden"}`}>
+        <div className={`w-full lg:w-1/2 xl:w-[55%] lg:flex overflow-hidden bg-gray-50 items-center justify-center ${mobileTab === "preview" ? "flex" : "hidden"}`}>
           {/* Phone mockup */}
           <div className="relative flex-shrink-0" style={{ width: 340, height: 700 }}>
             {/* Bezel */}
