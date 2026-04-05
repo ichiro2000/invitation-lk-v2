@@ -3,128 +3,67 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import {
-  Pencil,
-  Heart,
-  Calendar,
-  Clock,
-  MapPin,
-  Plus,
-  X,
-  Save,
-  Eye,
-  ChevronDown,
-  ChevronUp,
-  Loader2,
+  Pencil, Heart, Calendar, Clock, MapPin, Plus, X, Save, Eye,
+  ChevronDown, ChevronUp, Loader2, Smartphone, Monitor, Sparkles,
 } from "lucide-react";
 import type { InvitationEvent } from "@/types/invitation";
 
-/* ── Template registry ── */
 const templateOptions = [
-  { slug: "royal-elegance", name: "Royal Elegance" },
-  { slug: "golden-lotus", name: "Golden Lotus" },
-  { slug: "eternal-night", name: "Eternal Night" },
-  { slug: "modern-bloom", name: "Modern Bloom" },
-  { slug: "vintage-botanical", name: "Vintage Botanical" },
-  { slug: "minimal-grace", name: "Minimal Grace" },
-  { slug: "tropical-paradise", name: "Tropical Paradise" },
-  { slug: "sinhala-mangalya", name: "Sinhala Mangalya" },
-  { slug: "rose-garden", name: "Rose Garden" },
-] as const;
+  { slug: "royal-elegance", name: "Royal Elegance", color: "bg-[#5c2828]" },
+  { slug: "modern-bloom", name: "Modern Bloom", color: "bg-pink-300" },
+  { slug: "golden-lotus", name: "Golden Lotus", color: "bg-[#2a1515]" },
+  { slug: "minimal-grace", name: "Minimal Grace", color: "bg-stone-200" },
+  { slug: "tropical-paradise", name: "Tropical Paradise", color: "bg-teal-500" },
+  { slug: "eternal-night", name: "Eternal Night", color: "bg-[#1a2744]" },
+  { slug: "sinhala-mangalya", name: "Sinhala Mangalya", color: "bg-pink-400" },
+  { slug: "vintage-botanical", name: "Vintage Botanical", color: "bg-green-600" },
+  { slug: "rose-garden", name: "Rose Garden", color: "bg-rose-500" },
+];
 
 /* ── Collapsible Section ── */
-function Section({
-  title,
-  icon,
-  defaultOpen = true,
-  children,
-}: {
-  title: string;
-  icon: React.ReactNode;
-  defaultOpen?: boolean;
-  children: React.ReactNode;
+function Section({ title, icon, defaultOpen = true, children }: {
+  title: string; icon: React.ReactNode; defaultOpen?: boolean; children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
-
   return (
-    <div className="border border-gray-200 rounded-2xl overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="flex items-center justify-between w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors"
-      >
-        <span className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-          {icon}
-          {title}
-        </span>
-        {open ? (
-          <ChevronUp className="w-4 h-4 text-gray-400" />
-        ) : (
-          <ChevronDown className="w-4 h-4 text-gray-400" />
-        )}
+    <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+      <button type="button" onClick={() => setOpen(!open)}
+        className="flex items-center justify-between w-full px-5 py-3.5 hover:bg-gray-50/50 transition-colors">
+        <span className="flex items-center gap-2.5 text-sm font-semibold text-gray-800">{icon}{title}</span>
+        {open ? <ChevronUp className="w-4 h-4 text-gray-300" /> : <ChevronDown className="w-4 h-4 text-gray-300" />}
       </button>
-      {open && <div className="p-4 space-y-3">{children}</div>}
+      {open && <div className="px-5 pb-5 pt-1 space-y-4">{children}</div>}
     </div>
   );
 }
 
 /* ── Input helpers ── */
-function FormInput({
-  label,
-  value,
-  onChange,
-  placeholder,
-  type = "text",
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  type?: string;
+function FormInput({ label, value, onChange, placeholder, type = "text" }: {
+  label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string;
 }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-500 mb-1">{label}</label>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/30 focus:border-rose-400 transition-colors"
-      />
+      <label className="block text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1.5">{label}</label>
+      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
+        className="w-full px-3.5 py-2.5 text-sm border border-gray-200 rounded-xl bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 transition-all placeholder:text-gray-300" />
     </div>
   );
 }
 
-function FormTextarea({
-  label,
-  value,
-  onChange,
-  placeholder,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
+function FormTextarea({ label, value, onChange, placeholder }: {
+  label: string; value: string; onChange: (v: string) => void; placeholder?: string;
 }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-500 mb-1">{label}</label>
-      <textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        rows={2}
-        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/30 focus:border-rose-400 transition-colors resize-none"
-      />
+      <label className="block text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1.5">{label}</label>
+      <textarea value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} rows={2}
+        className="w-full px-3.5 py-2.5 text-sm border border-gray-200 rounded-xl bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 transition-all resize-none placeholder:text-gray-300" />
     </div>
   );
 }
 
-/* ── Main Editor Page ── */
 export default function EditorPage() {
   const { data: session } = useSession();
-
-  // Form state
   const [templateSlug, setTemplateSlug] = useState("royal-elegance");
   const [groomName, setGroomName] = useState("");
   const [brideName, setBrideName] = useState("");
@@ -136,8 +75,6 @@ export default function EditorPage() {
     { title: "Wedding Ceremony", time: "4:00 PM", venue: "" },
     { title: "Reception", time: "7:00 PM", venue: "" },
   ]);
-
-  // UI state
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [existingId, setExistingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -145,12 +82,6 @@ export default function EditorPage() {
   const [loading, setLoading] = useState(true);
   const [mobileTab, setMobileTab] = useState<"editor" | "preview">("editor");
 
-  // Collapsible sections
-  const [coupleOpen, setCoupleOpen] = useState(true);
-  const [detailsOpen, setDetailsOpen] = useState(true);
-  const [eventsOpen, setEventsOpen] = useState(true);
-
-  /* ── Load existing invitation ── */
   useEffect(() => {
     async function load() {
       try {
@@ -162,347 +93,190 @@ export default function EditorPage() {
           setTemplateSlug(inv.templateSlug || "royal-elegance");
           setGroomName(inv.groomName || "");
           setBrideName(inv.brideName || "");
-          if (inv.weddingDate) {
-            const d = new Date(inv.weddingDate);
-            setWeddingDate(d.toISOString().split("T")[0]);
-          }
+          if (inv.weddingDate) setWeddingDate(new Date(inv.weddingDate).toISOString().split("T")[0]);
           setVenue(inv.venue || "");
           setVenueAddress(inv.venueAddress || "");
           if (inv.events?.length) {
-            setEvents(
-              inv.events.map((e: InvitationEvent & { description?: string }) => ({
-                title: e.title,
-                time: e.time,
-                venue: e.venue || "",
-                description: e.description || "",
-              }))
-            );
+            setEvents(inv.events.map((e: InvitationEvent) => ({
+              title: e.title, time: e.time, venue: e.venue || "",
+            })));
           }
         }
-      } catch {
-        // No existing invitation — that's fine
-      } finally {
-        setLoading(false);
-      }
+      } catch { /* no existing invitation */ }
+      finally { setLoading(false); }
     }
     load();
   }, []);
 
-  /* ── Save handler ── */
   const handleSave = useCallback(async () => {
-    setSaving(true);
-    setSaveMessage("");
+    setSaving(true); setSaveMessage("");
     try {
-      const payload = {
-        groomName,
-        brideName,
-        weddingDate: weddingDate ? new Date(weddingDate).toISOString() : undefined,
-        venue,
-        venueAddress,
-        templateSlug,
-        events,
-      };
-
+      const payload = { groomName, brideName, weddingDate: weddingDate ? new Date(weddingDate).toISOString() : undefined, venue, venueAddress, templateSlug, events };
       const method = existingId ? "PATCH" : "POST";
-      const res = await fetch("/api/invitations", {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch("/api/invitations", { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const json = await res.json();
-
-      if (res.ok) {
-        if (json.invitation?.id) setExistingId(json.invitation.id);
-        setSaveMessage("Saved successfully!");
-      } else {
-        setSaveMessage(json.error || "Failed to save");
-      }
-    } catch {
-      setSaveMessage("Network error. Please try again.");
-    } finally {
-      setSaving(false);
-      setTimeout(() => setSaveMessage(""), 3000);
-    }
+      if (res.ok) { if (json.invitation?.id) setExistingId(json.invitation.id); setSaveMessage("success"); }
+      else setSaveMessage(json.error || "Failed to save");
+    } catch { setSaveMessage("Network error"); }
+    finally { setSaving(false); setTimeout(() => setSaveMessage(""), 3000); }
   }, [groomName, brideName, weddingDate, venue, venueAddress, templateSlug, events, existingId]);
 
-  /* ── Event helpers ── */
-  const updateEvent = (index: number, field: keyof InvitationEvent, value: string) => {
-    setEvents((prev) =>
-      prev.map((ev, i) => (i === index ? { ...ev, [field]: value } : ev))
-    );
+  const updateEvent = (i: number, field: keyof InvitationEvent, value: string) => {
+    setEvents((prev) => prev.map((ev, idx) => (idx === i ? { ...ev, [field]: value } : ev)));
   };
 
-  const addEvent = () => {
-    setEvents((prev) => [...prev, { title: "", time: "", venue: "" }]);
-  };
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <Loader2 className="w-6 h-6 animate-spin text-rose-500" />
+    </div>
+  );
 
-  const removeEvent = (index: number) => {
-    setEvents((prev) => prev.filter((_, i) => i !== index));
-  };
+  const selectedTemplate = templateOptions.find((t) => t.slug === templateSlug);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-6 h-6 animate-spin text-rose-500" />
-      </div>
-    );
-  }
-
-  /* ── Editor Panel ── */
-  const editorPanel = (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Header */}
-        <div className="flex items-center gap-2 mb-1">
-          <Pencil className="w-5 h-5 text-rose-600" />
-          <h1 className="text-lg font-bold text-gray-900">Edit Invitation</h1>
-        </div>
-
-        {/* Template Switcher */}
-        <div className="relative">
-          <label className="block text-xs font-medium text-gray-500 mb-1">Template</label>
-          <button
-            type="button"
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="w-full flex items-center justify-between px-3 py-2 text-sm border border-gray-200 rounded-xl bg-white hover:bg-gray-50 transition-colors"
-          >
-            <span>{templateOptions.find((t) => t.slug === templateSlug)?.name || "Select"}</span>
-            <ChevronDown className="w-4 h-4 text-gray-400" />
-          </button>
-          {dropdownOpen && (
-            <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
-              {templateOptions.map((t) => (
-                <button
-                  key={t.slug}
-                  type="button"
-                  onClick={() => {
-                    setTemplateSlug(t.slug);
-                    setDropdownOpen(false);
-                  }}
-                  className={`w-full text-left px-3 py-2 text-sm hover:bg-rose-50 transition-colors ${
-                    templateSlug === t.slug
-                      ? "bg-rose-50 text-rose-700 font-medium"
-                      : "text-gray-700"
-                  }`}
-                >
-                  {t.name}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Couple Details */}
-        <Section
-          title="Couple Details"
-          icon={<Heart className="w-4 h-4 text-rose-500" />}
-          defaultOpen={coupleOpen}
-        >
-          <FormInput
-            label="Groom Name"
-            value={groomName}
-            onChange={setGroomName}
-            placeholder={session?.user?.name || "Groom's name"}
-          />
-          <FormInput
-            label="Bride Name"
-            value={brideName}
-            onChange={setBrideName}
-            placeholder="Bride's name"
-          />
-        </Section>
-
-        {/* Wedding Details */}
-        <Section
-          title="Wedding Details"
-          icon={<Calendar className="w-4 h-4 text-rose-500" />}
-          defaultOpen={detailsOpen}
-        >
-          <FormInput
-            label="Date"
-            value={weddingDate}
-            onChange={setWeddingDate}
-            type="date"
-          />
-          <FormInput
-            label="Time"
-            value={weddingTime}
-            onChange={setWeddingTime}
-            type="time"
-          />
-          <FormInput
-            label="Venue"
-            value={venue}
-            onChange={setVenue}
-            placeholder="e.g. Grand Ballroom"
-          />
-          <FormTextarea
-            label="Venue Address"
-            value={venueAddress}
-            onChange={setVenueAddress}
-            placeholder="Full address of the venue"
-          />
-        </Section>
-
-        {/* Events */}
-        <Section
-          title="Events"
-          icon={<Clock className="w-4 h-4 text-rose-500" />}
-          defaultOpen={eventsOpen}
-        >
-          <div className="space-y-3">
-            {events.map((ev, i) => (
-              <div
-                key={i}
-                className="relative border border-gray-100 rounded-2xl p-3 bg-gray-50 space-y-2"
-              >
-                <button
-                  type="button"
-                  onClick={() => removeEvent(i)}
-                  className="absolute top-2 right-2 p-1 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-                <FormInput
-                  label="Title"
-                  value={ev.title}
-                  onChange={(v) => updateEvent(i, "title", v)}
-                  placeholder="e.g. Ceremony"
-                />
-                <FormInput
-                  label="Time"
-                  value={ev.time}
-                  onChange={(v) => updateEvent(i, "time", v)}
-                  placeholder="e.g. 4:00 PM"
-                />
-                <FormInput
-                  label="Venue"
-                  value={ev.venue || ""}
-                  onChange={(v) => updateEvent(i, "venue", v)}
-                  placeholder="Event venue"
-                />
-              </div>
-            ))}
+  return (
+    <div className="-m-6 lg:-m-8 h-[calc(100vh-0px)] flex flex-col">
+      {/* ── Top Bar ── */}
+      <div className="bg-white border-b border-gray-100 px-4 lg:px-6 py-3 flex items-center justify-between flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-rose-100 rounded-xl flex items-center justify-center">
+            <Pencil className="w-4 h-4 text-rose-600" />
           </div>
-          <button
-            type="button"
-            onClick={addEvent}
-            className="flex items-center gap-1.5 text-sm text-rose-600 hover:text-rose-700 font-medium mt-1"
-          >
-            <Plus className="w-4 h-4" />
-            Add Event
+          <div>
+            <h1 className="text-sm font-bold text-gray-900">Invitation Editor</h1>
+            <p className="text-[11px] text-gray-400">Edit and preview your wedding invitation</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {saveMessage === "success" && (
+            <span className="text-xs text-green-600 font-medium flex items-center gap-1">
+              <Sparkles className="w-3 h-3" /> Saved
+            </span>
+          )}
+          <button onClick={handleSave} disabled={saving}
+            className="flex items-center gap-1.5 px-4 py-2 bg-rose-600 text-white text-xs font-semibold rounded-xl hover:bg-rose-700 disabled:opacity-50 transition-colors shadow-sm shadow-rose-600/20">
+            {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+            Save
           </button>
-        </Section>
-      </div>
-
-      {/* Sticky action buttons */}
-      <div className="sticky bottom-0 border-t border-gray-200 bg-white p-4 space-y-2">
-        {saveMessage && (
-          <p
-            className={`text-xs text-center font-medium ${
-              saveMessage.includes("success") ? "text-green-600" : "text-red-500"
-            }`}
-          >
-            {saveMessage}
-          </p>
-        )}
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-rose-600 text-white text-sm font-semibold rounded-xl hover:bg-rose-700 disabled:opacity-50 transition-colors"
-          >
-            {saving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
-            Save Draft
-          </button>
-          <a
-            href={`/samples/${templateSlug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-50 transition-colors"
-          >
-            <Eye className="w-4 h-4" />
-            Preview Full Page
+          <a href={`/samples/${templateSlug}`} target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 text-gray-700 text-xs font-semibold rounded-xl hover:bg-gray-200 transition-colors">
+            <Eye className="w-3.5 h-3.5" /> Preview
           </a>
         </div>
       </div>
-    </div>
-  );
 
-  /* ── Preview Panel ── */
-  const previewPanel = (
-    <div className="flex items-start justify-center h-full overflow-auto bg-gray-100 p-6">
-      {/* Phone frame */}
-      <div
-        className="relative bg-gray-900 rounded-[2.5rem] shadow-2xl flex-shrink-0"
-        style={{ width: 320, height: 640, padding: 8 }}
-      >
-        {/* Notch */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-6 bg-gray-900 rounded-b-2xl z-10" />
-        {/* Home indicator */}
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-24 h-1 bg-gray-600 rounded-full z-10" />
-        {/* Template via iframe — gets its own viewport */}
-        <iframe
-          key={templateSlug}
-          src={`/samples/${templateSlug}`}
-          className="w-full h-full rounded-[1.8rem] bg-white border-0"
-          title="Template Preview"
-        />
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="h-[calc(100vh-64px)] bg-gray-50 flex flex-col">
-      {/* Mobile tabs */}
-      <div className="md:hidden flex border-b border-gray-200 bg-white">
-        <button
-          type="button"
-          onClick={() => setMobileTab("editor")}
-          className={`flex-1 py-3 text-sm font-semibold text-center transition-colors ${
-            mobileTab === "editor"
-              ? "text-rose-600 border-b-2 border-rose-600"
-              : "text-gray-500"
-          }`}
-        >
-          Editor
+      {/* ── Mobile Tabs ── */}
+      <div className="lg:hidden flex border-b border-gray-100 bg-white">
+        <button onClick={() => setMobileTab("editor")}
+          className={`flex-1 py-2.5 text-xs font-semibold text-center transition-colors flex items-center justify-center gap-1.5 ${mobileTab === "editor" ? "text-rose-600 border-b-2 border-rose-600" : "text-gray-400"}`}>
+          <Pencil className="w-3.5 h-3.5" /> Editor
         </button>
-        <button
-          type="button"
-          onClick={() => setMobileTab("preview")}
-          className={`flex-1 py-3 text-sm font-semibold text-center transition-colors ${
-            mobileTab === "preview"
-              ? "text-rose-600 border-b-2 border-rose-600"
-              : "text-gray-500"
-          }`}
-        >
-          Preview
+        <button onClick={() => setMobileTab("preview")}
+          className={`flex-1 py-2.5 text-xs font-semibold text-center transition-colors flex items-center justify-center gap-1.5 ${mobileTab === "preview" ? "text-rose-600 border-b-2 border-rose-600" : "text-gray-400"}`}>
+          <Smartphone className="w-3.5 h-3.5" /> Preview
         </button>
       </div>
 
-      {/* Desktop split layout */}
+      {/* ── Split Layout ── */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Editor — left panel (desktop), full-width (mobile when selected) */}
-        <div
-          className={`w-full md:w-[40%] md:block bg-white border-r border-gray-200 flex-shrink-0 overflow-hidden ${
-            mobileTab === "editor" ? "block" : "hidden"
-          }`}
-        >
-          {editorPanel}
+        {/* ── Editor Panel ── */}
+        <div className={`w-full lg:w-[420px] xl:w-[460px] lg:block bg-gray-50/50 border-r border-gray-100 flex-shrink-0 overflow-y-auto ${mobileTab === "editor" ? "block" : "hidden"}`}>
+          <div className="p-4 lg:p-5 space-y-4">
+
+            {/* Template Selector */}
+            <div className="relative">
+              <label className="block text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1.5">Template</label>
+              <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="w-full flex items-center gap-3 px-3.5 py-2.5 text-sm border border-gray-200 rounded-xl bg-white hover:border-gray-300 transition-colors">
+                <div className={`w-5 h-5 rounded-md ${selectedTemplate?.color || "bg-gray-300"}`} />
+                <span className="flex-1 text-left font-medium text-gray-800">{selectedTemplate?.name || "Select"}</span>
+                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${dropdownOpen ? "rotate-180" : ""}`} />
+              </button>
+              {dropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setDropdownOpen(false)} />
+                  <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden">
+                    {templateOptions.map((t) => (
+                      <button key={t.slug} type="button"
+                        onClick={() => { setTemplateSlug(t.slug); setDropdownOpen(false); }}
+                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-sm hover:bg-rose-50 transition-colors ${templateSlug === t.slug ? "bg-rose-50 text-rose-700 font-medium" : "text-gray-700"}`}>
+                        <div className={`w-4 h-4 rounded ${t.color}`} />
+                        {t.name}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Couple */}
+            <Section title="Couple Details" icon={<Heart className="w-4 h-4 text-rose-500" />}>
+              <FormInput label="Groom Name" value={groomName} onChange={setGroomName} placeholder="Enter groom's name" />
+              <FormInput label="Bride Name" value={brideName} onChange={setBrideName} placeholder="Enter bride's name" />
+            </Section>
+
+            {/* Wedding */}
+            <Section title="Wedding Details" icon={<Calendar className="w-4 h-4 text-rose-500" />}>
+              <div className="grid grid-cols-2 gap-3">
+                <FormInput label="Date" value={weddingDate} onChange={setWeddingDate} type="date" />
+                <FormInput label="Time" value={weddingTime} onChange={setWeddingTime} type="time" />
+              </div>
+              <FormInput label="Venue" value={venue} onChange={setVenue} placeholder="e.g. Cinnamon Grand, Colombo" />
+              <FormTextarea label="Address" value={venueAddress} onChange={setVenueAddress} placeholder="Full venue address" />
+            </Section>
+
+            {/* Events */}
+            <Section title="Events" icon={<Clock className="w-4 h-4 text-rose-500" />}>
+              <div className="space-y-3">
+                {events.map((ev, i) => (
+                  <div key={i} className="relative rounded-xl border border-gray-100 bg-gray-50/80 p-3.5 space-y-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Event {i + 1}</span>
+                      {events.length > 1 && (
+                        <button type="button" onClick={() => setEvents(p => p.filter((_, idx) => idx !== i))}
+                          className="p-1 rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-500 transition-colors">
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <FormInput label="Title" value={ev.title} onChange={(v) => updateEvent(i, "title", v)} placeholder="Ceremony" />
+                      <FormInput label="Time" value={ev.time} onChange={(v) => updateEvent(i, "time", v)} placeholder="4:00 PM" />
+                    </div>
+                    <FormInput label="Venue" value={ev.venue || ""} onChange={(v) => updateEvent(i, "venue", v)} placeholder="Event venue" />
+                  </div>
+                ))}
+              </div>
+              <button type="button" onClick={() => setEvents(p => [...p, { title: "", time: "", venue: "" }])}
+                className="flex items-center gap-1.5 text-xs text-rose-600 hover:text-rose-700 font-semibold mt-2 py-1">
+                <Plus className="w-3.5 h-3.5" /> Add Event
+              </button>
+            </Section>
+          </div>
         </div>
 
-        {/* Preview — right panel (desktop), full-width (mobile when selected) */}
-        <div
-          className={`w-full md:w-[60%] md:block flex-1 overflow-hidden ${
-            mobileTab === "preview" ? "block" : "hidden"
-          }`}
-        >
-          {previewPanel}
+        {/* ── Preview Panel ── */}
+        <div className={`w-full lg:flex-1 lg:block overflow-hidden ${mobileTab === "preview" ? "block" : "hidden"}`}>
+          <div className="flex items-center justify-center h-full bg-gradient-to-br from-gray-100 via-gray-50 to-gray-100 p-4 lg:p-8">
+            {/* Phone Frame */}
+            <div className="relative flex-shrink-0" style={{ width: 300, height: 620 }}>
+              {/* Phone body */}
+              <div className="absolute inset-0 bg-gray-900 rounded-[2.5rem] shadow-2xl shadow-gray-900/30" />
+              {/* Screen area */}
+              <div className="absolute inset-[5px] bg-white rounded-[2.2rem] overflow-hidden">
+                {/* Notch */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-5 bg-gray-900 rounded-b-xl z-10" />
+                {/* Home indicator */}
+                <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-20 h-1 bg-gray-300 rounded-full z-10" />
+                {/* iframe */}
+                <iframe
+                  key={templateSlug}
+                  src={`/samples/${templateSlug}`}
+                  className="w-full h-full border-0"
+                  title="Template Preview"
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
