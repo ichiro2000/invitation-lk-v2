@@ -238,13 +238,31 @@ export default function EditorPage() {
         </div>
 
         {/* ── Live Preview Panel ── */}
-        <div className={`w-full lg:w-1/2 xl:w-[55%] lg:block overflow-hidden bg-gray-50 ${mobileTab === "preview" ? "block" : "hidden"}`}>
-          <iframe
-            key={templateSlug}
-            src={`/samples/${templateSlug}`}
-            className="w-full h-full border-0 bg-white"
-            title="Template Preview"
-          />
+        <div className={`w-full lg:w-1/2 xl:w-[55%] lg:flex overflow-hidden bg-gradient-to-b from-gray-50 to-gray-100 items-center justify-center ${mobileTab === "preview" ? "flex" : "hidden"}`}>
+          {/* Phone mockup */}
+          <div className="relative flex-shrink-0" style={{ width: 340, height: 700 }}>
+            {/* Bezel */}
+            <div className="absolute inset-0 bg-gray-900 rounded-[3rem] shadow-2xl shadow-black/30" />
+            {/* Side buttons */}
+            <div className="absolute -right-[2px] top-28 w-[3px] h-8 bg-gray-700 rounded-r-sm" />
+            <div className="absolute -left-[2px] top-24 w-[3px] h-6 bg-gray-700 rounded-l-sm" />
+            <div className="absolute -left-[2px] top-36 w-[3px] h-10 bg-gray-700 rounded-l-sm" />
+            <div className="absolute -left-[2px] top-48 w-[3px] h-10 bg-gray-700 rounded-l-sm" />
+            {/* Screen */}
+            <div className="absolute inset-[4px] rounded-[2.7rem] overflow-hidden bg-white">
+              {/* Dynamic Island */}
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 w-[90px] h-[22px] bg-black rounded-full z-20" />
+              {/* iframe content */}
+              <iframe
+                key={templateSlug}
+                src={`/samples/${templateSlug}`}
+                className="w-full h-full border-0"
+                title="Template Preview"
+              />
+            </div>
+            {/* Home indicator */}
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-28 h-[5px] bg-white/80 rounded-full z-20" />
+          </div>
         </div>
       </div>
     </div>
