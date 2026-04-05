@@ -16,17 +16,7 @@ import {
   ChevronUp,
   Loader2,
 } from "lucide-react";
-import type { InvitationData, InvitationEvent } from "@/types/invitation";
-
-import RoyalElegance from "@/components/templates/RoyalElegance";
-import GoldenLotus from "@/components/templates/GoldenLotus";
-import EternalNight from "@/components/templates/EternalNight";
-import ModernBloom from "@/components/templates/ModernBloom";
-import VintageBotanical from "@/components/templates/VintageBotanical";
-import MinimalGrace from "@/components/templates/MinimalGrace";
-import TropicalParadise from "@/components/templates/TropicalParadise";
-import SinhalaMangalya from "@/components/templates/SinhalaMangalya";
-import RoseGarden from "@/components/templates/RoseGarden";
+import type { InvitationEvent } from "@/types/invitation";
 
 /* ── Template registry ── */
 const templateOptions = [
@@ -40,18 +30,6 @@ const templateOptions = [
   { slug: "sinhala-mangalya", name: "Sinhala Mangalya" },
   { slug: "rose-garden", name: "Rose Garden" },
 ] as const;
-
-const templateComponents: Record<string, React.ComponentType<{ data?: InvitationData }>> = {
-  "royal-elegance": RoyalElegance,
-  "golden-lotus": GoldenLotus,
-  "eternal-night": EternalNight,
-  "modern-bloom": ModernBloom,
-  "vintage-botanical": VintageBotanical,
-  "minimal-grace": MinimalGrace,
-  "tropical-paradise": TropicalParadise,
-  "sinhala-mangalya": SinhalaMangalya,
-  "rose-garden": RoseGarden,
-};
 
 /* ── Collapsible Section ── */
 function Section({
@@ -209,27 +187,6 @@ export default function EditorPage() {
     }
     load();
   }, []);
-
-  /* ── Build preview data ── */
-  const previewData: InvitationData = {
-    groomName: groomName || "Groom",
-    brideName: brideName || "Bride",
-    weddingDate: weddingDate ? new Date(weddingDate).toISOString() : new Date().toISOString(),
-    weddingTime: weddingTime
-      ? new Date(`2000-01-01T${weddingTime}`).toLocaleTimeString("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-          hour12: true,
-        })
-      : "4:00 PM",
-    venue: venue || "Wedding Venue",
-    venueAddress: venueAddress || "",
-    events: events.length
-      ? events
-      : [{ title: "Wedding Ceremony", time: "4:00 PM", venue: "" }],
-  };
-
-  const TemplateComponent = templateComponents[templateSlug] || RoyalElegance;
 
   /* ── Save handler ── */
   const handleSave = useCallback(async () => {
@@ -482,21 +439,20 @@ export default function EditorPage() {
     <div className="flex items-start justify-center h-full overflow-auto bg-gray-100 p-6">
       {/* Phone frame */}
       <div
-        className="relative bg-white rounded-[2.5rem] border-[6px] border-gray-800 shadow-2xl flex-shrink-0"
-        style={{ width: 390, height: 750 }}
+        className="relative bg-gray-900 rounded-[2.5rem] shadow-2xl flex-shrink-0"
+        style={{ width: 320, height: 640, padding: 8 }}
       >
         {/* Notch */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-36 h-7 bg-gray-800 rounded-b-2xl z-10" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-6 bg-gray-900 rounded-b-2xl z-10" />
         {/* Home indicator */}
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-28 h-1 bg-gray-300 rounded-full z-10" />
-        {/* Template preview — zoomed down, scrollable */}
-        <div className="absolute inset-0 rounded-[2rem] overflow-hidden">
-          <div className="w-full h-full overflow-y-auto overflow-x-hidden">
-            <div style={{ zoom: 0.28, width: `${100 / 0.28}%` }}>
-              <TemplateComponent data={previewData} />
-            </div>
-          </div>
-        </div>
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-24 h-1 bg-gray-600 rounded-full z-10" />
+        {/* Template via iframe — gets its own viewport */}
+        <iframe
+          key={templateSlug}
+          src={`/samples/${templateSlug}`}
+          className="w-full h-full rounded-[1.8rem] bg-white border-0"
+          title="Template Preview"
+        />
       </div>
     </div>
   );
