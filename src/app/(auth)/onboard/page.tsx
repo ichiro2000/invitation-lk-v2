@@ -2,25 +2,28 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Heart, ArrowRight, ArrowLeft, User, Calendar, MapPin, Mail, Phone, Lock, Eye, EyeOff, Loader2, Check, Sparkles } from "lucide-react";
+import { Heart, ArrowRight, ArrowLeft, User, Calendar as CalendarIcon, MapPin, Mail, Phone, Lock, Eye, EyeOff, Loader2, Check, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
 
 export default function OnboardPage() {
   const [step, setStep] = useState(1);
   const [yourName, setYourName] = useState("");
   const [partnerName, setPartnerName] = useState("");
-  const [weddingDate, setWeddingDate] = useState("");
+  const [weddingDate, setWeddingDate] = useState<Date | undefined>(undefined);
   const [venue, setVenue] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const canGoNext = () => {
     if (step === 1) return yourName.trim() && partnerName.trim();
-    if (step === 2) return weddingDate && venue.trim();
+    if (step === 2) return !!weddingDate && venue.trim();
     if (step === 3) return email && phone && password.length >= 8;
     return false;
   };
@@ -37,7 +40,7 @@ export default function OnboardPage() {
         body: JSON.stringify({
           yourName,
           partnerName,
-          weddingDate,
+          weddingDate: weddingDate ? weddingDate.toISOString().split("T")[0] : "",
           venue,
           email,
           phone,
@@ -134,7 +137,7 @@ export default function OnboardPage() {
             <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
               <div className="text-center mb-6">
                 <div className="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                  <Calendar className="w-7 h-7 text-amber-500" />
+                  <CalendarIcon className="w-7 h-7 text-amber-500" />
                 </div>
                 <h2 className="text-xl font-bold text-gray-900">When &amp; Where?</h2>
                 <p className="text-sm text-gray-400 mt-1">Wedding date and venue</p>
@@ -144,8 +147,32 @@ export default function OnboardPage() {
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">Wedding Date</label>
                   <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
-                    <input type="date" value={weddingDate} onChange={(e) => setWeddingDate(e.target.value)} className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 text-sm" />
+                    <button
+                      type="button"
+                      onClick={() => setCalendarOpen(!calendarOpen)}
+                      className="w-full flex items-center gap-2 pl-3 pr-4 py-3 border border-gray-200 rounded-xl bg-gray-50/50 text-sm text-left hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-colors"
+                    >
+                      <CalendarIcon className="w-4 h-4 text-gray-300 shrink-0" />
+                      {weddingDate ? (
+                        <span className="text-gray-700">{format(weddingDate, "PPP")}</span>
+                      ) : (
+                        <span className="text-gray-300">Pick a date</span>
+                      )}
+                    </button>
+                    {calendarOpen && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setCalendarOpen(false)} />
+                        <div className="absolute left-0 top-full mt-1 z-50 rounded-xl border border-gray-200 bg-white shadow-lg">
+                          <Calendar
+                            mode="single"
+                            selected={weddingDate}
+                            onSelect={(date) => { setWeddingDate(date); setCalendarOpen(false); }}
+                            disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                            autoFocus
+                          />
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
                 <div>
