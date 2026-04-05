@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import {
   Heart, Calendar, Clock, Plus, X, Save, Eye, Pencil, Smartphone,
-  ChevronDown, ChevronUp, Loader2, Sparkles,
+  ChevronDown, Loader2, Sparkles,
 } from "lucide-react";
 import type { InvitationEvent } from "@/types/invitation";
 
@@ -20,18 +20,16 @@ const templateOptions = [
   { slug: "rose-garden", name: "Rose Garden", color: "bg-rose-500" },
 ];
 
-function Section({ title, icon, defaultOpen = true, children }: {
-  title: string; icon: React.ReactNode; defaultOpen?: boolean; children: React.ReactNode;
+function Section({ title, icon, children }: {
+  title: string; icon: React.ReactNode; children: React.ReactNode;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
-      <button type="button" onClick={() => setOpen(!open)}
-        className="flex items-center justify-between w-full px-5 py-3.5 hover:bg-gray-50/50 transition-colors">
-        <span className="flex items-center gap-2.5 text-sm font-semibold text-gray-800">{icon}{title}</span>
-        {open ? <ChevronUp className="w-4 h-4 text-gray-300" /> : <ChevronDown className="w-4 h-4 text-gray-300" />}
-      </button>
-      {open && <div className="px-5 pb-5 pt-1 space-y-4">{children}</div>}
+      <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-gray-50">
+        {icon}
+        <span className="text-sm font-semibold text-gray-800">{title}</span>
+      </div>
+      <div className="px-5 pb-5 pt-4 space-y-4">{children}</div>
     </div>
   );
 }
