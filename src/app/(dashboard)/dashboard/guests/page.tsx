@@ -27,30 +27,32 @@ const sideOptions = [
   { value: "BOTH", label: "Both" },
 ];
 
-/* ── Stepper Component ── */
+/* ── Stepper: number | − | + ── */
 function Stepper({ value, onChange, min = 1, max = 20 }: { value: number; onChange: (v: number) => void; min?: number; max?: number }) {
   return (
     <div className="inline-flex items-center border border-gray-200 rounded-full overflow-hidden bg-white">
-      <button
-        onClick={() => onChange(Math.max(min, value - 1))}
-        disabled={value <= min}
-        className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 disabled:text-gray-200 disabled:hover:bg-white transition-colors"
-      >
-        <Minus className="w-3.5 h-3.5" />
-      </button>
-      <span className="w-8 text-center text-sm font-semibold text-gray-900 tabular-nums">{value}</span>
-      <button
-        onClick={() => onChange(Math.min(max, value + 1))}
-        disabled={value >= max}
-        className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 disabled:text-gray-200 disabled:hover:bg-white transition-colors"
-      >
-        <Plus className="w-3.5 h-3.5" />
-      </button>
+      <span className="w-10 text-center text-sm font-semibold text-gray-900 tabular-nums py-1.5">{value}</span>
+      <div className="flex border-l border-gray-200">
+        <button
+          onClick={() => onChange(Math.max(min, value - 1))}
+          disabled={value <= min}
+          className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 disabled:text-gray-200 transition-colors border-r border-gray-200"
+        >
+          <Minus className="w-3.5 h-3.5" />
+        </button>
+        <button
+          onClick={() => onChange(Math.min(max, value + 1))}
+          disabled={value >= max}
+          className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 disabled:text-gray-200 transition-colors"
+        >
+          <Plus className="w-3.5 h-3.5" />
+        </button>
+      </div>
     </div>
   );
 }
 
-/* ── Custom Dropdown (portaled to body) ── */
+/* ── Custom Dropdown (portaled) ── */
 function CustomSelect({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
@@ -160,7 +162,7 @@ export default function AddGuestsPage() {
               <tr className="border-b border-gray-100 bg-gray-50/50">
                 <th className="text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider px-3 py-3 w-8">#</th>
                 <th className="text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider px-3 py-3">Guest Name *</th>
-                <th className="text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider px-3 py-3">WhatsApp</th>
+                <th className="text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider px-3 py-3 w-[130px]">WhatsApp</th>
                 <th className="text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider px-3 py-3">Invite Type</th>
                 <th className="text-center text-[11px] font-medium text-gray-400 uppercase tracking-wider px-3 py-3">Head Count</th>
                 <th className="text-left text-[11px] font-medium text-gray-400 uppercase tracking-wider px-3 py-3">Category</th>
@@ -178,7 +180,7 @@ export default function AddGuestsPage() {
                       value={guest.name}
                       onChange={(e) => updateRow(i, "name", e.target.value)}
                       placeholder="Full name"
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-rose-400 focus:ring-1 focus:ring-rose-100 bg-white placeholder:text-gray-300 transition-colors"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-rose-400 focus:ring-1 focus:ring-rose-100 bg-white placeholder:text-gray-300 transition-colors"
                     />
                   </td>
                   <td className="px-3 py-3">
@@ -186,8 +188,8 @@ export default function AddGuestsPage() {
                       type="tel"
                       value={guest.whatsapp}
                       onChange={(e) => updateRow(i, "whatsapp", e.target.value)}
-                      placeholder="+94 77 XXX XXXX"
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-rose-400 focus:ring-1 focus:ring-rose-100 bg-white placeholder:text-gray-300 transition-colors"
+                      placeholder="+94 77 XXX"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-rose-400 focus:ring-1 focus:ring-rose-100 bg-white placeholder:text-gray-300 transition-colors"
                     />
                   </td>
                   <td className="px-3 py-3">
