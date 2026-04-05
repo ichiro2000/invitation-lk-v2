@@ -239,22 +239,22 @@ export default function OnboardPage() {
           )}
 
           {step < 3 ? (
-            <div className="flex-1 flex flex-col items-center gap-2">
-              <button onClick={() => canGoNext() && setStep(step + 1)} disabled={!canGoNext()} className="w-full bg-rose-600 text-white py-3 rounded-xl font-medium text-sm hover:bg-rose-700 transition-colors shadow-lg shadow-rose-600/20 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                Continue <ArrowRight className="w-4 h-4" />
-              </button>
-              {step === 2 && (
-                <button onClick={() => setStep(3)} className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
-                  Skip for now
-                </button>
-              )}
-            </div>
+            <button onClick={() => canGoNext() && setStep(step + 1)} disabled={!canGoNext()} className="flex-1 bg-rose-600 text-white py-3 rounded-xl font-medium text-sm hover:bg-rose-700 transition-colors shadow-lg shadow-rose-600/20 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+              Continue <ArrowRight className="w-4 h-4" />
+            </button>
           ) : (
             <button onClick={handleSubmit} disabled={!canGoNext() || loading} className="flex-1 bg-rose-600 text-white py-3 rounded-xl font-medium text-sm hover:bg-rose-700 transition-colors shadow-lg shadow-rose-600/20 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
               {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Creating...</> : <><Sparkles className="w-4 h-4" /> Create My Invitation</>}
             </button>
           )}
         </div>
+        {step === 2 && (
+          <div className="text-center mt-2">
+            <button onClick={() => setStep(3)} className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+              Skip for now
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Login link */}
