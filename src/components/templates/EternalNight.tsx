@@ -171,7 +171,7 @@ export default function EternalNight({ data }: { data?: InvitationData } = {}) {
 
           {/* Names with staggered letter animation */}
           <motion.h1
-            className="text-6xl sm:text-8xl lg:text-9xl font-extralight tracking-widest text-white leading-none mb-2"
+            className="text-6xl sm:text-8xl lg:text-9xl font-extralight tracking-wider sm:tracking-widest text-white leading-none mb-2"
             initial={{ opacity: 0, y: 50, filter: "blur(15px)" }}
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             transition={{ duration: 1.2, delay: 0.8 }}
@@ -201,7 +201,7 @@ export default function EternalNight({ data }: { data?: InvitationData } = {}) {
           </motion.div>
 
           <motion.h1
-            className="text-6xl sm:text-8xl lg:text-9xl font-extralight tracking-widest text-white leading-none"
+            className="text-6xl sm:text-8xl lg:text-9xl font-extralight tracking-wider sm:tracking-widest text-white leading-none"
             initial={{ opacity: 0, y: 50, filter: "blur(15px)" }}
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             transition={{ duration: 1.2, delay: 1 }}

@@ -222,21 +222,21 @@ export default function SinhalaMangalya({ data }: { data?: InvitationData } = {}
         <GlowParticles />
 
         {/* Corner mandalas */}
-        <div className="absolute top-0 left-0 -translate-x-1/4 -translate-y-1/4">
+        <div className="absolute top-0 left-0 -translate-x-1/4 -translate-y-1/4 hidden sm:block">
           <DetailedMandala size={350} className="opacity-25" />
         </div>
-        <div className="absolute top-0 right-0 translate-x-1/4 -translate-y-1/4">
+        <div className="absolute top-0 right-0 translate-x-1/4 -translate-y-1/4 hidden sm:block">
           <DetailedMandala size={300} className="opacity-20" />
         </div>
-        <div className="absolute bottom-0 left-0 -translate-x-1/4 translate-y-1/4">
+        <div className="absolute bottom-0 left-0 -translate-x-1/4 translate-y-1/4 hidden sm:block">
           <DetailedMandala size={380} className="opacity-25" />
         </div>
-        <div className="absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4">
+        <div className="absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4 hidden sm:block">
           <DetailedMandala size={320} className="opacity-20" />
         </div>
 
         {/* Center mandala behind text */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-[90vw] max-h-[90vw] sm:max-w-none sm:max-h-none">
           <DetailedMandala size={500} className="opacity-[0.07]" animate={true} />
         </div>
 
@@ -296,7 +296,7 @@ export default function SinhalaMangalya({ data }: { data?: InvitationData } = {}
           </motion.div>
 
           {/* Parents & Names */}
-          <div className="grid grid-cols-2 gap-8 sm:gap-16 mb-8 max-w-lg mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 sm:gap-16 mb-8 max-w-lg mx-auto">
             <motion.div
               initial={{ opacity: 0, x: -40 }}
               animate={{ opacity: 1, x: 0 }}

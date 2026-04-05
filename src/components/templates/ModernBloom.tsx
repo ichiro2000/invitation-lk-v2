@@ -91,10 +91,10 @@ export default function ModernBloom({ data }: { data?: InvitationData } = {}) {
     <div className="bg-white text-gray-800 font-sans overflow-hidden">
       {/* ═══ HERO ═══ */}
       <section ref={heroRef} className="relative min-h-screen flex flex-col items-center justify-center text-center px-4 overflow-hidden">
-        <WatercolorBlob className="top-0 left-0 w-[500px] h-[500px]" color="rgba(251,182,206,0.25)" delay={0} />
-        <WatercolorBlob className="bottom-0 right-0 w-[600px] h-[600px]" color="rgba(244,114,182,0.12)" delay={2} />
-        <WatercolorBlob className="top-1/3 right-1/4 w-[300px] h-[300px]" color="rgba(253,164,175,0.15)" delay={4} />
-        <WatercolorBlob className="bottom-1/4 left-1/3 w-[250px] h-[250px]" color="rgba(249,168,212,0.18)" delay={1} />
+        <WatercolorBlob className="top-0 left-0 w-[280px] sm:w-[500px] h-[280px] sm:h-[500px]" color="rgba(251,182,206,0.25)" delay={0} />
+        <WatercolorBlob className="bottom-0 right-0 w-[300px] sm:w-[600px] h-[300px] sm:h-[600px]" color="rgba(244,114,182,0.12)" delay={2} />
+        <WatercolorBlob className="top-1/3 right-1/4 w-[200px] sm:w-[300px] h-[200px] sm:h-[300px]" color="rgba(253,164,175,0.15)" delay={4} />
+        <WatercolorBlob className="bottom-1/4 left-1/3 w-[180px] sm:w-[250px] h-[180px] sm:h-[250px]" color="rgba(249,168,212,0.18)" delay={1} />
 
         <FloatingPetals count={18} />
 
@@ -335,7 +335,7 @@ export default function ModernBloom({ data }: { data?: InvitationData } = {}) {
             <h2 className="text-4xl sm:text-5xl font-extralight text-gray-800">Captured Moments</h2>
           </motion.div>
 
-          <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {Array.from({ length: 8 }).map((_, i) => (
               <motion.div
                 key={i}

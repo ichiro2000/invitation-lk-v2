@@ -108,7 +108,7 @@ function RoseCorner({ position }: { position: "top-right" | "bottom-left" | "top
   }[position];
 
   return (
-    <div className={`absolute ${posClass} w-48 h-48 pointer-events-none`}>
+    <div className={`absolute ${posClass} w-28 h-28 sm:w-48 sm:h-48 pointer-events-none`}>
       <svg viewBox="0 0 200 200" className="w-full h-full">
         {/* Main rose */}
         <circle cx="160" cy="40" r="30" fill="#be123c" opacity="0.3" />
@@ -220,7 +220,7 @@ function CountdownTimer() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: i * 0.1 }}
-          className="flex flex-col items-center bg-white/10 backdrop-blur-sm rounded-2xl px-4 sm:px-6 py-4 min-w-[70px] sm:min-w-[90px]"
+          className="flex flex-col items-center bg-white/10 backdrop-blur-sm rounded-2xl px-3 sm:px-6 py-4 min-w-[65px] sm:min-w-[90px]"
         >
           <motion.span
             key={item.value}
@@ -315,9 +315,9 @@ export default function RoseGarden({ data }: { data?: InvitationData } = {}) {
           </motion.p>
 
           {/* Couple Names */}
-          <div className="flex items-center justify-center gap-4 sm:gap-8 mb-6">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-8 mb-6">
             <motion.h1
-              className="text-5xl sm:text-6xl font-bold text-rose-700"
+              className="text-4xl sm:text-6xl font-bold text-rose-700"
               style={{ fontFamily: "'Dancing Script', cursive, serif" }}
               initial={{ opacity: 0, x: -40 }}
               animate={{ opacity: 1, x: 0 }}
@@ -332,18 +332,18 @@ export default function RoseGarden({ data }: { data?: InvitationData } = {}) {
               animate={{ scale: 1 }}
               transition={{ type: "spring", delay: 0.7 }}
             >
-              <div className="w-16 h-16 bg-gradient-to-br from-rose-100 to-rose-200 rounded-full flex items-center justify-center shadow-lg shadow-rose-200/50">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-rose-100 to-rose-200 rounded-full flex items-center justify-center shadow-lg shadow-rose-200/50">
                 <motion.div
                   animate={{ scale: [1, 1.15, 1] }}
                   transition={{ duration: 1.5, repeat: Infinity }}
                 >
-                  <Heart className="w-7 h-7 text-rose-500 fill-rose-500" />
+                  <Heart className="w-5 h-5 sm:w-7 sm:h-7 text-rose-500 fill-rose-500" />
                 </motion.div>
               </div>
             </motion.div>
 
             <motion.h1
-              className="text-5xl sm:text-6xl font-bold text-rose-700"
+              className="text-4xl sm:text-6xl font-bold text-rose-700"
               style={{ fontFamily: "'Dancing Script', cursive, serif" }}
               initial={{ opacity: 0, x: 40 }}
               animate={{ opacity: 1, x: 0 }}

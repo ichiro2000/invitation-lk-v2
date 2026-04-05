@@ -74,7 +74,7 @@ export default function MinimalGrace({ data }: { data?: InvitationData } = {}) {
             The Wedding Of
           </motion.p>
 
-          <RevealText delay={0.3} className="text-7xl sm:text-9xl lg:text-[10rem] font-extralight tracking-tight text-gray-900 leading-none">
+          <RevealText delay={0.3} className="text-5xl sm:text-9xl lg:text-[10rem] font-extralight tracking-tight text-gray-900 leading-none">
             {bride}
           </RevealText>
 
@@ -87,7 +87,7 @@ export default function MinimalGrace({ data }: { data?: InvitationData } = {}) {
             &amp;
           </motion.p>
 
-          <RevealText delay={0.6} className="text-7xl sm:text-9xl lg:text-[10rem] font-extralight tracking-tight text-gray-900 leading-none">
+          <RevealText delay={0.6} className="text-5xl sm:text-9xl lg:text-[10rem] font-extralight tracking-tight text-gray-900 leading-none">
             {groom}
           </RevealText>
 
@@ -135,7 +135,7 @@ export default function MinimalGrace({ data }: { data?: InvitationData } = {}) {
           <DiamondOrnament className="mb-10" />
           <Countdown
             targetDate={`${date}T10:00:00`}
-            valueClassName="text-6xl sm:text-7xl font-extralight text-gray-900"
+            valueClassName="text-4xl sm:text-7xl font-extralight text-gray-900"
             labelClassName="text-[9px] text-stone-500 tracking-[0.4em] uppercase mt-4"
             boxClassName="flex flex-col items-center min-w-[80px] sm:min-w-[110px]"
             separatorClassName="text-4xl font-extralight text-stone-300 mx-4 self-start"

@@ -113,9 +113,9 @@ export default function GoldenLotus({ data }: { data?: InvitationData } = {}) {
       {/* ═══ HERO ═══ */}
       <section ref={heroRef} className="relative min-h-screen flex flex-col items-center justify-center text-center px-4 overflow-hidden">
         {/* Mandala backgrounds */}
-        <Mandala size={600} className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-30" />
+        <Mandala size={600} className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-30 max-w-[90vw] max-h-[90vw]" />
         <motion.div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full pointer-events-none"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] sm:w-[700px] h-[90vw] sm:h-[700px] rounded-full pointer-events-none"
           animate={{
             boxShadow: [
               "inset 0 0 80px 20px rgba(212,168,83,0.03)",

@@ -270,7 +270,7 @@ export default function RoyalElegance({ data }: { data?: InvitationData } = {}) 
         <div className="relative">
           {/* Animated center line */}
           <motion.div
-            className="absolute left-1/2 top-0 w-px bg-gradient-to-b from-[#c9a96e]/50 via-[#c9a96e]/30 to-transparent"
+            className="absolute left-6 md:left-1/2 top-0 w-px bg-gradient-to-b from-[#c9a96e]/50 via-[#c9a96e]/30 to-transparent"
             initial={{ height: 0 }}
             whileInView={{ height: "100%" }}
             viewport={{ once: true }}
@@ -285,14 +285,14 @@ export default function RoyalElegance({ data }: { data?: InvitationData } = {}) 
           ].map((event, i) => (
             <motion.div
               key={i}
-              initial={{ opacity: 0, x: i % 2 === 0 ? -60 : 60 }}
+              initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8, delay: i * 0.15 }}
-              className={`relative flex items-center gap-8 mb-16 ${i % 2 === 1 ? "flex-row-reverse" : ""}`}
+              className={`relative flex items-center gap-4 md:gap-8 mb-16 pl-16 md:pl-0 ${i % 2 === 1 ? "md:flex-row-reverse" : ""}`}
             >
               {/* Content */}
-              <div className={`flex-1 ${i % 2 === 1 ? "text-left" : "text-right"}`}>
+              <div className={`flex-1 text-left ${i % 2 === 1 ? "md:text-left" : "md:text-right"}`}>
                 <motion.div
                   whileHover={{ scale: 1.02, y: -4 }}
                   className="bg-white p-6 rounded-xl shadow-sm border border-[#c9a96e]/10 hover:shadow-lg hover:shadow-[#c9a96e]/10 transition-shadow"
@@ -304,7 +304,7 @@ export default function RoyalElegance({ data }: { data?: InvitationData } = {}) 
 
               {/* Center dot */}
               <motion.div
-                className="relative z-10 w-14 h-14 rounded-full bg-[#5c2828] flex items-center justify-center text-[#c9a96e] text-sm font-bold flex-shrink-0 shadow-lg"
+                className="absolute left-0 md:relative z-10 w-12 h-12 md:w-14 md:h-14 rounded-full bg-[#5c2828] flex items-center justify-center text-[#c9a96e] text-xs md:text-sm font-bold flex-shrink-0 shadow-lg"
                 whileHover={{ scale: 1.2 }}
                 animate={{ boxShadow: ["0 0 0 0 rgba(201,169,110,0)", "0 0 0 8px rgba(201,169,110,0.2)", "0 0 0 0 rgba(201,169,110,0)"] }}
                 transition={{ duration: 2, repeat: Infinity, delay: i * 0.5 }}
@@ -313,7 +313,7 @@ export default function RoyalElegance({ data }: { data?: InvitationData } = {}) 
               </motion.div>
 
               {/* Spacer */}
-              <div className="flex-1" />
+              <div className="flex-1 hidden md:block" />
             </motion.div>
           ))}
         </div>

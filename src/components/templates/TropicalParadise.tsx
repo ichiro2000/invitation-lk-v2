@@ -320,7 +320,7 @@ export default function TropicalParadise({ data }: { data?: InvitationData } = {
             <h2 className="text-4xl sm:text-5xl font-light text-teal-800">Sun-Kissed Memories</h2>
           </motion.div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {Array.from({ length: 9 }).map((_, i) => (
               <motion.div
                 key={i}
@@ -329,7 +329,7 @@ export default function TropicalParadise({ data }: { data?: InvitationData } = {
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.05 }}
                 whileHover={{ scale: 1.05, zIndex: 10 }}
-                className={`${i === 4 ? "row-span-2" : ""} bg-gradient-to-br ${
+                className={`${i === 4 ? "sm:row-span-2" : ""} bg-gradient-to-br ${
                   i % 4 === 0 ? "from-teal-100 to-teal-50" :
                   i % 4 === 1 ? "from-orange-50 to-teal-50" :
                   i % 4 === 2 ? "from-teal-50 to-cyan-50" :
