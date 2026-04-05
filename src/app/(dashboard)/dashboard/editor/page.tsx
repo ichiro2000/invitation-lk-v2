@@ -249,9 +249,9 @@ export default function EditorPage() {
             {/* Phone Frame */}
             <div className="relative flex-shrink-0" style={{ width: 300, height: 620 }}>
               {/* Phone body */}
-              <div className="absolute inset-0 bg-gray-900 rounded-[2.5rem] shadow-2xl shadow-gray-900/30" />
-              {/* Screen — iframe fills the visible area flush with bezel */}
-              <div className="absolute inset-[3px] rounded-[2.3rem] overflow-hidden">
+              <div className="absolute inset-0 bg-white rounded-[2.5rem] shadow-2xl shadow-gray-300/50 border border-gray-200" />
+              {/* Screen — iframe fills the visible area */}
+              <div className="absolute inset-[1px] rounded-[2.4rem] overflow-hidden">
                 <iframe
                   key={templateSlug}
                   src={`/samples/${templateSlug}`}
@@ -259,10 +259,6 @@ export default function EditorPage() {
                   title="Template Preview"
                 />
               </div>
-              {/* Notch overlay */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-5 bg-gray-900 rounded-b-xl z-10" />
-              {/* Home indicator */}
-              <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-20 h-1 bg-gray-600 rounded-full z-10" />
             </div>
           </div>
         </div>
