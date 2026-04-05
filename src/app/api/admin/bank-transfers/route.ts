@@ -27,7 +27,7 @@ export async function GET(request: Request) {
       ? { status: status as BankTransferStatus }
       : {};
 
-    const transfers = await prisma.bankTransfer.findMany({
+    const rawTransfers = await prisma.bankTransfer.findMany({
       where,
       include: {
         order: {
@@ -40,6 +40,21 @@ export async function GET(request: Request) {
       },
       orderBy: { createdAt: "desc" },
     });
+
+    // Flatten data to match frontend interface
+    const transfers = rawTransfers.map((t) => ({
+      id: t.id,
+      userId: t.order.userId,
+      userEmail: t.order.user.email,
+      userName: `${t.order.user.yourName} & ${t.order.user.partnerName}`,
+      plan: t.order.plan,
+      amount: Number(t.order.amount),
+      bankReference: t.bankReference,
+      receiptUrl: t.receiptImage,
+      status: t.status,
+      adminNotes: t.adminNotes,
+      createdAt: t.createdAt.toISOString(),
+    }));
 
     return NextResponse.json({ transfers });
   } catch (error) {

@@ -80,7 +80,7 @@ function CheckoutContent() {
       const res = await fetch("/api/checkout/bank-transfer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: selectedPlan, receipt: receiptFile, bankReference: bankRef }),
+        body: JSON.stringify({ plan: selectedPlan, receiptImage: receiptFile, bankReference: bankRef }),
       });
       const data = await res.json();
       if (res.ok) {

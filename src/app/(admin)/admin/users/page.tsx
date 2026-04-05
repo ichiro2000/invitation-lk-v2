@@ -22,7 +22,7 @@ const planBadge: Record<string, string> = {
 };
 
 const roleBadge: Record<string, string> = {
-  USER: "bg-gray-100 text-gray-600",
+  CUSTOMER: "bg-gray-100 text-gray-600",
   ADMIN: "bg-violet-100 text-violet-700",
 };
 

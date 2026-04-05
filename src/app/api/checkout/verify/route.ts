@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/db";
-import { stripe } from "@/lib/stripe";
 
 export async function GET(request: Request) {
   try {
@@ -18,19 +17,18 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "session_id required" }, { status: 400 });
     }
 
-    const checkoutSession = await stripe.checkout.sessions.retrieve(sessionId);
-
     const order = await prisma.order.findUnique({
       where: { stripeSessionId: sessionId },
     });
 
-    if (!order) {
+    if (!order || order.userId !== session.user.id) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
     return NextResponse.json({
       status: order.paymentStatus,
       plan: order.plan,
+      amount: Number(order.amount),
     });
   } catch (error) {
     console.error("Checkout verify error:", error);

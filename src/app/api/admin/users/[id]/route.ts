@@ -62,6 +62,7 @@ export async function PATCH(
     const updatedUser = await prisma.user.update({
       where: { id },
       data,
+      select: { id: true, email: true, yourName: true, partnerName: true, phone: true, role: true, plan: true, createdAt: true },
     });
 
     return NextResponse.json({ user: updatedUser });

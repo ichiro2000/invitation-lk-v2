@@ -18,10 +18,16 @@ interface BankTransfer {
   createdAt: string;
 }
 
-const statusTabs = ["ALL", "PENDING", "APPROVED", "REJECTED"] as const;
+const statusTabs = ["ALL", "PENDING_REVIEW", "APPROVED", "REJECTED"] as const;
+
+const statusLabels: Record<string, string> = {
+  PENDING_REVIEW: "Pending",
+  APPROVED: "Approved",
+  REJECTED: "Rejected",
+};
 
 const statusBadge: Record<string, string> = {
-  PENDING: "bg-amber-100 text-amber-700",
+  PENDING_REVIEW: "bg-amber-100 text-amber-700",
   APPROVED: "bg-green-100 text-green-700",
   REJECTED: "bg-red-100 text-red-700",
 };
@@ -101,7 +107,7 @@ export default function AdminBankTransfersPage() {
                 : "bg-white text-gray-500 border border-gray-200 hover:bg-gray-50"
             }`}
           >
-            {tab.charAt(0) + tab.slice(1).toLowerCase()}
+            {statusLabels[tab] || "All"}
           </button>
         ))}
       </div>
@@ -151,14 +157,14 @@ export default function AdminBankTransfersPage() {
                     </td>
                     <td className="px-5 py-4">
                       <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${statusBadge[t.status] || "bg-gray-100 text-gray-600"}`}>
-                        {t.status === "PENDING" && <Clock className="w-3 h-3" />}
+                        {t.status === "PENDING_REVIEW" && <Clock className="w-3 h-3" />}
                         {t.status === "APPROVED" && <CheckCircle className="w-3 h-3" />}
                         {t.status === "REJECTED" && <XCircle className="w-3 h-3" />}
-                        {t.status}
+                        {statusLabels[t.status] || t.status}
                       </span>
                     </td>
                     <td className="px-5 py-4">
-                      {t.status === "PENDING" && (
+                      {t.status === "PENDING_REVIEW" && (
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleAction(t.id, "approve")}
