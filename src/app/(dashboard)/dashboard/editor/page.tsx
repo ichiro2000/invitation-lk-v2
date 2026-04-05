@@ -245,21 +245,13 @@ export default function EditorPage() {
 
         {/* ── Preview Panel ── */}
         <div className={`w-full lg:flex-1 lg:block overflow-hidden ${mobileTab === "preview" ? "block" : "hidden"}`}>
-          <div className="flex items-center justify-center h-full bg-gradient-to-br from-gray-100 via-gray-50 to-gray-100 p-4 lg:p-8">
-            {/* Phone Frame */}
-            <div className="relative flex-shrink-0" style={{ width: 300, height: 620 }}>
-              {/* Phone body */}
-              <div className="absolute inset-0 bg-white rounded-[2.5rem] shadow-2xl shadow-gray-300/50 border border-gray-200" />
-              {/* Screen — iframe fills the visible area */}
-              <div className="absolute inset-[1px] rounded-[2.4rem] overflow-hidden">
-                <iframe
-                  key={templateSlug}
-                  src={`/samples/${templateSlug}`}
-                  className="w-full h-full border-0 bg-white"
-                  title="Template Preview"
-                />
-              </div>
-            </div>
+          <div className="h-full bg-gray-50">
+            <iframe
+              key={templateSlug}
+              src={`/samples/${templateSlug}`}
+              className="w-full h-full border-0 bg-white"
+              title="Template Preview"
+            />
           </div>
         </div>
       </div>
