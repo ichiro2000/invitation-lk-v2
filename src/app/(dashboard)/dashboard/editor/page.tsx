@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import {
-  Heart, Calendar, Clock, Plus, X, Save, Eye,
+  Heart, Calendar, Clock, Plus, X, Save, Eye, Pencil, Smartphone,
   ChevronDown, ChevronUp, Loader2, Sparkles,
 } from "lucide-react";
 import type { InvitationEvent } from "@/types/invitation";
@@ -20,7 +20,6 @@ const templateOptions = [
   { slug: "rose-garden", name: "Rose Garden", color: "bg-rose-500" },
 ];
 
-/* ── Collapsible Section ── */
 function Section({ title, icon, defaultOpen = true, children }: {
   title: string; icon: React.ReactNode; defaultOpen?: boolean; children: React.ReactNode;
 }) {
@@ -37,7 +36,6 @@ function Section({ title, icon, defaultOpen = true, children }: {
   );
 }
 
-/* ── Input helpers ── */
 function FormInput({ label, value, onChange, placeholder, type = "text" }: {
   label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string;
 }) {
@@ -80,6 +78,7 @@ export default function EditorPage() {
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [mobileTab, setMobileTab] = useState<"editor" | "preview">("editor");
 
   useEffect(() => {
     async function load() {
@@ -133,8 +132,23 @@ export default function EditorPage() {
   const selectedTemplate = templateOptions.find((t) => t.slug === templateSlug);
 
   return (
-    <div>
-      <div className="max-w-2xl mx-auto space-y-4">
+    <div className="-m-6 lg:-m-8 h-[calc(100vh-0px)] flex flex-col">
+      {/* Mobile Tabs */}
+      <div className="lg:hidden flex border-b border-gray-100 bg-white">
+        <button onClick={() => setMobileTab("editor")}
+          className={`flex-1 py-2.5 text-xs font-semibold text-center flex items-center justify-center gap-1.5 ${mobileTab === "editor" ? "text-rose-600 border-b-2 border-rose-600" : "text-gray-400"}`}>
+          <Pencil className="w-3.5 h-3.5" /> Editor
+        </button>
+        <button onClick={() => setMobileTab("preview")}
+          className={`flex-1 py-2.5 text-xs font-semibold text-center flex items-center justify-center gap-1.5 ${mobileTab === "preview" ? "text-rose-600 border-b-2 border-rose-600" : "text-gray-400"}`}>
+          <Smartphone className="w-3.5 h-3.5" /> Preview
+        </button>
+      </div>
+
+      <div className="flex-1 flex overflow-hidden">
+        {/* ── Editor Panel ── */}
+        <div className={`w-full lg:w-1/2 xl:w-[45%] lg:block bg-white border-r border-gray-100 flex-shrink-0 overflow-y-auto ${mobileTab === "editor" ? "block" : "hidden"}`}>
+          <div className="p-5 lg:p-6 space-y-4 max-w-xl mx-auto">
 
             {/* Template Selector */}
             <div className="relative">
@@ -162,13 +176,11 @@ export default function EditorPage() {
               )}
             </div>
 
-            {/* Couple */}
             <Section title="Couple Details" icon={<Heart className="w-4 h-4 text-rose-500" />}>
               <FormInput label="Groom Name" value={groomName} onChange={setGroomName} placeholder="Enter groom's name" />
               <FormInput label="Bride Name" value={brideName} onChange={setBrideName} placeholder="Enter bride's name" />
             </Section>
 
-            {/* Wedding */}
             <Section title="Wedding Details" icon={<Calendar className="w-4 h-4 text-rose-500" />}>
               <div className="grid grid-cols-2 gap-3">
                 <FormInput label="Date" value={weddingDate} onChange={setWeddingDate} type="date" />
@@ -178,7 +190,6 @@ export default function EditorPage() {
               <FormTextarea label="Address" value={venueAddress} onChange={setVenueAddress} placeholder="Full venue address" />
             </Section>
 
-            {/* Events */}
             <Section title="Events" icon={<Clock className="w-4 h-4 text-rose-500" />}>
               <div className="space-y-3">
                 {events.map((ev, i) => (
@@ -206,7 +217,7 @@ export default function EditorPage() {
               </button>
             </Section>
 
-            {/* Action Buttons */}
+            {/* Actions */}
             <div className="flex gap-2 pt-2 pb-4">
               <button onClick={handleSave} disabled={saving}
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-rose-600 text-white text-sm font-semibold rounded-full hover:bg-rose-700 disabled:opacity-50 transition-colors shadow-lg shadow-rose-600/20">
@@ -223,6 +234,18 @@ export default function EditorPage() {
                 <Sparkles className="w-3 h-3" /> Saved successfully!
               </p>
             )}
+          </div>
+        </div>
+
+        {/* ── Live Preview Panel ── */}
+        <div className={`w-full lg:w-1/2 xl:w-[55%] lg:block overflow-hidden bg-gray-50 ${mobileTab === "preview" ? "block" : "hidden"}`}>
+          <iframe
+            key={templateSlug}
+            src={`/samples/${templateSlug}`}
+            className="w-full h-full border-0 bg-white"
+            title="Template Preview"
+          />
+        </div>
       </div>
     </div>
   );
