@@ -20,16 +20,18 @@ const templateOptions = [
   { slug: "rose-garden", name: "Rose Garden", color: "bg-rose-500" },
 ];
 
-function Section({ title, icon, children }: {
-  title: string; icon: React.ReactNode; children: React.ReactNode;
+function Section({ id, title, icon, activeSection, setActiveSection, children }: {
+  id: string; title: string; icon: React.ReactNode; activeSection: string | null; setActiveSection: (id: string | null) => void; children: React.ReactNode;
 }) {
+  const isOpen = activeSection === id;
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
-      <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-gray-50">
-        {icon}
-        <span className="text-sm font-semibold text-gray-800">{title}</span>
-      </div>
-      <div className="px-5 pb-5 pt-4 space-y-4">{children}</div>
+    <div className="rounded-2xl border border-gray-100 overflow-hidden">
+      <button type="button" onClick={() => setActiveSection(isOpen ? null : id)}
+        className="flex items-center justify-between w-full px-5 py-3.5 hover:bg-gray-50/50 transition-colors">
+        <span className="flex items-center gap-2.5 text-sm font-semibold text-gray-800">{icon}{title}</span>
+        <ChevronDown className={`w-4 h-4 text-gray-300 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+      </button>
+      {isOpen && <div className="px-5 pb-5 pt-1 space-y-4 border-t border-gray-50">{children}</div>}
     </div>
   );
 }
@@ -77,6 +79,7 @@ export default function EditorPage() {
   const [saveMessage, setSaveMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [mobileTab, setMobileTab] = useState<"editor" | "preview">("editor");
+  const [activeSection, setActiveSection] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -145,8 +148,9 @@ export default function EditorPage() {
 
       <div className="flex-1 flex overflow-hidden">
         {/* ── Editor Panel ── */}
-        <div className={`w-full lg:w-1/2 xl:w-[45%] lg:block bg-white border-r border-gray-100 flex-shrink-0 overflow-y-auto ${mobileTab === "editor" ? "block" : "hidden"}`}>
-          <div className="p-5 lg:p-6 space-y-4 max-w-xl mx-auto">
+        <div className={`w-full lg:w-1/2 xl:w-[45%] lg:block bg-gray-50 border-r border-gray-100 flex-shrink-0 overflow-y-auto ${mobileTab === "editor" ? "block" : "hidden"}`}>
+          <div className="p-5 lg:p-6 max-w-xl mx-auto">
+            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 lg:p-6 space-y-4">
 
             {/* Template Selector */}
             <div className="relative">
@@ -174,12 +178,12 @@ export default function EditorPage() {
               )}
             </div>
 
-            <Section title="Couple Details" icon={<Heart className="w-4 h-4 text-rose-500" />}>
+            <Section id="couple" title="Couple Details" icon={<Heart className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
               <FormInput label="Groom Name" value={groomName} onChange={setGroomName} placeholder="Enter groom's name" />
               <FormInput label="Bride Name" value={brideName} onChange={setBrideName} placeholder="Enter bride's name" />
             </Section>
 
-            <Section title="Wedding Details" icon={<Calendar className="w-4 h-4 text-rose-500" />}>
+            <Section id="wedding" title="Wedding Details" icon={<Calendar className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
               <div className="grid grid-cols-2 gap-3">
                 <FormInput label="Date" value={weddingDate} onChange={setWeddingDate} type="date" />
                 <FormInput label="Time" value={weddingTime} onChange={setWeddingTime} type="time" />
@@ -188,7 +192,7 @@ export default function EditorPage() {
               <FormTextarea label="Address" value={venueAddress} onChange={setVenueAddress} placeholder="Full venue address" />
             </Section>
 
-            <Section title="Events" icon={<Clock className="w-4 h-4 text-rose-500" />}>
+            <Section id="events" title="Events" icon={<Clock className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
               <div className="space-y-3">
                 {events.map((ev, i) => (
                   <div key={i} className="relative rounded-xl border border-gray-100 bg-gray-50/80 p-3.5 space-y-3">
@@ -232,6 +236,7 @@ export default function EditorPage() {
                 <Sparkles className="w-3 h-3" /> Saved successfully!
               </p>
             )}
+            </div>
           </div>
         </div>
 
