@@ -132,10 +132,10 @@ export default function VintageBotanical({ data }: { data?: InvitationData } = {
           <p className="tracking-[0.3em] uppercase text-xs mb-8 text-green-100">Counting Down</p>
           <Countdown
             targetDate={`${date}T09:00:00`}
-            valueClassName="text-5xl sm:text-6xl font-light text-white"
+            valueClassName="text-3xl sm:text-6xl font-light text-white"
             labelClassName="text-[10px] text-green-200 tracking-wider uppercase mt-2"
-            boxClassName="flex flex-col items-center bg-white/10 backdrop-blur-sm rounded-2xl px-5 py-4 min-w-[85px]"
-            separatorClassName="text-3xl font-light text-white/30 mx-1 self-start mt-2"
+            boxClassName="flex flex-col items-center bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl px-3 sm:px-5 py-4 min-w-[60px] sm:min-w-[85px]"
+            separatorClassName="text-xl sm:text-3xl font-light text-white/30 mx-1 self-start mt-2"
           />
         </motion.div>
       </section>

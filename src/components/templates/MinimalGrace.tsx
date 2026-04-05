@@ -135,10 +135,10 @@ export default function MinimalGrace({ data }: { data?: InvitationData } = {}) {
           <DiamondOrnament className="mb-10" />
           <Countdown
             targetDate={`${date}T10:00:00`}
-            valueClassName="text-4xl sm:text-7xl font-extralight text-gray-900"
+            valueClassName="text-3xl sm:text-7xl font-extralight text-gray-900"
             labelClassName="text-[9px] text-stone-500 tracking-[0.4em] uppercase mt-4"
-            boxClassName="flex flex-col items-center min-w-[80px] sm:min-w-[110px]"
-            separatorClassName="text-4xl font-extralight text-stone-300 mx-4 self-start"
+            boxClassName="flex flex-col items-center min-w-[60px] sm:min-w-[110px]"
+            separatorClassName="text-2xl sm:text-4xl font-extralight text-stone-300 mx-1 sm:mx-4 self-start"
           />
           <DiamondOrnament className="mt-10" />
         </motion.div>

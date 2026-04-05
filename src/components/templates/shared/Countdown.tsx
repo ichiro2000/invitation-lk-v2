@@ -25,10 +25,10 @@ function calculate(targetDate: string) {
 export default function Countdown({
   targetDate,
   className = "",
-  labelClassName = "text-xs text-gray-400 mt-1",
-  valueClassName = "text-2xl font-bold",
+  labelClassName = "text-[10px] sm:text-xs text-gray-400 mt-1",
+  valueClassName = "text-lg sm:text-2xl font-bold",
   boxClassName = "flex flex-col items-center",
-  separatorClassName = "text-2xl font-light opacity-30 mx-1",
+  separatorClassName = "text-lg sm:text-2xl font-light opacity-30 mx-0.5 sm:mx-1",
 }: CountdownProps) {
   const [timeLeft, setTimeLeft] = useState(() => calculate(targetDate));
 
@@ -44,14 +44,14 @@ export default function Countdown({
   const items = [
     { value: timeLeft.days, label: "Days" },
     { value: timeLeft.hours, label: "Hours" },
-    { value: timeLeft.minutes, label: "Minutes" },
-    { value: timeLeft.seconds, label: "Seconds" },
+    { value: timeLeft.minutes, label: "Min" },
+    { value: timeLeft.seconds, label: "Sec" },
   ];
 
   return (
-    <div className={`flex items-center justify-center gap-4 ${className}`}>
+    <div className={`flex items-center justify-center gap-2 sm:gap-4 ${className}`}>
       {items.map((item, i) => (
-        <div key={item.label} className="flex items-center gap-4">
+        <div key={item.label} className="flex items-center gap-2 sm:gap-4">
           <div className={boxClassName}>
             <span className={valueClassName}>
               {String(item.value).padStart(2, "0")}

@@ -246,10 +246,10 @@ export default function RoyalElegance({ data }: { data?: InvitationData } = {}) 
           <p className="text-[#c9a96e] tracking-[0.4em] uppercase text-xs mb-10">Counting Down To Our Big Day</p>
           <Countdown
             targetDate={`${date}T16:00:00`}
-            valueClassName="text-5xl sm:text-6xl font-light text-white"
+            valueClassName="text-3xl sm:text-6xl font-light text-white"
             labelClassName="text-[10px] text-[#c9a96e] tracking-[0.3em] uppercase mt-3"
-            boxClassName="flex flex-col items-center min-w-[80px] sm:min-w-[100px]"
-            separatorClassName="text-4xl font-light text-[#c9a96e]/20 mx-2 self-start"
+            boxClassName="flex flex-col items-center min-w-[60px] sm:min-w-[100px]"
+            separatorClassName="text-2xl sm:text-4xl font-light text-[#c9a96e]/20 mx-1 sm:mx-2 self-start"
           />
         </motion.div>
       </section>

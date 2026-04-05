@@ -210,9 +210,9 @@ function CountdownTimer() {
     <div className="flex items-center justify-center gap-3 sm:gap-5">
       {[
         { value: timeLeft.days, label: "Days" },
-        { value: timeLeft.hours, label: "Hours" },
-        { value: timeLeft.minutes, label: "Minutes" },
-        { value: timeLeft.seconds, label: "Seconds" },
+        { value: timeLeft.hours, label: "Hrs" },
+        { value: timeLeft.minutes, label: "Min" },
+        { value: timeLeft.seconds, label: "Sec" },
       ].map((item, i) => (
         <motion.div
           key={item.label}
@@ -220,7 +220,7 @@ function CountdownTimer() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: i * 0.1 }}
-          className="flex flex-col items-center bg-white/10 backdrop-blur-sm rounded-2xl px-3 sm:px-6 py-4 min-w-[65px] sm:min-w-[90px]"
+          className="flex flex-col items-center bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl px-2 sm:px-6 py-3 sm:py-4 min-w-[55px] sm:min-w-[90px]"
         >
           <motion.span
             key={item.value}

@@ -364,10 +364,10 @@ export default function SinhalaMangalya({ data }: { data?: InvitationData } = {}
           <p className="tracking-[0.4em] uppercase text-xs mb-10 text-pink-100">විවාහ දිනය දක්වා</p>
           <Countdown
             targetDate={`${date}T09:00:00`}
-            valueClassName="text-5xl sm:text-6xl font-light text-white"
+            valueClassName="text-3xl sm:text-6xl font-light text-white"
             labelClassName="text-[10px] text-pink-200 tracking-[0.2em] uppercase mt-3"
-            boxClassName="flex flex-col items-center bg-white/10 backdrop-blur-sm rounded-2xl px-6 py-5 min-w-[85px]"
-            separatorClassName="text-3xl font-light text-white/20 mx-1 self-start mt-3"
+            boxClassName="flex flex-col items-center bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl px-3 sm:px-6 py-5 min-w-[60px] sm:min-w-[85px]"
+            separatorClassName="text-xl sm:text-3xl font-light text-white/20 mx-1 self-start mt-3"
           />
         </motion.div>
       </section>

@@ -233,10 +233,10 @@ export default function TropicalParadise({ data }: { data?: InvitationData } = {
           <p className="tracking-[0.3em] uppercase text-xs mb-8 text-teal-100">Toes in the sand in</p>
           <Countdown
             targetDate={`${date}T16:00:00`}
-            valueClassName="text-5xl sm:text-6xl font-light text-white"
+            valueClassName="text-3xl sm:text-6xl font-light text-white"
             labelClassName="text-[10px] text-teal-200 tracking-[0.2em] uppercase mt-3"
-            boxClassName="flex flex-col items-center bg-white/10 rounded-2xl px-6 py-5 min-w-[90px] backdrop-blur-sm"
-            separatorClassName="text-3xl font-light text-white/20 mx-1 self-start mt-3"
+            boxClassName="flex flex-col items-center bg-white/10 rounded-xl sm:rounded-2xl px-3 sm:px-6 py-5 min-w-[60px] sm:min-w-[90px] backdrop-blur-sm"
+            separatorClassName="text-xl sm:text-3xl font-light text-white/20 mx-1 self-start mt-3"
           />
         </motion.div>
       </section>

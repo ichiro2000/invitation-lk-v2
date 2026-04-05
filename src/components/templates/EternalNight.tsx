@@ -256,10 +256,10 @@ export default function EternalNight({ data }: { data?: InvitationData } = {}) {
           <p className="text-[#c4a35a] tracking-[0.4em] uppercase text-xs mb-10">The Night Begins In</p>
           <Countdown
             targetDate={`${date}T20:00:00`}
-            valueClassName="text-5xl sm:text-6xl font-extralight text-white"
+            valueClassName="text-3xl sm:text-6xl font-extralight text-white"
             labelClassName="text-[10px] text-[#c4a35a]/50 tracking-[0.3em] uppercase mt-3"
-            boxClassName="flex flex-col items-center bg-white/[0.03] border border-white/5 rounded-2xl px-6 py-5 min-w-[90px] sm:min-w-[110px] backdrop-blur-sm"
-            separatorClassName="text-3xl font-extralight text-[#c4a35a]/15 mx-1 self-start mt-3"
+            boxClassName="flex flex-col items-center bg-white/[0.03] border border-white/5 rounded-xl sm:rounded-2xl px-3 sm:px-6 py-5 min-w-[60px] sm:min-w-[110px] backdrop-blur-sm"
+            separatorClassName="text-xl sm:text-3xl font-extralight text-[#c4a35a]/15 mx-1 self-start mt-3"
           />
         </motion.div>
       </section>

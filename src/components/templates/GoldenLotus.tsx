@@ -239,10 +239,10 @@ export default function GoldenLotus({ data }: { data?: InvitationData } = {}) {
           <p className="tracking-[0.4em] uppercase text-xs mb-10 text-[#1a0a0a]/50">The Celebration Begins In</p>
           <Countdown
             targetDate={`${date}T09:00:00`}
-            valueClassName="text-5xl sm:text-6xl font-light text-[#1a0a0a]"
+            valueClassName="text-3xl sm:text-6xl font-light text-[#1a0a0a]"
             labelClassName="text-[10px] text-[#1a0a0a]/40 tracking-[0.3em] uppercase mt-3"
-            boxClassName="flex flex-col items-center bg-white/20 backdrop-blur-sm rounded-2xl px-6 py-5 min-w-[90px]"
-            separatorClassName="text-4xl font-light text-[#1a0a0a]/15 mx-1 self-start mt-2"
+            boxClassName="flex flex-col items-center bg-white/20 backdrop-blur-sm rounded-xl sm:rounded-2xl px-3 sm:px-6 py-5 min-w-[60px] sm:min-w-[90px]"
+            separatorClassName="text-2xl sm:text-4xl font-light text-[#1a0a0a]/15 mx-1 self-start mt-2"
           />
         </motion.div>
       </section>

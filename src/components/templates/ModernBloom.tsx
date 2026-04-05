@@ -206,10 +206,10 @@ export default function ModernBloom({ data }: { data?: InvitationData } = {}) {
           <p className="text-pink-400 tracking-[0.3em] uppercase text-xs mb-8">Counting the days</p>
           <Countdown
             targetDate={`${date}T15:00:00`}
-            valueClassName="text-5xl sm:text-6xl font-extralight text-gray-800"
+            valueClassName="text-3xl sm:text-6xl font-extralight text-gray-800"
             labelClassName="text-[10px] text-pink-400 tracking-[0.2em] uppercase mt-3"
-            boxClassName="flex flex-col items-center bg-white rounded-2xl shadow-lg shadow-pink-100/50 px-6 py-5 min-w-[90px] sm:min-w-[100px]"
-            separatorClassName="text-3xl font-extralight text-pink-200 mx-1 self-start mt-3"
+            boxClassName="flex flex-col items-center bg-white rounded-xl sm:rounded-2xl shadow-lg shadow-pink-100/50 px-3 sm:px-6 py-5 min-w-[60px] sm:min-w-[100px]"
+            separatorClassName="text-xl sm:text-3xl font-extralight text-pink-200 mx-1 self-start mt-3"
           />
         </motion.div>
       </section>
