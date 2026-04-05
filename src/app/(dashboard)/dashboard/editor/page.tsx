@@ -45,7 +45,7 @@ function FormInput({ label, value, onChange, placeholder, type = "text" }: {
     <div>
       <label className="block text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1.5">{label}</label>
       <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-        className="w-full px-3.5 py-2.5 text-sm border border-gray-200 rounded-xl bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 transition-all placeholder:text-gray-300" />
+        className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-full bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 transition-all placeholder:text-gray-300" />
     </div>
   );
 }
@@ -57,7 +57,7 @@ function FormTextarea({ label, value, onChange, placeholder }: {
     <div>
       <label className="block text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1.5">{label}</label>
       <textarea value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} rows={2}
-        className="w-full px-3.5 py-2.5 text-sm border border-gray-200 rounded-xl bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 transition-all resize-none placeholder:text-gray-300" />
+        className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-2xl bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 transition-all resize-none placeholder:text-gray-300" />
     </div>
   );
 }
@@ -186,7 +186,7 @@ export default function EditorPage() {
             <div className="relative">
               <label className="block text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1.5">Template</label>
               <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="w-full flex items-center gap-3 px-3.5 py-2.5 text-sm border border-gray-200 rounded-xl bg-white hover:border-gray-300 transition-colors">
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm border border-gray-200 rounded-full bg-white hover:border-gray-300 transition-colors">
                 <div className={`w-5 h-5 rounded-md ${selectedTemplate?.color || "bg-gray-300"}`} />
                 <span className="flex-1 text-left font-medium text-gray-800">{selectedTemplate?.name || "Select"}</span>
                 <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${dropdownOpen ? "rotate-180" : ""}`} />
