@@ -452,6 +452,53 @@ export default function EditorPage() {
                 onChange={(v) => setContentOverrides(p => ({ ...p, story: { ...p.story, title: v } }))}
                 placeholder={defaultConfig.content?.story?.title || "Our Love Story"}
               />
+              {/* Love Story Timeline */}
+              <div>
+                <label className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-2 block">Love Story Timeline</label>
+                <div className="space-y-3">
+                  {(contentOverrides.story?.items || []).map((item, i) => (
+                    <div key={i} className="relative rounded-xl border border-gray-100 bg-gray-50/80 p-3 space-y-2">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Story {i + 1}</span>
+                        <button type="button" onClick={() => {
+                          const items = [...(contentOverrides.story?.items || [])];
+                          items.splice(i, 1);
+                          setContentOverrides(p => ({ ...p, story: { ...p.story, items } }));
+                        }} className="p-1 rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-500 transition-colors">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <FormInput label="Year" value={item.year} onChange={(v) => {
+                          const items = [...(contentOverrides.story?.items || [])];
+                          items[i] = { ...items[i], year: v };
+                          setContentOverrides(p => ({ ...p, story: { ...p.story, items } }));
+                        }} placeholder="2020" />
+                        <div className="col-span-2">
+                          <FormInput label="Title" value={item.title} onChange={(v) => {
+                            const items = [...(contentOverrides.story?.items || [])];
+                            items[i] = { ...items[i], title: v };
+                            setContentOverrides(p => ({ ...p, story: { ...p.story, items } }));
+                          }} placeholder="First Meeting" />
+                        </div>
+                      </div>
+                      <FormTextarea label="Description" value={item.description} onChange={(v) => {
+                        const items = [...(contentOverrides.story?.items || [])];
+                        items[i] = { ...items[i], description: v };
+                        setContentOverrides(p => ({ ...p, story: { ...p.story, items } }));
+                      }} placeholder="Tell your story..." />
+                    </div>
+                  ))}
+                </div>
+                <button type="button" onClick={() => {
+                  const items = [...(contentOverrides.story?.items || [])];
+                  items.push({ year: "", title: "", description: "" });
+                  setContentOverrides(p => ({ ...p, story: { ...p.story, items } }));
+                }} className="flex items-center gap-1.5 text-xs text-rose-600 hover:text-rose-700 font-semibold mt-2 py-1">
+                  <Plus className="w-3.5 h-3.5" /> Add Story Item
+                </button>
+              </div>
+
               <FormInput
                 label="RSVP Title"
                 value={contentOverrides.rsvp?.title || ""}
@@ -463,6 +510,12 @@ export default function EditorPage() {
                 value={contentOverrides.rsvp?.deadline || ""}
                 onChange={(v) => setContentOverrides(p => ({ ...p, rsvp: { ...p.rsvp, deadline: v } }))}
                 placeholder="Kindly respond by..."
+              />
+              <FormInput
+                label="Footer Message"
+                value={contentOverrides.footer?.message || ""}
+                onChange={(v) => setContentOverrides(p => ({ ...p, footer: { ...p.footer, message: v } }))}
+                placeholder="Custom footer message (optional)"
               />
             </Section>
 
