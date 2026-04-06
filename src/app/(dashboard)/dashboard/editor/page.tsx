@@ -116,7 +116,13 @@ export default function EditorPage() {
           setTemplateSlug(inv.templateSlug || "royal-elegance");
           setGroomName(inv.groomName || "");
           setBrideName(inv.brideName || "");
-          if (inv.weddingDate) setWeddingDate(new Date(inv.weddingDate).toISOString().split("T")[0]);
+          if (inv.weddingDate) {
+            const d = new Date(inv.weddingDate);
+            setWeddingDate(d.toISOString().split("T")[0]);
+            const h = d.getUTCHours().toString().padStart(2, "0");
+            const m = d.getUTCMinutes().toString().padStart(2, "0");
+            if (h !== "00" || m !== "00") setWeddingTime(`${h}:${m}`);
+          }
           setVenue(inv.venue || "");
           setVenueAddress(inv.venueAddress || "");
           if (inv.events?.length) {
@@ -198,7 +204,7 @@ export default function EditorPage() {
       const payload = {
         groomName,
         brideName,
-        weddingDate: weddingDate ? new Date(weddingDate).toISOString() : undefined,
+        weddingDate: weddingDate ? new Date(`${weddingDate}T${weddingTime || "16:00"}:00`).toISOString() : undefined,
         venue,
         venueAddress,
         templateSlug,
