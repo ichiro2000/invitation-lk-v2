@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Heart, Menu, X } from "lucide-react";
+import { Heart, Menu, X, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 const links = [
   { href: "/features", label: "Features" },
@@ -16,6 +17,8 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const isLoggedIn = !!session?.user;
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -66,15 +69,23 @@ export default function Navbar() {
 
           {/* Desktop actions */}
           <div className="hidden md:flex items-center gap-2">
-            <Link
-              href="/login"
-              className="px-4 py-2 text-[0.8125rem] font-medium text-slate-500 hover:text-slate-900 rounded-lg transition-colors duration-200"
-            >
-              Sign In
-            </Link>
-            <Link href="/onboard" className="btn-primary text-[0.8125rem] py-2.5 px-5">
-              Get Started Free
-            </Link>
+            {isLoggedIn ? (
+              <Link href="/dashboard" className="btn-primary text-[0.8125rem] py-2.5 px-5 flex items-center gap-2">
+                <LayoutDashboard className="w-4 h-4" /> Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="px-4 py-2 text-[0.8125rem] font-medium text-slate-500 hover:text-slate-900 rounded-lg transition-colors duration-200"
+                >
+                  Sign In
+                </Link>
+                <Link href="/onboard" className="btn-primary text-[0.8125rem] py-2.5 px-5">
+                  Get Started Free
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile toggle */}
@@ -111,12 +122,20 @@ export default function Navbar() {
             );
           })}
           <div className="border-t border-slate-100 mt-2 pt-2">
-            <Link href="/login" className="block py-2.5 px-4 text-sm font-medium text-slate-500 rounded-xl hover:bg-slate-50">
-              Sign In
-            </Link>
-            <Link href="/onboard" className="block mt-1 btn-primary w-full text-center">
-              Get Started Free
-            </Link>
+            {isLoggedIn ? (
+              <Link href="/dashboard" className="block mt-1 btn-primary w-full text-center flex items-center justify-center gap-2">
+                <LayoutDashboard className="w-4 h-4" /> Go to Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link href="/login" className="block py-2.5 px-4 text-sm font-medium text-slate-500 rounded-xl hover:bg-slate-50">
+                  Sign In
+                </Link>
+                <Link href="/onboard" className="block mt-1 btn-primary w-full text-center">
+                  Get Started Free
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>
