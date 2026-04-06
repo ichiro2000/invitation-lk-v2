@@ -92,6 +92,8 @@ model Invitation {
   venue       String
   venueAddress String?
 
+  config      Json?
+
   isPublished Boolean @default(false)
   isPaid      Boolean @default(false)
 

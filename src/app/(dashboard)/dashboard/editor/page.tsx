@@ -4,21 +4,17 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import {
   Heart, Calendar, Clock, Plus, X, Save, Eye, Pencil, Smartphone,
-  ChevronDown, Loader2, Sparkles,
+  ChevronDown, ChevronUp, Loader2, Sparkles, Palette, LayoutList, Type,
 } from "lucide-react";
 import type { InvitationEvent } from "@/types/invitation";
+import type { TemplateConfig, ThemeConfig, SectionConfig, ContentOverrides } from "@/types/template-config";
+import { DEFAULT_SECTIONS, SECTION_LABELS, FONT_OPTIONS } from "@/types/template-config";
+import { TEMPLATE_REGISTRY, getDefaultConfig, getDefaultTheme } from "@/lib/template-registry";
+import { deepMerge } from "@/lib/deep-merge";
 
-const templateOptions = [
-  { slug: "royal-elegance", name: "Royal Elegance", color: "bg-[#5c2828]" },
-  { slug: "modern-bloom", name: "Modern Bloom", color: "bg-pink-300" },
-  { slug: "golden-lotus", name: "Golden Lotus", color: "bg-[#2a1515]" },
-  { slug: "minimal-grace", name: "Minimal Grace", color: "bg-stone-200" },
-  { slug: "tropical-paradise", name: "Tropical Paradise", color: "bg-teal-500" },
-  { slug: "eternal-night", name: "Eternal Night", color: "bg-[#1a2744]" },
-  { slug: "sinhala-mangalya", name: "Sinhala Mangalya", color: "bg-pink-400" },
-  { slug: "vintage-botanical", name: "Vintage Botanical", color: "bg-green-600" },
-  { slug: "rose-garden", name: "Rose Garden", color: "bg-rose-500" },
-];
+/* ------------------------------------------------------------------ */
+/*  Reusable sub-components                                           */
+/* ------------------------------------------------------------------ */
 
 function Section({ id, title, icon, activeSection, setActiveSection, children }: {
   id: string; title: string; icon: React.ReactNode; activeSection: string | null; setActiveSection: (id: string | null) => void; children: React.ReactNode;
@@ -60,8 +56,14 @@ function FormTextarea({ label, value, onChange, placeholder }: {
   );
 }
 
+/* ------------------------------------------------------------------ */
+/*  Editor Page                                                       */
+/* ------------------------------------------------------------------ */
+
 export default function EditorPage() {
   const { data: session } = useSession();
+
+  /* ---- Core invitation fields ---- */
   const [templateSlug, setTemplateSlug] = useState("royal-elegance");
   const [groomName, setGroomName] = useState("");
   const [brideName, setBrideName] = useState("");
@@ -73,6 +75,13 @@ export default function EditorPage() {
     { title: "Wedding Ceremony", time: "4:00 PM", venue: "" },
     { title: "Reception", time: "7:00 PM", venue: "" },
   ]);
+
+  /* ---- Config state (NEW) ---- */
+  const [themeOverrides, setThemeOverrides] = useState<Partial<ThemeConfig>>({});
+  const [sectionConfigs, setSectionConfigs] = useState<SectionConfig[]>([...DEFAULT_SECTIONS]);
+  const [contentOverrides, setContentOverrides] = useState<ContentOverrides>({});
+
+  /* ---- UI state ---- */
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [existingId, setExistingId] = useState<string | null>(null);
   const [invitationSlug, setInvitationSlug] = useState<string | null>(null);
@@ -81,9 +90,20 @@ export default function EditorPage() {
   const [loading, setLoading] = useState(true);
   const [mobileTab, setMobileTab] = useState<"editor" | "preview">("editor");
   const [activeSection, setActiveSection] = useState<string | null>(null);
-  const [previewKey, setPreviewKey] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
+  /* ---- Derived config values ---- */
+  const defaultConfig = getDefaultConfig(templateSlug);
+  const effectiveTheme: ThemeConfig = { ...getDefaultTheme(templateSlug), ...themeOverrides };
+
+  const userConfig: TemplateConfig = {
+    theme: Object.keys(themeOverrides).length > 0 ? themeOverrides : undefined,
+    sections: sectionConfigs,
+    content: Object.keys(contentOverrides).length > 0 ? contentOverrides : undefined,
+  };
+  const mergedConfig = deepMerge(defaultConfig, userConfig as Record<string, unknown>) as TemplateConfig;
+
+  /* ---- Load existing invitation ---- */
   useEffect(() => {
     async function load() {
       try {
@@ -104,6 +124,13 @@ export default function EditorPage() {
               title: e.title, time: e.time, venue: e.venue || "",
             })));
           }
+          /* Load config */
+          if (inv.config) {
+            const c = inv.config as TemplateConfig;
+            if (c.theme) setThemeOverrides(c.theme);
+            if (c.sections) setSectionConfigs(c.sections);
+            if (c.content) setContentOverrides(c.content);
+          }
         }
       } catch { /* no existing invitation */ }
       finally { setLoading(false); }
@@ -111,31 +138,128 @@ export default function EditorPage() {
     load();
   }, []);
 
+  /* ---- PostMessage preview updates ---- */
+  const sendPreviewUpdate = useCallback(() => {
+    const previewData = {
+      groomName: groomName || "Groom",
+      brideName: brideName || "Bride",
+      weddingDate: weddingDate || new Date().toISOString().split("T")[0],
+      weddingTime: weddingTime
+        ? new Date(`2000-01-01T${weddingTime}`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })
+        : "4:00 PM",
+      venue: venue || "Wedding Venue",
+      venueAddress: venueAddress || "",
+      events: events.length ? events : [{ title: "Ceremony", time: "4:00 PM" }],
+    };
+
+    iframeRef.current?.contentWindow?.postMessage({
+      type: "preview-update",
+      templateSlug,
+      data: previewData,
+      config: userConfig,
+    }, window.location.origin);
+  }, [templateSlug, groomName, brideName, weddingDate, weddingTime, venue, venueAddress, events, themeOverrides, sectionConfigs, contentOverrides]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* Send on every state change */
+  useEffect(() => {
+    sendPreviewUpdate();
+  }, [sendPreviewUpdate]);
+
+  /* Listen for iframe ready */
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === "preview-ready") sendPreviewUpdate();
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [sendPreviewUpdate]);
+
+  /* ---- Template change resets config ---- */
+  const handleTemplateChange = (slug: string) => {
+    setTemplateSlug(slug);
+    setThemeOverrides({});
+    setSectionConfigs([...DEFAULT_SECTIONS]);
+    setContentOverrides({});
+    setDropdownOpen(false);
+  };
+
+  /* ---- Save ---- */
   const handleSave = useCallback(async () => {
     setSaving(true); setSaveMessage("");
     try {
-      const payload = { groomName, brideName, weddingDate: weddingDate ? new Date(weddingDate).toISOString() : undefined, venue, venueAddress, templateSlug, events };
+      /* Build config payload */
+      const config: TemplateConfig = {};
+      if (Object.keys(themeOverrides).length > 0) config.theme = themeOverrides;
+      if (sectionConfigs.some((s, i) => s.visible !== DEFAULT_SECTIONS[i]?.visible || s.order !== DEFAULT_SECTIONS[i]?.order)) {
+        config.sections = sectionConfigs;
+      }
+      if (Object.keys(contentOverrides).length > 0) config.content = contentOverrides;
+
+      const payload = {
+        groomName,
+        brideName,
+        weddingDate: weddingDate ? new Date(weddingDate).toISOString() : undefined,
+        venue,
+        venueAddress,
+        templateSlug,
+        events,
+        config: Object.keys(config).length > 0 ? config : null,
+      };
       const method = existingId ? "PATCH" : "POST";
       const res = await fetch("/api/invitations", { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const json = await res.json();
-      if (res.ok) { if (json.invitation?.id) { setExistingId(json.invitation.id); setInvitationSlug(json.invitation.slug); } setSaveMessage("success"); setPreviewKey(k => k + 1); }
-      else setSaveMessage(json.error || "Failed to save");
+      if (res.ok) {
+        if (json.invitation?.id) { setExistingId(json.invitation.id); setInvitationSlug(json.invitation.slug); }
+        setSaveMessage("success");
+      } else {
+        setSaveMessage(json.error || "Failed to save");
+      }
     } catch { setSaveMessage("Network error"); }
     finally { setSaving(false); setTimeout(() => setSaveMessage(""), 3000); }
-  }, [groomName, brideName, weddingDate, venue, venueAddress, templateSlug, events, existingId]);
+  }, [groomName, brideName, weddingDate, venue, venueAddress, templateSlug, events, existingId, themeOverrides, sectionConfigs, contentOverrides]);
 
+  /* ---- Section reorder helpers ---- */
+  const toggleSection = (id: string) => {
+    setSectionConfigs(prev => prev.map(s => s.id === id ? { ...s, visible: !s.visible } : s));
+  };
+
+  const moveSectionUp = (id: string) => {
+    setSectionConfigs(prev => {
+      const sorted = [...prev].sort((a, b) => a.order - b.order);
+      const idx = sorted.findIndex(s => s.id === id);
+      if (idx <= 0) return prev;
+      const newOrder = sorted[idx - 1].order;
+      sorted[idx - 1].order = sorted[idx].order;
+      sorted[idx].order = newOrder;
+      return [...sorted];
+    });
+  };
+
+  const moveSectionDown = (id: string) => {
+    setSectionConfigs(prev => {
+      const sorted = [...prev].sort((a, b) => a.order - b.order);
+      const idx = sorted.findIndex(s => s.id === id);
+      if (idx < 0 || idx >= sorted.length - 1) return prev;
+      const newOrder = sorted[idx + 1].order;
+      sorted[idx + 1].order = sorted[idx].order;
+      sorted[idx].order = newOrder;
+      return [...sorted];
+    });
+  };
+
+  /* ---- Event helpers ---- */
   const updateEvent = (i: number, field: keyof InvitationEvent, value: string) => {
     setEvents((prev) => prev.map((ev, idx) => (idx === i ? { ...ev, [field]: value } : ev)));
   };
 
+  /* ---- Loading state ---- */
   if (loading) return (
     <div className="flex items-center justify-center min-h-[60vh]">
       <Loader2 className="w-6 h-6 animate-spin text-rose-500" />
     </div>
   );
 
-  const selectedTemplate = templateOptions.find((t) => t.slug === templateSlug);
-  const previewUrl = invitationSlug ? `/i/${invitationSlug}` : `/samples/${templateSlug}`;
+  const selectedTemplate = TEMPLATE_REGISTRY.find((t) => t.slug === templateSlug);
 
   return (
     <div className="-m-6 lg:-m-8 h-[calc(100vh-0px)] flex flex-col">
@@ -162,7 +286,7 @@ export default function EditorPage() {
               <label className="block text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1.5">Template</label>
               <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm border border-gray-200 rounded-full bg-white hover:border-gray-300 transition-colors">
-                <div className={`w-5 h-5 rounded-md ${selectedTemplate?.color || "bg-gray-300"}`} />
+                <div className={`w-5 h-5 rounded-md ${selectedTemplate?.colorSwatch || "bg-gray-300"}`} />
                 <span className="flex-1 text-left font-medium text-gray-800">{selectedTemplate?.name || "Select"}</span>
                 <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${dropdownOpen ? "rotate-180" : ""}`} />
               </button>
@@ -170,11 +294,11 @@ export default function EditorPage() {
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setDropdownOpen(false)} />
                   <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden">
-                    {templateOptions.map((t) => (
+                    {TEMPLATE_REGISTRY.map((t) => (
                       <button key={t.slug} type="button"
-                        onClick={() => { setTemplateSlug(t.slug); setDropdownOpen(false); }}
+                        onClick={() => handleTemplateChange(t.slug)}
                         className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-sm hover:bg-rose-50 transition-colors ${templateSlug === t.slug ? "bg-rose-50 text-rose-700 font-medium" : "text-gray-700"}`}>
-                        <div className={`w-4 h-4 rounded ${t.color}`} />
+                        <div className={`w-4 h-4 rounded ${t.colorSwatch}`} />
                         {t.name}
                       </button>
                     ))}
@@ -183,11 +307,13 @@ export default function EditorPage() {
               )}
             </div>
 
+            {/* 1. Couple Details */}
             <Section id="couple" title="Couple Details" icon={<Heart className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
               <FormInput label="Groom Name" value={groomName} onChange={setGroomName} placeholder="Enter groom's name" />
               <FormInput label="Bride Name" value={brideName} onChange={setBrideName} placeholder="Enter bride's name" />
             </Section>
 
+            {/* 2. Wedding Details */}
             <Section id="wedding" title="Wedding Details" icon={<Calendar className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
               <div className="grid grid-cols-2 gap-3">
                 <FormInput label="Date" value={weddingDate} onChange={setWeddingDate} type="date" />
@@ -197,6 +323,7 @@ export default function EditorPage() {
               <FormTextarea label="Address" value={venueAddress} onChange={setVenueAddress} placeholder="Full venue address" />
             </Section>
 
+            {/* 3. Events */}
             <Section id="events" title="Events" icon={<Clock className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
               <div className="space-y-3">
                 {events.map((ev, i) => (
@@ -222,6 +349,114 @@ export default function EditorPage() {
                 className="flex items-center gap-1.5 text-xs text-rose-600 hover:text-rose-700 font-semibold mt-2 py-1">
                 <Plus className="w-3.5 h-3.5" /> Add Event
               </button>
+            </Section>
+
+            {/* 4. Style & Colors (NEW) */}
+            <Section id="style" title="Style & Colors" icon={<Palette className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
+              <div className="space-y-4">
+                {[
+                  { key: "primaryColor", label: "Primary Color" },
+                  { key: "secondaryColor", label: "Secondary Color" },
+                  { key: "backgroundColor", label: "Background" },
+                  { key: "textColor", label: "Text Color" },
+                  { key: "accentColor", label: "Accent Color" },
+                ].map(({ key, label }) => (
+                  <div key={key} className="flex items-center justify-between">
+                    <label className="text-xs text-gray-500">{label}</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={(themeOverrides as Record<string, string>)[key] || effectiveTheme[key as keyof ThemeConfig] as string}
+                        onChange={(e) => setThemeOverrides(prev => ({ ...prev, [key]: e.target.value }))}
+                        className="w-8 h-8 rounded-full border border-gray-200 cursor-pointer"
+                      />
+                      {(themeOverrides as Record<string, string>)[key] && (
+                        <button
+                          onClick={() => setThemeOverrides(prev => {
+                            const n = { ...prev };
+                            delete (n as Record<string, unknown>)[key];
+                            return n;
+                          })}
+                          className="text-[10px] text-gray-400 hover:text-rose-500"
+                        >
+                          Reset
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                <div>
+                  <label className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1.5 block">Font Family</label>
+                  <select
+                    value={themeOverrides.fontFamily || effectiveTheme.fontFamily}
+                    onChange={(e) => setThemeOverrides(prev => ({ ...prev, fontFamily: e.target.value as ThemeConfig["fontFamily"] }))}
+                    className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-full bg-gray-50/50"
+                  >
+                    {FONT_OPTIONS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+                  </select>
+                </div>
+              </div>
+            </Section>
+
+            {/* 5. Sections (NEW) */}
+            <Section id="sections" title="Sections" icon={<LayoutList className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
+              <div className="space-y-2">
+                {[...sectionConfigs].sort((a, b) => a.order - b.order).map((sec, idx) => (
+                  <div key={sec.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <div className="flex flex-col gap-0.5">
+                        <button disabled={idx === 0} onClick={() => moveSectionUp(sec.id)}
+                          className="p-0.5 text-gray-300 hover:text-gray-600 disabled:opacity-30">
+                          <ChevronUp className="w-3 h-3" />
+                        </button>
+                        <button disabled={idx === sectionConfigs.length - 1} onClick={() => moveSectionDown(sec.id)}
+                          className="p-0.5 text-gray-300 hover:text-gray-600 disabled:opacity-30">
+                          <ChevronDown className="w-3 h-3" />
+                        </button>
+                      </div>
+                      <span className="text-sm text-gray-700">{SECTION_LABELS[sec.id]}</span>
+                    </div>
+                    <button onClick={() => toggleSection(sec.id)}
+                      className={`w-10 h-5 rounded-full transition-colors ${sec.visible ? "bg-rose-500" : "bg-gray-200"}`}>
+                      <div className={`w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform ${sec.visible ? "translate-x-5" : "translate-x-0.5"}`} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </Section>
+
+            {/* 6. Content (NEW) */}
+            <Section id="content" title="Content" icon={<Type className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
+              <FormInput
+                label="Hero Subtitle"
+                value={contentOverrides.hero?.subtitle || ""}
+                onChange={(v) => setContentOverrides(p => ({ ...p, hero: { ...p.hero, subtitle: v } }))}
+                placeholder={defaultConfig.content?.hero?.subtitle || "Together with their families"}
+              />
+              <FormTextarea
+                label="Hero Message"
+                value={contentOverrides.hero?.message || ""}
+                onChange={(v) => setContentOverrides(p => ({ ...p, hero: { ...p.hero, message: v } }))}
+                placeholder={defaultConfig.content?.hero?.message || "Request the honour of your presence"}
+              />
+              <FormInput
+                label="Story Section Title"
+                value={contentOverrides.story?.title || ""}
+                onChange={(v) => setContentOverrides(p => ({ ...p, story: { ...p.story, title: v } }))}
+                placeholder={defaultConfig.content?.story?.title || "Our Love Story"}
+              />
+              <FormInput
+                label="RSVP Title"
+                value={contentOverrides.rsvp?.title || ""}
+                onChange={(v) => setContentOverrides(p => ({ ...p, rsvp: { ...p.rsvp, title: v } }))}
+                placeholder={defaultConfig.content?.rsvp?.title || "Will You Join Us?"}
+              />
+              <FormInput
+                label="RSVP Deadline"
+                value={contentOverrides.rsvp?.deadline || ""}
+                onChange={(v) => setContentOverrides(p => ({ ...p, rsvp: { ...p.rsvp, deadline: v } }))}
+                placeholder="Kindly respond by..."
+              />
             </Section>
 
             {/* Your Invitation Link */}
@@ -277,14 +512,13 @@ export default function EditorPage() {
             <div className="absolute -left-[2px] top-24 w-[3px] h-6 bg-gray-700 rounded-l-sm" />
             <div className="absolute -left-[2px] top-36 w-[3px] h-10 bg-gray-700 rounded-l-sm" />
             <div className="absolute -left-[2px] top-48 w-[3px] h-10 bg-gray-700 rounded-l-sm" />
-            {/* Screen — iframe with its own viewport */}
+            {/* Screen — iframe with PostMessage-driven preview */}
             <div className="absolute inset-[4px] rounded-[2.6rem] overflow-hidden bg-white">
               {/* Dynamic Island */}
               <div className="absolute top-2 left-1/2 -translate-x-1/2 w-[80px] h-[20px] bg-black rounded-full z-20" />
               <iframe
                 ref={iframeRef}
-                key={`${templateSlug}-${previewKey}`}
-                src={previewUrl}
+                src="/i/preview"
                 className="w-full h-full border-0"
                 title="Invitation Preview"
               />

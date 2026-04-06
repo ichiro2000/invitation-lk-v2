@@ -148,10 +148,11 @@ export async function PATCH(request: Request) {
 }
 
 async function handleUpdate(userId: string, body: Record<string, unknown>) {
-  const { groomName, brideName, weddingDate, venue, venueAddress, templateSlug, events } = body as {
+  const { groomName, brideName, weddingDate, venue, venueAddress, templateSlug, events, config } = body as {
     groomName?: string; brideName?: string; weddingDate?: string; venue?: string;
     venueAddress?: string; templateSlug?: string;
     events?: { title: string; time: string; venue?: string; description?: string }[];
+    config?: Record<string, unknown>;
   };
 
   const data: Record<string, unknown> = {};
@@ -161,6 +162,7 @@ async function handleUpdate(userId: string, body: Record<string, unknown>) {
   if (venue !== undefined) data.venue = venue.trim();
   if (venueAddress !== undefined) data.venueAddress = venueAddress?.trim() || null;
   if (templateSlug !== undefined) data.templateSlug = templateSlug;
+  if (config !== undefined) data.config = config;
 
   const invitation = await prisma.invitation.update({
     where: { userId },

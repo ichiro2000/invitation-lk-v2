@@ -92,5 +92,8 @@ export default async function InvitationPreviewPage({
     })),
   };
 
-  return <TemplateComponent data={data} />;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const config = (invitation as any).config as Record<string, unknown> | null;
+
+  return <TemplateComponent data={data} config={config || undefined} />;
 }

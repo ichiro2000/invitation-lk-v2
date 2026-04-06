@@ -6,9 +6,12 @@ type CountdownProps = {
   targetDate: string;
   className?: string;
   labelClassName?: string;
+  labelStyle?: React.CSSProperties;
   valueClassName?: string;
+  valueStyle?: React.CSSProperties;
   boxClassName?: string;
   separatorClassName?: string;
+  separatorStyle?: React.CSSProperties;
 };
 
 function calculate(targetDate: string) {
@@ -26,9 +29,12 @@ export default function Countdown({
   targetDate,
   className = "",
   labelClassName = "text-[10px] sm:text-xs text-gray-400 mt-1",
+  labelStyle,
   valueClassName = "text-lg sm:text-2xl font-bold",
+  valueStyle,
   boxClassName = "flex flex-col items-center",
   separatorClassName = "text-lg sm:text-2xl font-light opacity-30 mx-0.5 sm:mx-1",
+  separatorStyle,
 }: CountdownProps) {
   const [timeLeft, setTimeLeft] = useState(() => calculate(targetDate));
 
@@ -53,12 +59,12 @@ export default function Countdown({
       {items.map((item, i) => (
         <div key={item.label} className="flex items-center gap-2 sm:gap-4">
           <div className={boxClassName}>
-            <span className={valueClassName}>
+            <span className={valueClassName} style={valueStyle}>
               {String(item.value).padStart(2, "0")}
             </span>
-            <span className={labelClassName}>{item.label}</span>
+            <span className={labelClassName} style={labelStyle}>{item.label}</span>
           </div>
-          {i < 3 && <span className={separatorClassName}>:</span>}
+          {i < 3 && <span className={separatorClassName} style={separatorStyle}>:</span>}
         </div>
       ))}
     </div>
