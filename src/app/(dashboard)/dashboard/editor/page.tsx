@@ -1,36 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import {
   Heart, Calendar, Clock, Plus, X, Save, Eye, Pencil, Smartphone,
   ChevronDown, Loader2, Sparkles,
 } from "lucide-react";
-import type { InvitationData, InvitationEvent } from "@/types/invitation";
-import dynamic from "next/dynamic";
-
-const RoyalElegance = dynamic(() => import("@/components/templates/RoyalElegance"), { ssr: false });
-const ModernBloom = dynamic(() => import("@/components/templates/ModernBloom"), { ssr: false });
-const GoldenLotus = dynamic(() => import("@/components/templates/GoldenLotus"), { ssr: false });
-const MinimalGrace = dynamic(() => import("@/components/templates/MinimalGrace"), { ssr: false });
-const TropicalParadise = dynamic(() => import("@/components/templates/TropicalParadise"), { ssr: false });
-const EternalNight = dynamic(() => import("@/components/templates/EternalNight"), { ssr: false });
-const SinhalaMangalya = dynamic(() => import("@/components/templates/SinhalaMangalya"), { ssr: false });
-const VintageBotanical = dynamic(() => import("@/components/templates/VintageBotanical"), { ssr: false });
-const RoseGarden = dynamic(() => import("@/components/templates/RoseGarden"), { ssr: false });
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const templateComponents: Record<string, React.ComponentType<any>> = {
-  "royal-elegance": RoyalElegance,
-  "modern-bloom": ModernBloom,
-  "golden-lotus": GoldenLotus,
-  "minimal-grace": MinimalGrace,
-  "tropical-paradise": TropicalParadise,
-  "eternal-night": EternalNight,
-  "sinhala-mangalya": SinhalaMangalya,
-  "vintage-botanical": VintageBotanical,
-  "rose-garden": RoseGarden,
-};
+import type { InvitationEvent } from "@/types/invitation";
 
 const templateOptions = [
   { slug: "royal-elegance", name: "Royal Elegance", color: "bg-[#5c2828]" },
@@ -105,6 +81,8 @@ export default function EditorPage() {
   const [loading, setLoading] = useState(true);
   const [mobileTab, setMobileTab] = useState<"editor" | "preview">("editor");
   const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [previewKey, setPreviewKey] = useState(0);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     async function load() {
@@ -140,7 +118,7 @@ export default function EditorPage() {
       const method = existingId ? "PATCH" : "POST";
       const res = await fetch("/api/invitations", { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const json = await res.json();
-      if (res.ok) { if (json.invitation?.id) { setExistingId(json.invitation.id); setInvitationSlug(json.invitation.slug); } setSaveMessage("success"); }
+      if (res.ok) { if (json.invitation?.id) { setExistingId(json.invitation.id); setInvitationSlug(json.invitation.slug); } setSaveMessage("success"); setPreviewKey(k => k + 1); }
       else setSaveMessage(json.error || "Failed to save");
     } catch { setSaveMessage("Network error"); }
     finally { setSaving(false); setTimeout(() => setSaveMessage(""), 3000); }
@@ -157,19 +135,7 @@ export default function EditorPage() {
   );
 
   const selectedTemplate = templateOptions.find((t) => t.slug === templateSlug);
-  const TemplateComponent = templateComponents[templateSlug] || RoyalElegance;
-
-  const previewData: InvitationData = {
-    groomName: groomName || "Groom",
-    brideName: brideName || "Bride",
-    weddingDate: weddingDate || new Date().toISOString().split("T")[0],
-    weddingTime: weddingTime
-      ? (() => { try { return new Date(`2000-01-01T${weddingTime}`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }); } catch { return "4:00 PM"; } })()
-      : "4:00 PM",
-    venue: venue || "Wedding Venue",
-    venueAddress: venueAddress || "",
-    events: events.length ? events : [{ title: "Ceremony", time: "4:00 PM" }],
-  };
+  const previewUrl = invitationSlug ? `/i/${invitationSlug}` : `/samples/${templateSlug}`;
 
   return (
     <div className="-m-6 lg:-m-8 h-[calc(100vh-0px)] flex flex-col">
@@ -303,28 +269,33 @@ export default function EditorPage() {
         {/* ── Live Preview Panel ── */}
         <div className={`w-full lg:w-1/2 xl:w-[55%] lg:flex overflow-hidden bg-gray-50 items-center justify-center ${mobileTab === "preview" ? "flex" : "hidden"}`}>
           {/* Phone mockup */}
-          <div className="relative flex-shrink-0" style={{ width: 340, height: 700 }}>
+          <div className="relative flex-shrink-0" style={{ width: 320, height: 660 }}>
             {/* Bezel */}
-            <div className="absolute inset-0 bg-gray-900 rounded-[3rem] shadow-2xl shadow-black/30" />
+            <div className="absolute inset-0 bg-gray-900 rounded-[3rem] shadow-2xl shadow-black/25" />
             {/* Side buttons */}
             <div className="absolute -right-[2px] top-28 w-[3px] h-8 bg-gray-700 rounded-r-sm" />
             <div className="absolute -left-[2px] top-24 w-[3px] h-6 bg-gray-700 rounded-l-sm" />
             <div className="absolute -left-[2px] top-36 w-[3px] h-10 bg-gray-700 rounded-l-sm" />
             <div className="absolute -left-[2px] top-48 w-[3px] h-10 bg-gray-700 rounded-l-sm" />
-            {/* Screen */}
-            <div className="absolute inset-[4px] rounded-[2.7rem] overflow-hidden bg-white">
+            {/* Screen — iframe with its own viewport */}
+            <div className="absolute inset-[4px] rounded-[2.6rem] overflow-hidden bg-white">
               {/* Dynamic Island */}
-              <div className="absolute top-2 left-1/2 -translate-x-1/2 w-[90px] h-[22px] bg-black rounded-full z-20" />
-              {/* Live template render */}
-              <div className="w-full h-full overflow-y-auto overflow-x-hidden">
-                <div style={{ zoom: 0.26, width: `${100 / 0.26}%` }}>
-                  <TemplateComponent data={previewData} />
-                </div>
-              </div>
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 w-[80px] h-[20px] bg-black rounded-full z-20" />
+              <iframe
+                ref={iframeRef}
+                key={`${templateSlug}-${previewKey}`}
+                src={previewUrl}
+                className="w-full h-full border-0"
+                title="Invitation Preview"
+              />
             </div>
             {/* Home indicator */}
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-28 h-[5px] bg-white/80 rounded-full z-20" />
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-24 h-[4px] bg-white/70 rounded-full z-20" />
           </div>
+          {/* Save hint */}
+          {!invitationSlug && (
+            <p className="absolute bottom-4 text-xs text-gray-400">Save your draft to see your invitation preview</p>
+          )}
         </div>
       </div>
     </div>
