@@ -8,6 +8,7 @@ import EternalNight from "@/components/templates/EternalNight";
 import SinhalaMangalya from "@/components/templates/SinhalaMangalya";
 import VintageBotanical from "@/components/templates/VintageBotanical";
 import RoseGarden from "@/components/templates/RoseGarden";
+import ModernElegance from "@/components/templates/ModernElegance";
 import type { Metadata } from "next";
 
 const templates: Record<string, { component: React.ComponentType; title: string; description: string }> = {
@@ -55,6 +56,11 @@ const templates: Record<string, { component: React.ComponentType; title: string;
     component: RoseGarden,
     title: "Rose Garden — Sample Wedding Invitation",
     description: "Romantic homecoming invitation with red roses and interactive calendar.",
+  },
+  "modern-elegance": {
+    component: ModernElegance,
+    title: "Modern Elegance — Sample Wedding Invitation",
+    description: "Premium modern luxury wedding invitation with clean typography and warm tones.",
   },
 };
 
