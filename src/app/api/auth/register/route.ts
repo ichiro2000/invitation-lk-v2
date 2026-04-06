@@ -28,9 +28,7 @@ export async function POST(request: Request) {
 
     const passwordHash = await bcrypt.hash(password, 12);
 
-    // Generate unique invitation code
-    const code = Math.random().toString(36).slice(2, 8);
-
+    // Create user first (without nested invitation to avoid schema mismatch)
     const user = await prisma.user.create({
       data: {
         yourName,
@@ -42,24 +40,39 @@ export async function POST(request: Request) {
         venue: venue || null,
         role: "CUSTOMER",
         plan: "FREE",
-        invitation: {
-          create: {
-            templateSlug: "royal-elegance",
-            slug: code,
-            groomName: yourName,
-            brideName: partnerName,
-            weddingDate: weddingDate ? new Date(weddingDate) : new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
-            venue: venue || "Wedding Venue",
-            events: {
-              create: [
-                { title: "Wedding Ceremony", time: "4:00 PM", sortOrder: 0 },
-                { title: "Reception", time: "7:00 PM", sortOrder: 1 },
-              ],
-            },
-          },
-        },
       },
     });
+
+    // Try to create invitation separately (won't block registration if it fails)
+    try {
+      const code = Math.random().toString(36).slice(2, 8);
+      await prisma.invitation.create({
+        data: {
+          userId: user.id,
+          templateSlug: "royal-elegance",
+          slug: code,
+          groomName: yourName,
+          brideName: partnerName,
+          weddingDate: weddingDate ? new Date(weddingDate) : new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
+          venue: venue || "Wedding Venue",
+        },
+      });
+      // Create default events
+      try {
+        const inv = await prisma.invitation.findUnique({ where: { userId: user.id } });
+        if (inv) {
+          await prisma.event.createMany({
+            data: [
+              { invitationId: inv.id, title: "Wedding Ceremony", time: "4:00 PM", sortOrder: 0 },
+              { invitationId: inv.id, title: "Reception", time: "7:00 PM", sortOrder: 1 },
+            ],
+          });
+        }
+      } catch { /* events creation is optional */ }
+    } catch (invError) {
+      console.error("Auto-create invitation failed (non-blocking):", invError);
+      // Registration still succeeds — invitation can be created later via editor
+    }
 
     // Send welcome email (fire-and-forget)
     sendWelcomeEmail(email, yourName).catch(() => {});
