@@ -52,10 +52,10 @@ export async function POST(request: Request) {
       select: { yourName: true, partnerName: true, weddingDate: true, venue: true },
     });
 
-    const finalGroom = (groomName || user?.yourName || "Groom").trim();
-    const finalBride = (brideName || user?.partnerName || "Bride").trim();
-    const finalDate = weddingDate ? new Date(weddingDate) : (user?.weddingDate || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000));
-    const finalVenue = (venue || user?.venue || "Wedding Venue").trim();
+    const finalGroom = (groomName || user?.yourName || "Groom").trim() || "Groom";
+    const finalBride = (brideName || user?.partnerName || "Bride").trim() || "Bride";
+    const finalDate = weddingDate && weddingDate !== "" ? new Date(weddingDate) : (user?.weddingDate || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000));
+    const finalVenue = (venue || user?.venue || "Wedding Venue").trim() || "Wedding Venue";
     const finalTemplate = templateSlug || "royal-elegance";
 
     const invitation = await prisma.invitation.create({
@@ -67,24 +67,35 @@ export async function POST(request: Request) {
         brideName: finalBride,
         weddingDate: finalDate,
         venue: finalVenue,
-        venueAddress: venueAddress?.trim() || null,
-        events: {
-          create: (events?.length ? events : [
-            { title: "Wedding Ceremony", time: "4:00 PM" },
-            { title: "Reception", time: "7:00 PM" },
-          ]).map((e: { title: string; time: string; venue?: string; description?: string }, i: number) => ({
-            title: e.title,
-            time: e.time,
-            venue: e.venue || null,
-            description: e.description || null,
-            sortOrder: i,
-          })),
-        },
+        venueAddress: venueAddress?.trim() || undefined,
+        config: body.config && Object.keys(body.config).length > 0 ? body.config : undefined,
       },
+    });
+
+    // Create events separately
+    try {
+      const evts = events?.length ? events : [
+        { title: "Wedding Ceremony", time: "4:00 PM" },
+        { title: "Reception", time: "7:00 PM" },
+      ];
+      await prisma.event.createMany({
+        data: evts.map((e: { title: string; time: string; venue?: string; description?: string }, i: number) => ({
+          invitationId: invitation.id,
+          title: e.title || "Event",
+          time: e.time || "TBD",
+          venue: e.venue || null,
+          description: e.description || null,
+          sortOrder: i,
+        })),
+      });
+    } catch { /* events are optional */ }
+
+    const full = await prisma.invitation.findUnique({
+      where: { id: invitation.id },
       include: { events: { orderBy: { sortOrder: "asc" } } },
     });
 
-    return NextResponse.json({ invitation }, { status: 201 });
+    return NextResponse.json({ invitation: full || invitation }, { status: 201 });
   } catch (error) {
     console.error("Create invitation error:", error);
     return NextResponse.json({ error: "Failed to create invitation" }, { status: 500 });
@@ -125,25 +136,37 @@ export async function PATCH(request: Request) {
           brideName: bride,
           weddingDate: date,
           venue: ven,
-          venueAddress: body.venueAddress?.trim() || null,
-          config: body.config || undefined,
-          events: {
-            create: (body.events?.length ? body.events : [
-              { title: "Wedding Ceremony", time: "4:00 PM" },
-              { title: "Reception", time: "7:00 PM" },
-            ]).map((e: { title: string; time: string; venue?: string; description?: string }, i: number) => ({
-              title: e.title || "Event",
-              time: e.time || "TBD",
-              venue: e.venue || null,
-              description: e.description || null,
-              sortOrder: i,
-            })),
-          },
+          venueAddress: body.venueAddress?.trim() || undefined,
+          config: body.config && Object.keys(body.config).length > 0 ? body.config : undefined,
         },
+      });
+
+      // Create events separately
+      try {
+        const eventsToCreate = body.events?.length ? body.events : [
+          { title: "Wedding Ceremony", time: "4:00 PM" },
+          { title: "Reception", time: "7:00 PM" },
+        ];
+        await prisma.event.createMany({
+          data: eventsToCreate.map((e: { title: string; time: string; venue?: string; description?: string }, i: number) => ({
+            invitationId: invitation.id,
+            title: e.title || "Event",
+            time: e.time || "TBD",
+            venue: e.venue || null,
+            description: e.description || null,
+            sortOrder: i,
+          })),
+        });
+      } catch (evErr) {
+        console.error("Events creation failed (non-blocking):", evErr);
+      }
+
+      const full = await prisma.invitation.findUnique({
+        where: { id: invitation.id },
         include: { events: { orderBy: { sortOrder: "asc" } } },
       });
 
-      return NextResponse.json({ invitation }, { status: 201 });
+      return NextResponse.json({ invitation: full || invitation }, { status: 201 });
     }
 
     return handleUpdate(session.user.id, await request.json());
