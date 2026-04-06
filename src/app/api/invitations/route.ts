@@ -58,44 +58,41 @@ export async function POST(request: Request) {
     const finalVenue = (venue || user?.venue || "Wedding Venue").trim() || "Wedding Venue";
     const finalTemplate = templateSlug || "royal-elegance";
 
-    const invitation = await prisma.invitation.create({
-      data: {
-        userId: session.user.id,
-        templateSlug: finalTemplate,
-        slug: generateCode(),
-        groomName: finalGroom,
-        brideName: finalBride,
-        weddingDate: finalDate,
-        venue: finalVenue,
-        venueAddress: venueAddress?.trim() || undefined,
-        config: body.config && Object.keys(body.config).length > 0 ? body.config : undefined,
-      },
-    });
+    // Use raw SQL to avoid Prisma/DB schema mismatch
+    const invId = `inv_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const slug = generateCode();
+    const configJson = body.config && Object.keys(body.config).length > 0 ? JSON.stringify(body.config) : null;
 
-    // Create events separately
+    await prisma.$executeRawUnsafe(
+      `INSERT INTO "Invitation" (id, "userId", "templateSlug", slug, "groomName", "brideName", "weddingDate", venue, "venueAddress", config, "isPublished", "isPaid", "createdAt", "updatedAt")
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, false, false, NOW(), NOW())`,
+      invId, session.user.id, finalTemplate, slug,
+      finalGroom, finalBride, finalDate, finalVenue,
+      venueAddress?.trim() || null, configJson
+    );
+
+    // Create events
     try {
       const evts = events?.length ? events : [
         { title: "Wedding Ceremony", time: "4:00 PM" },
         { title: "Reception", time: "7:00 PM" },
       ];
-      await prisma.event.createMany({
-        data: evts.map((e: { title: string; time: string; venue?: string; description?: string }, i: number) => ({
-          invitationId: invitation.id,
-          title: e.title || "Event",
-          time: e.time || "TBD",
-          venue: e.venue || null,
-          description: e.description || null,
-          sortOrder: i,
-        })),
-      });
-    } catch { /* events are optional */ }
+      for (let i = 0; i < evts.length; i++) {
+        const e = evts[i];
+        await prisma.$executeRawUnsafe(
+          `INSERT INTO "Event" (id, "invitationId", title, time, venue, description, "sortOrder")
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          `evt_${Date.now()}_${i}`, invId, e.title || "Event", e.time || "TBD", e.venue || null, e.description || null, i
+        );
+      }
+    } catch { /* events optional */ }
 
     const full = await prisma.invitation.findUnique({
-      where: { id: invitation.id },
+      where: { id: invId },
       include: { events: { orderBy: { sortOrder: "asc" } } },
     });
 
-    return NextResponse.json({ invitation: full || invitation }, { status: 201 });
+    return NextResponse.json({ invitation: full }, { status: 201 });
   } catch (error) {
     console.error("Create invitation error:", error);
     return NextResponse.json({ error: "Failed to create invitation" }, { status: 500 });
@@ -127,46 +124,41 @@ export async function PATCH(request: Request) {
       const date = body.weddingDate && body.weddingDate !== "" ? new Date(body.weddingDate) : (user?.weddingDate || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000));
       const ven = (body.venue || user?.venue || "Wedding Venue").trim() || "Wedding Venue";
 
-      const invitation = await prisma.invitation.create({
-        data: {
-          userId: session.user.id,
-          templateSlug: body.templateSlug || "royal-elegance",
-          slug: generateCode(),
-          groomName: groom,
-          brideName: bride,
-          weddingDate: date,
-          venue: ven,
-          venueAddress: body.venueAddress?.trim() || undefined,
-          config: body.config && Object.keys(body.config).length > 0 ? body.config : undefined,
-        },
-      });
+      // Use raw SQL to avoid Prisma schema mismatch with DB
+      const invId = `inv_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+      const slug = generateCode();
+      const configJson = body.config && Object.keys(body.config).length > 0 ? JSON.stringify(body.config) : null;
 
-      // Create events separately
+      await prisma.$executeRawUnsafe(
+        `INSERT INTO "Invitation" (id, "userId", "templateSlug", slug, "groomName", "brideName", "weddingDate", venue, "venueAddress", config, "isPublished", "isPaid", "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, false, false, NOW(), NOW())`,
+        invId, session.user.id, body.templateSlug || "royal-elegance", slug,
+        groom, bride, date, ven,
+        body.venueAddress?.trim() || null, configJson
+      );
+
+      // Create default events
       try {
-        const eventsToCreate = body.events?.length ? body.events : [
+        const evts = body.events?.length ? body.events : [
           { title: "Wedding Ceremony", time: "4:00 PM" },
           { title: "Reception", time: "7:00 PM" },
         ];
-        await prisma.event.createMany({
-          data: eventsToCreate.map((e: { title: string; time: string; venue?: string; description?: string }, i: number) => ({
-            invitationId: invitation.id,
-            title: e.title || "Event",
-            time: e.time || "TBD",
-            venue: e.venue || null,
-            description: e.description || null,
-            sortOrder: i,
-          })),
-        });
-      } catch (evErr) {
-        console.error("Events creation failed (non-blocking):", evErr);
-      }
+        for (let i = 0; i < evts.length; i++) {
+          const e = evts[i];
+          await prisma.$executeRawUnsafe(
+            `INSERT INTO "Event" (id, "invitationId", title, time, venue, description, "sortOrder")
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            `evt_${Date.now()}_${i}`, invId, e.title || "Event", e.time || "TBD", e.venue || null, e.description || null, i
+          );
+        }
+      } catch { /* events optional */ }
 
       const full = await prisma.invitation.findUnique({
-        where: { id: invitation.id },
+        where: { id: invId },
         include: { events: { orderBy: { sortOrder: "asc" } } },
       });
 
-      return NextResponse.json({ invitation: full || invitation }, { status: 201 });
+      return NextResponse.json({ invitation: full }, { status: 201 });
     }
 
     return handleUpdate(session.user.id, await request.json());
