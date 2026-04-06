@@ -111,23 +111,29 @@ export async function PATCH(request: Request) {
         select: { yourName: true, partnerName: true, weddingDate: true, venue: true },
       });
 
+      const groom = (body.groomName || user?.yourName || "Groom").trim() || "Groom";
+      const bride = (body.brideName || user?.partnerName || "Bride").trim() || "Bride";
+      const date = body.weddingDate && body.weddingDate !== "" ? new Date(body.weddingDate) : (user?.weddingDate || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000));
+      const ven = (body.venue || user?.venue || "Wedding Venue").trim() || "Wedding Venue";
+
       const invitation = await prisma.invitation.create({
         data: {
           userId: session.user.id,
           templateSlug: body.templateSlug || "royal-elegance",
           slug: generateCode(),
-          groomName: (body.groomName || user?.yourName || "Groom").trim(),
-          brideName: (body.brideName || user?.partnerName || "Bride").trim(),
-          weddingDate: body.weddingDate ? new Date(body.weddingDate) : (user?.weddingDate || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)),
-          venue: (body.venue || user?.venue || "Wedding Venue").trim(),
+          groomName: groom,
+          brideName: bride,
+          weddingDate: date,
+          venue: ven,
           venueAddress: body.venueAddress?.trim() || null,
+          config: body.config || undefined,
           events: {
             create: (body.events?.length ? body.events : [
               { title: "Wedding Ceremony", time: "4:00 PM" },
               { title: "Reception", time: "7:00 PM" },
             ]).map((e: { title: string; time: string; venue?: string; description?: string }, i: number) => ({
-              title: e.title,
-              time: e.time,
+              title: e.title || "Event",
+              time: e.time || "TBD",
               venue: e.venue || null,
               description: e.description || null,
               sortOrder: i,
