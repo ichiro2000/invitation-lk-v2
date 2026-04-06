@@ -147,6 +147,17 @@ export default function RoyalElegance({ data, config }: { data?: InvitationData;
     { title: "After Party", time: "11:00 PM onwards", venue: "Poolside Lounge", description: "Continue the celebration with music, drinks, and memories" },
   ];
 
+  const dateObj = new Date(date + "T00:00:00");
+  const dayName = dateObj.toLocaleDateString("en-US", { weekday: "long" }).toUpperCase();
+  const formattedDate = dateObj.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+
+  const storyItems = content.story?.items || [
+    { year: "2019", title: "First Meeting", description: "We met at a mutual friend's birthday party in Colombo. A shared love for Sri Lankan cricket and hoppers sparked an instant connection." },
+    { year: "2021", title: "Started Dating", description: "After two years of friendship, we realized our bond was something deeper. Our first date was a sunset walk along Galle Face Green." },
+    { year: "2024", title: "The Proposal", description: "Tharaka proposed at Sigiriya during sunrise, surrounded by the ancient beauty of our homeland. She said yes before he could finish!" },
+    { year: "2026", title: "The Wedding", description: "We are thrilled to celebrate our union with a traditional Poruwa ceremony, surrounded by family and friends we love." },
+  ];
+
   const [rsvpSent, setRsvpSent] = useState(false);
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
@@ -254,9 +265,9 @@ export default function RoyalElegance({ data, config }: { data?: InvitationData;
               borderColor: withOpacity(theme.primaryColor, 0.2),
             }}
           >
-            <p className="tracking-[0.3em] uppercase text-xs mb-1" style={{ color: theme.primaryColor }}>Saturday</p>
-            <p className="text-3xl sm:text-4xl font-light" style={{ color: theme.secondaryColor }}>June 15, 2026</p>
-            <p className="tracking-[0.2em] uppercase text-xs mt-1" style={{ color: theme.primaryColor }}>at four o&apos;clock in the afternoon</p>
+            <p className="tracking-[0.3em] uppercase text-xs mb-1" style={{ color: theme.primaryColor }}>{dayName}</p>
+            <p className="text-3xl sm:text-4xl font-light" style={{ color: theme.secondaryColor }}>{formattedDate}</p>
+            <p className="tracking-[0.2em] uppercase text-xs mt-1" style={{ color: theme.primaryColor }}>{time}</p>
           </div>
           {/* Glow effect */}
           <div className="absolute -inset-4 rounded-2xl blur-xl -z-10" style={{ backgroundColor: withOpacity(theme.primaryColor, 0.05) }} />
@@ -321,12 +332,7 @@ export default function RoyalElegance({ data, config }: { data?: InvitationData;
           transition={{ duration: 2 }}
         />
 
-        {[
-          { year: "2019", title: "First Meeting", desc: "We met at a mutual friend's birthday party in Colombo. A shared love for Sri Lankan cricket and hoppers sparked an instant connection.", emoji: "sparkles" },
-          { year: "2021", title: "Started Dating", desc: "After two years of friendship, we realized our bond was something deeper. Our first date was a sunset walk along Galle Face Green.", emoji: "heart" },
-          { year: "2024", title: "The Proposal", desc: "Tharaka proposed at Sigiriya during sunrise, surrounded by the ancient beauty of our homeland. She said yes before he could finish!", emoji: "ring" },
-          { year: "2026", title: "The Wedding", desc: "We are thrilled to celebrate our union with a traditional Poruwa ceremony, surrounded by family and friends we love.", emoji: "celebration" },
-        ].map((event, i) => (
+        {storyItems.map((event, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, x: -30 }}
@@ -347,7 +353,7 @@ export default function RoyalElegance({ data, config }: { data?: InvitationData;
                 }}
               >
                 <h3 className="text-xl font-semibold mb-2" style={{ color: theme.secondaryColor }}>{event.title}</h3>
-                <p className="text-sm leading-relaxed" style={{ color: theme.accentColor }}>{event.desc}</p>
+                <p className="text-sm leading-relaxed" style={{ color: theme.accentColor }}>{event.description}</p>
               </motion.div>
             </div>
 
@@ -384,11 +390,10 @@ export default function RoyalElegance({ data, config }: { data?: InvitationData;
         </motion.div>
 
         <div className="grid md:grid-cols-3 gap-8">
-          {[
-            { icon: Music, title: "Poruwa Ceremony", time: "4:00 PM - 5:30 PM", venue: "Grand Ballroom", desc: "Traditional Sinhalese wedding ceremony on the beautifully decorated Poruwa" },
-            { icon: Heart, title: "Wedding Reception", time: "6:30 PM - 11:00 PM", venue: "Royal Garden", desc: "Dinner, dancing, and celebration with family and friends" },
-            { icon: Camera, title: "After Party", time: "11:00 PM onwards", venue: "Poolside Lounge", desc: "Continue the celebration with music, drinks, and memories" },
-          ].map((event, i) => (
+          {events.map((event, i) => {
+            const EventIcons = [Music, Heart, Camera];
+            const EventIcon = EventIcons[i % EventIcons.length];
+            return (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 30, rotateY: -15 }}
@@ -408,15 +413,16 @@ export default function RoyalElegance({ data, config }: { data?: InvitationData;
                 style={{ background: `linear-gradient(to bottom right, ${theme.secondaryColor}, ${lighten(theme.secondaryColor, 0.15)})` }}
                 whileHover={{ rotate: 12 }}
               >
-                <event.icon className="w-7 h-7" style={{ color: theme.primaryColor }} />
+                <EventIcon className="w-7 h-7" style={{ color: theme.primaryColor }} />
               </motion.div>
               <h3 className="text-lg font-semibold mb-2" style={{ color: theme.secondaryColor }}>{event.title}</h3>
               <p className="text-sm font-medium mb-1" style={{ color: theme.primaryColor }}>{event.time}</p>
               <p className="text-sm mb-3" style={{ color: theme.accentColor }}>{event.venue}</p>
               <div className="w-8 h-px mx-auto mb-3" style={{ backgroundColor: withOpacity(theme.primaryColor, 0.3) }} />
-              <p className="text-sm" style={{ color: withOpacity(theme.accentColor, 0.7) }}>{event.desc}</p>
+              <p className="text-sm" style={{ color: withOpacity(theme.accentColor, 0.7) }}>{event.description}</p>
             </motion.div>
-          ))}
+          );
+          })}
         </div>
       </div>
     </section>
@@ -622,7 +628,7 @@ export default function RoyalElegance({ data, config }: { data?: InvitationData;
           <Heart className="w-6 h-6 mx-auto mb-4" style={{ color: theme.primaryColor, fill: theme.primaryColor }} />
         </motion.div>
         <p className="text-xl font-light mb-2" style={{ color: theme.secondaryColor }}>{bride} & {groom}</p>
-        <p className="text-sm mb-8" style={{ color: theme.accentColor }}>June 15, 2026 &middot; Colombo, Sri Lanka</p>
+        <p className="text-sm mb-8" style={{ color: theme.accentColor }}>{formattedDate} &middot; {venue}</p>
         <div className="flex items-center justify-center gap-4 mb-8">
           {[Phone, Mail].map((Icon, idx) => (
             <motion.div

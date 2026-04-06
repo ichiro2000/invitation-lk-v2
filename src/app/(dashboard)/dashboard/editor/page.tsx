@@ -348,6 +348,7 @@ export default function EditorPage() {
                       <FormInput label="Time" value={ev.time} onChange={(v) => updateEvent(i, "time", v)} placeholder="4:00 PM" />
                     </div>
                     <FormInput label="Venue" value={ev.venue || ""} onChange={(v) => updateEvent(i, "venue", v)} placeholder="Event venue" />
+                    <FormTextarea label="Description" value={ev.description || ""} onChange={(v) => updateEvent(i, "description", v)} placeholder="Brief description of this event" />
                   </div>
                 ))}
               </div>
