@@ -212,6 +212,7 @@ function FadeIn({ children, className = "", delay = 0 }: { children: React.React
 export default function ModernElegance({ data, config }: { data?: InvitationData; config?: TemplateConfig } = {}) {
   const merged = deepMerge(DEFAULT_CONFIG as Record<string, unknown>, (config || {}) as Record<string, unknown>) as TemplateConfig;
   const theme = merged.theme as ThemeConfig;
+  const content = merged.content || {};
 
   const groom = data?.groomName || "Groom";
   const bride = data?.brideName || "Bride";
@@ -265,7 +266,7 @@ export default function ModernElegance({ data, config }: { data?: InvitationData
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.5 }}
           >
-            We&apos;re Getting Married
+            {content.hero?.subtitle || "We're Getting Married"}
           </motion.p>
 
           <motion.h1
@@ -380,16 +381,62 @@ export default function ModernElegance({ data, config }: { data?: InvitationData
           <p className="text-sm mb-10" style={{ color: withOpacity("#faf8f5", 0.6) }}>
             {venueAddr}
           </p>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.98 }}
-            className="inline-flex items-center gap-2 px-6 py-3 text-xs tracking-[0.3em] uppercase border rounded-none"
-            style={{ color: "#faf8f5", borderColor: withOpacity("#faf8f5", 0.4) }}
-          >
-            <MapPin className="w-3.5 h-3.5" /> Open in Maps
-          </motion.button>
+          {(content.venue?.mapUrl || venue || venueAddr) ? (
+            <iframe
+              src={`https://maps.google.com/maps?q=${encodeURIComponent(
+                content.venue?.mapUrl && content.venue.mapUrl.includes("google")
+                  ? content.venue.mapUrl
+                  : [venue, venueAddr].filter(Boolean).join(", ")
+              )}&output=embed`}
+              className="w-full h-64 rounded-2xl border-0 mb-6"
+              loading="lazy"
+              allowFullScreen
+              title="Wedding Venue Map"
+            />
+          ) : null}
+          {content.venue?.mapUrl ? (
+            <a
+              href={content.venue.mapUrl.startsWith("http") ? content.venue.mapUrl : `https://maps.google.com/maps?q=${encodeURIComponent(content.venue.mapUrl)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-6 py-3 text-xs tracking-[0.3em] uppercase border rounded-none"
+              style={{ color: "#faf8f5", borderColor: withOpacity("#faf8f5", 0.4) }}
+            >
+              <MapPin className="w-3.5 h-3.5" /> Open in Google Maps
+            </a>
+          ) : (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.98 }}
+              className="inline-flex items-center gap-2 px-6 py-3 text-xs tracking-[0.3em] uppercase border rounded-none"
+              style={{ color: "#faf8f5", borderColor: withOpacity("#faf8f5", 0.4) }}
+            >
+              <MapPin className="w-3.5 h-3.5" /> Open in Maps
+            </motion.button>
+          )}
         </FadeIn>
       </section>
+
+      {/* ═══ GALLERY ═══ */}
+      {content.gallery?.images?.length ? (
+        <section className="py-24 sm:py-32 px-4" style={{ backgroundColor: theme.backgroundColor }}>
+          <FadeIn className="text-center mb-12">
+            <p className="text-xs tracking-[0.5em] uppercase mb-4" style={{ color: withOpacity(theme.textColor, 0.5) }}>
+              Gallery
+            </p>
+            <div className="w-12 h-px mx-auto" style={{ backgroundColor: theme.primaryColor }} />
+          </FadeIn>
+          <div className="max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {content.gallery.images.map((src: string, i: number) => (
+              <FadeIn key={i} delay={i * 0.08}>
+                <motion.div whileHover={{ scale: 1.03 }} className="rounded-2xl overflow-hidden aspect-[4/3]">
+                  <img src={src} alt={`Gallery ${i + 1}`} className="w-full h-full object-cover" />
+                </motion.div>
+              </FadeIn>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {/* ═══ DAY PROGRAMME / TIMELINE ═══ */}
       <section className="py-24 sm:py-32 px-4" style={{ backgroundColor: theme.backgroundColor }}>
@@ -436,9 +483,9 @@ export default function ModernElegance({ data, config }: { data?: InvitationData
       {/* ═══ RSVP ═══ */}
       <section className="py-24 sm:py-32 px-4" style={{ backgroundColor: theme.secondaryColor }}>
         <FadeIn className="max-w-md mx-auto text-center">
-          <h2 className="text-3xl sm:text-4xl font-light mb-3" style={{ color: "#faf8f5" }}>RSVP</h2>
+          <h2 className="text-3xl sm:text-4xl font-light mb-3" style={{ color: "#faf8f5" }}>{content.rsvp?.title || "RSVP"}</h2>
           <p className="text-sm mb-12" style={{ color: withOpacity("#faf8f5", 0.5) }}>
-            Let us know if you can make it
+            {content.rsvp?.deadline || "Let us know if you can make it"}
           </p>
 
           {rsvpSent ? (
