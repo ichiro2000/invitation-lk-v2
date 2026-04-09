@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import {
-  Heart, Calendar, Clock, Plus, X, Save, Eye, Pencil, Smartphone,
+  Heart, Calendar as CalendarIcon, Clock, Plus, X, Save, Eye, Pencil, Smartphone,
   ChevronDown, Loader2, Sparkles, Palette, Type,
   MapPin, ImagePlus, Trash2,
 } from "lucide-react";
@@ -12,6 +12,8 @@ import type { TemplateConfig, ThemeConfig, SectionConfig, ContentOverrides } fro
 import { DEFAULT_SECTIONS, SECTION_LABELS, FONT_OPTIONS } from "@/types/template-config";
 import { TEMPLATE_REGISTRY, getDefaultConfig, getDefaultTheme } from "@/lib/template-registry";
 import { deepMerge } from "@/lib/deep-merge";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
 
 /* ------------------------------------------------------------------ */
 /*  Reusable sub-components                                           */
@@ -115,6 +117,8 @@ export default function EditorPage() {
 
   /* ---- UI state ---- */
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [timePickerOpen, setTimePickerOpen] = useState(false);
   const [existingId, setExistingId] = useState<string | null>(null);
   const [invitationSlug, setInvitationSlug] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -369,8 +373,68 @@ export default function EditorPage() {
                     <FormInput label="Subtitle" value={contentOverrides.hero?.subtitle || ""} onChange={(v) => setContentOverrides(p => ({ ...p, hero: { ...p.hero, subtitle: v } }))} placeholder={defaultConfig.content?.hero?.subtitle || "Together with their families"} />
                     <FormTextarea label="Message" value={contentOverrides.hero?.message || ""} onChange={(v) => setContentOverrides(p => ({ ...p, hero: { ...p.hero, message: v } }))} placeholder={defaultConfig.content?.hero?.message || "Request the honour..."} />
                     <div className="grid grid-cols-2 gap-3">
-                      <FormInput label="Wedding Date" value={weddingDate} onChange={setWeddingDate} type="date" />
-                      <FormInput label="Wedding Time" value={weddingTime} onChange={setWeddingTime} type="time" />
+                      {/* Date Picker */}
+                      <div>
+                        <label className="block text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1.5">Wedding Date</label>
+                        <div className="relative">
+                          <button type="button" onClick={() => setDatePickerOpen(!datePickerOpen)}
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm border border-gray-200 rounded-full bg-gray-50/50 text-left hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 transition-all">
+                            <CalendarIcon className="w-4 h-4 text-gray-300 shrink-0" />
+                            {weddingDate ? (
+                              <span className="text-gray-700">{format(new Date(weddingDate + "T00:00:00"), "PPP")}</span>
+                            ) : (
+                              <span className="text-gray-300">Pick a date</span>
+                            )}
+                          </button>
+                          {datePickerOpen && (
+                            <>
+                              <div className="fixed inset-0 z-40" onClick={() => setDatePickerOpen(false)} />
+                              <div className="absolute left-0 top-full mt-1 z-50 rounded-2xl border border-gray-200 bg-white shadow-lg overflow-hidden">
+                                <Calendar
+                                  mode="single"
+                                  captionLayout="dropdown"
+                                  selected={weddingDate ? new Date(weddingDate + "T00:00:00") : undefined}
+                                  onSelect={(d) => { if (d) { setWeddingDate(d.toISOString().split("T")[0]); } setDatePickerOpen(false); }}
+                                  disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
+                                  startMonth={new Date()}
+                                  endMonth={new Date(new Date().getFullYear() + 3, 11)}
+                                  autoFocus
+                                />
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      {/* Time Picker */}
+                      <div>
+                        <label className="block text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1.5">Wedding Time</label>
+                        <div className="relative">
+                          <button type="button" onClick={() => setTimePickerOpen(!timePickerOpen)}
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm border border-gray-200 rounded-full bg-gray-50/50 text-left hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 transition-all">
+                            <Clock className="w-4 h-4 text-gray-300 shrink-0" />
+                            <span className="text-gray-700">
+                              {(() => { try { return new Date(`2000-01-01T${weddingTime}:00`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }); } catch { return weddingTime || "4:00 PM"; } })()}
+                            </span>
+                          </button>
+                          {timePickerOpen && (
+                            <>
+                              <div className="fixed inset-0 z-40" onClick={() => setTimePickerOpen(false)} />
+                              <div className="absolute right-0 top-full mt-1 z-50 rounded-2xl border border-gray-200 bg-white shadow-lg p-3 w-48 max-h-64 overflow-y-auto">
+                                {Array.from({ length: 24 }, (_, h) => [0, 30].map(m => {
+                                  const val = `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
+                                  const label = new Date(`2000-01-01T${val}:00`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+                                  return (
+                                    <button key={val} type="button" onClick={() => { setWeddingTime(val); setTimePickerOpen(false); }}
+                                      className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-colors ${weddingTime === val ? "bg-rose-50 text-rose-700 font-medium" : "text-gray-700 hover:bg-gray-50"}`}>
+                                      {label}
+                                    </button>
+                                  );
+                                })).flat()}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </Section>
                 );
