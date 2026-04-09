@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import {
   Heart, Calendar, Clock, Plus, X, Save, Eye, Pencil, Smartphone,
-  ChevronDown, ChevronUp, Loader2, Sparkles, Palette, LayoutList, Type,
+  ChevronDown, Loader2, Sparkles, Palette, LayoutList, Type,
   MapPin, ImagePlus, Trash2,
 } from "lucide-react";
 import type { InvitationEvent } from "@/types/invitation";
@@ -230,29 +230,27 @@ export default function EditorPage() {
     setSectionConfigs(prev => prev.map(s => s.id === id ? { ...s, visible: !s.visible } : s));
   };
 
-  const moveSectionUp = (id: string) => {
-    setSectionConfigs(prev => {
-      const sorted = [...prev].sort((a, b) => a.order - b.order);
-      const idx = sorted.findIndex(s => s.id === id);
-      if (idx <= 0) return prev;
-      const newOrder = sorted[idx - 1].order;
-      sorted[idx - 1].order = sorted[idx].order;
-      sorted[idx].order = newOrder;
-      return [...sorted];
-    });
-  };
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
 
-  const moveSectionDown = (id: string) => {
+  const handleDragStart = (id: string) => { setDragId(id); };
+  const handleDragOver = (e: React.DragEvent, id: string) => { e.preventDefault(); setDragOverId(id); };
+  const handleDragLeave = () => { setDragOverId(null); };
+  const handleDrop = (targetId: string) => {
+    if (!dragId || dragId === targetId) { setDragId(null); setDragOverId(null); return; }
     setSectionConfigs(prev => {
       const sorted = [...prev].sort((a, b) => a.order - b.order);
-      const idx = sorted.findIndex(s => s.id === id);
-      if (idx < 0 || idx >= sorted.length - 1) return prev;
-      const newOrder = sorted[idx + 1].order;
-      sorted[idx + 1].order = sorted[idx].order;
-      sorted[idx].order = newOrder;
-      return [...sorted];
+      const fromIdx = sorted.findIndex(s => s.id === dragId);
+      const toIdx = sorted.findIndex(s => s.id === targetId);
+      if (fromIdx < 0 || toIdx < 0) return prev;
+      const [moved] = sorted.splice(fromIdx, 1);
+      sorted.splice(toIdx, 0, moved);
+      return sorted.map((s, i) => ({ ...s, order: i }));
     });
+    setDragId(null);
+    setDragOverId(null);
   };
+  const handleDragEnd = () => { setDragId(null); setDragOverId(null); };
 
   /* ---- Event helpers ---- */
   const updateEvent = (i: number, field: keyof InvitationEvent, value: string) => {
@@ -408,24 +406,33 @@ export default function EditorPage() {
 
             {/* 5. Sections (NEW) */}
             <Section id="sections" title="Sections" icon={<LayoutList className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
-              <div className="space-y-2">
-                {[...sectionConfigs].sort((a, b) => a.order - b.order).map((sec, idx) => (
-                  <div key={sec.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+              <p className="text-[10px] text-gray-400 -mt-1 mb-2">Drag to reorder. Toggle to show/hide.</p>
+              <div className="space-y-1.5">
+                {[...sectionConfigs].sort((a, b) => a.order - b.order).map((sec) => (
+                  <div
+                    key={sec.id}
+                    draggable
+                    onDragStart={() => handleDragStart(sec.id)}
+                    onDragOver={(e) => handleDragOver(e, sec.id)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={() => handleDrop(sec.id)}
+                    onDragEnd={handleDragEnd}
+                    className={`flex items-center justify-between p-3 rounded-xl cursor-grab active:cursor-grabbing select-none transition-all ${
+                      dragId === sec.id ? "opacity-40 scale-95" : ""
+                    } ${dragOverId === sec.id && dragId !== sec.id ? "border-2 border-dashed border-rose-300 bg-rose-50/50" : "bg-gray-50 border-2 border-transparent"
+                    } ${!sec.visible ? "opacity-50" : ""}`}
+                  >
                     <div className="flex items-center gap-3">
-                      <div className="flex flex-col gap-0.5">
-                        <button disabled={idx === 0} onClick={() => moveSectionUp(sec.id)}
-                          className="p-0.5 text-gray-300 hover:text-gray-600 disabled:opacity-30">
-                          <ChevronUp className="w-3 h-3" />
-                        </button>
-                        <button disabled={idx === sectionConfigs.length - 1} onClick={() => moveSectionDown(sec.id)}
-                          className="p-0.5 text-gray-300 hover:text-gray-600 disabled:opacity-30">
-                          <ChevronDown className="w-3 h-3" />
-                        </button>
+                      {/* Drag handle */}
+                      <div className="flex flex-col gap-[2px] text-gray-300">
+                        <div className="flex gap-[2px]"><div className="w-1 h-1 rounded-full bg-current" /><div className="w-1 h-1 rounded-full bg-current" /></div>
+                        <div className="flex gap-[2px]"><div className="w-1 h-1 rounded-full bg-current" /><div className="w-1 h-1 rounded-full bg-current" /></div>
+                        <div className="flex gap-[2px]"><div className="w-1 h-1 rounded-full bg-current" /><div className="w-1 h-1 rounded-full bg-current" /></div>
                       </div>
                       <span className="text-sm text-gray-700">{SECTION_LABELS[sec.id]}</span>
                     </div>
-                    <button onClick={() => toggleSection(sec.id)}
-                      className={`w-10 h-5 rounded-full transition-colors ${sec.visible ? "bg-rose-500" : "bg-gray-200"}`}>
+                    <button onClick={(e) => { e.stopPropagation(); toggleSection(sec.id); }}
+                      className={`w-10 h-5 rounded-full transition-colors flex-shrink-0 ${sec.visible ? "bg-rose-500" : "bg-gray-200"}`}>
                       <div className={`w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform ${sec.visible ? "translate-x-5" : "translate-x-0.5"}`} />
                     </button>
                   </div>
