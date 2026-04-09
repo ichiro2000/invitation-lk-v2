@@ -372,7 +372,7 @@ export default function EditorPage() {
                     <FormInput label="Bride Name" value={brideName} onChange={setBrideName} placeholder="Enter bride's name" />
                     <FormInput label="Subtitle" value={contentOverrides.hero?.subtitle || ""} onChange={(v) => setContentOverrides(p => ({ ...p, hero: { ...p.hero, subtitle: v } }))} placeholder={defaultConfig.content?.hero?.subtitle || "Together with their families"} />
                     <FormTextarea label="Message" value={contentOverrides.hero?.message || ""} onChange={(v) => setContentOverrides(p => ({ ...p, hero: { ...p.hero, message: v } }))} placeholder={defaultConfig.content?.hero?.message || "Request the honour..."} />
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-4">
                       {/* Date Picker */}
                       <div>
                         <label className="block text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1.5">Wedding Date</label>
