@@ -389,7 +389,7 @@ export default function EditorPage() {
                           {datePickerOpen && (
                             <>
                               <div className="fixed inset-0 z-40" onClick={() => setDatePickerOpen(false)} />
-                              <div className="absolute left-0 top-full mt-1 z-50 rounded-2xl border border-gray-200 bg-white shadow-lg overflow-hidden">
+                              <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-50 rounded-2xl border border-gray-200 bg-white shadow-xl overflow-hidden w-[280px]">
                                 <Calendar
                                   mode="single"
                                   captionLayout="dropdown"
