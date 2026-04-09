@@ -523,23 +523,27 @@ export default function EditorPage() {
             {/* 7. Venue Map */}
             <Section id="map" title="Venue Map" icon={<MapPin className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
               <FormInput
-                label="Google Maps Link"
+                label="Google Maps Link (for guests to open)"
                 value={contentOverrides.venue?.mapUrl || ""}
                 onChange={(v) => setContentOverrides(p => ({ ...p, venue: { ...p.venue, mapUrl: v } }))}
-                placeholder="Paste Google Maps share link or address"
+                placeholder="Paste Google Maps share link"
               />
               <p className="text-[10px] text-gray-400 -mt-2">
                 Open Google Maps → Search your venue → Click Share → Copy link and paste above
               </p>
-              {contentOverrides.venue?.mapUrl && (
+              {/* Map preview uses venue name + address for reliable embedding */}
+              {(venue || venueAddress) && (
                 <div className="rounded-xl overflow-hidden border border-gray-200 mt-2">
                   <iframe
-                    src={`https://maps.google.com/maps?q=${encodeURIComponent(contentOverrides.venue.mapUrl)}&output=embed`}
+                    src={`https://maps.google.com/maps?q=${encodeURIComponent([venue, venueAddress].filter(Boolean).join(", "))}&output=embed`}
                     className="w-full h-40 border-0"
                     loading="lazy"
                     title="Venue Map Preview"
                   />
                 </div>
+              )}
+              {!venue && !venueAddress && (
+                <p className="text-[10px] text-amber-600 mt-1">Enter venue name/address in Wedding Details to see map preview</p>
               )}
             </Section>
 

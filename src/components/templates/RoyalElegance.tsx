@@ -502,9 +502,9 @@ export default function RoyalElegance({ data, config }: { data?: InvitationData;
             <h3 className="text-xl font-semibold" style={{ color: theme.secondaryColor }}>{venue}</h3>
           </div>
           <p className="mb-10" style={{ color: theme.accentColor }}>{venueAddr}</p>
-          {content.venue?.mapUrl ? (
+          {(venue || venueAddr) ? (
             <iframe
-              src={`https://maps.google.com/maps?q=${encodeURIComponent(content.venue.mapUrl)}&output=embed`}
+              src={`https://maps.google.com/maps?q=${encodeURIComponent([venue, venueAddr].filter(Boolean).join(", "))}&output=embed`}
               className="w-full h-64 rounded-2xl border-0"
               loading="lazy"
               allowFullScreen
