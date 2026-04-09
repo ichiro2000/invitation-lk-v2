@@ -441,30 +441,48 @@ export default function RoyalElegance({ data, config }: { data?: InvitationData;
           <h2 className="text-4xl sm:text-5xl font-light" style={{ color: theme.secondaryColor }}>Our Moments</h2>
         </motion.div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {[
-            { h: "h-64 md:h-72", span: "md:col-span-2", gradient: `linear-gradient(to bottom right, ${withOpacity(theme.primaryColor, 0.3)}, ${withOpacity(theme.secondaryColor, 0.1)}, ${withOpacity(theme.primaryColor, 0.2)})` },
-            { h: "h-64 md:h-72", span: "", gradient: `linear-gradient(to bottom right, ${withOpacity(theme.secondaryColor, 0.2)}, ${withOpacity(theme.primaryColor, 0.2)})` },
-            { h: "h-56", span: "", gradient: `linear-gradient(to bottom right, ${withOpacity(theme.accentColor, 0.2)}, ${withOpacity(theme.primaryColor, 0.3)})` },
-            { h: "h-56", span: "", gradient: `linear-gradient(to bottom right, ${withOpacity(theme.primaryColor, 0.25)}, ${withOpacity(theme.accentColor, 0.15)})` },
-            { h: "h-56", span: "md:col-span-1", gradient: `linear-gradient(to bottom right, ${withOpacity(theme.secondaryColor, 0.25)}, ${withOpacity(theme.primaryColor, 0.15)})` },
-            { h: "h-64 md:h-72", span: "col-span-2 md:col-span-3", gradient: `linear-gradient(to bottom right, ${withOpacity(theme.primaryColor, 0.15)}, ${withOpacity(theme.secondaryColor, 0.1)}, ${withOpacity(theme.primaryColor, 0.2)})` },
-          ].map((img, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, scale: 0.85 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: i * 0.08 }}
-              whileHover={{ scale: 1.03 }}
-              className={`${img.h} ${img.span} rounded-2xl overflow-hidden flex items-center justify-center cursor-pointer group relative`}
-              style={{ background: img.gradient }}
-            >
-              <Camera className="w-8 h-8 group-hover:scale-110 transition-transform" style={{ color: withOpacity(theme.secondaryColor, 0.2) }} />
-              <div className="absolute inset-0 group-hover:opacity-100 opacity-0 transition-opacity rounded-2xl" style={{ backgroundColor: withOpacity(theme.secondaryColor, 0.1) }} />
-            </motion.div>
-          ))}
-        </div>
+        {content.gallery?.images?.length ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {content.gallery.images.map((src: string, i: number) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, scale: 0.85 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: i * 0.08 }}
+                whileHover={{ scale: 1.03 }}
+                className="rounded-2xl overflow-hidden aspect-[4/3]"
+              >
+                <img src={src} alt={`Gallery ${i + 1}`} className="w-full h-full object-cover" />
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {[
+              { h: "h-64 md:h-72", span: "md:col-span-2", gradient: `linear-gradient(to bottom right, ${withOpacity(theme.primaryColor, 0.3)}, ${withOpacity(theme.secondaryColor, 0.1)}, ${withOpacity(theme.primaryColor, 0.2)})` },
+              { h: "h-64 md:h-72", span: "", gradient: `linear-gradient(to bottom right, ${withOpacity(theme.secondaryColor, 0.2)}, ${withOpacity(theme.primaryColor, 0.2)})` },
+              { h: "h-56", span: "", gradient: `linear-gradient(to bottom right, ${withOpacity(theme.accentColor, 0.2)}, ${withOpacity(theme.primaryColor, 0.3)})` },
+              { h: "h-56", span: "", gradient: `linear-gradient(to bottom right, ${withOpacity(theme.primaryColor, 0.25)}, ${withOpacity(theme.accentColor, 0.15)})` },
+              { h: "h-56", span: "md:col-span-1", gradient: `linear-gradient(to bottom right, ${withOpacity(theme.secondaryColor, 0.25)}, ${withOpacity(theme.primaryColor, 0.15)})` },
+              { h: "h-64 md:h-72", span: "col-span-2 md:col-span-3", gradient: `linear-gradient(to bottom right, ${withOpacity(theme.primaryColor, 0.15)}, ${withOpacity(theme.secondaryColor, 0.1)}, ${withOpacity(theme.primaryColor, 0.2)})` },
+            ].map((img, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, scale: 0.85 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: i * 0.08 }}
+                whileHover={{ scale: 1.03 }}
+                className={`${img.h} ${img.span} rounded-2xl overflow-hidden flex items-center justify-center cursor-pointer group relative`}
+                style={{ background: img.gradient }}
+              >
+                <Camera className="w-8 h-8 group-hover:scale-110 transition-transform" style={{ color: withOpacity(theme.secondaryColor, 0.2) }} />
+                <div className="absolute inset-0 group-hover:opacity-100 opacity-0 transition-opacity rounded-2xl" style={{ backgroundColor: withOpacity(theme.secondaryColor, 0.1) }} />
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
@@ -484,21 +502,42 @@ export default function RoyalElegance({ data, config }: { data?: InvitationData;
             <h3 className="text-xl font-semibold" style={{ color: theme.secondaryColor }}>{venue}</h3>
           </div>
           <p className="mb-10" style={{ color: theme.accentColor }}>{venueAddr}</p>
-          <motion.div
-            whileHover={{ scale: 1.01 }}
-            className="rounded-2xl h-72 sm:h-80 flex items-center justify-center shadow-inner"
-            style={{
-              background: `linear-gradient(to bottom right, ${withOpacity(theme.primaryColor, 0.1)}, ${withOpacity(theme.secondaryColor, 0.1)})`,
-              borderWidth: 1,
-              borderStyle: "solid",
-              borderColor: withOpacity(theme.primaryColor, 0.1),
-            }}
-          >
-            <div className="text-center">
-              <MapPin className="w-12 h-12 mx-auto mb-3" style={{ color: withOpacity(theme.primaryColor, 0.4) }} />
-              <p className="text-sm" style={{ color: withOpacity(theme.accentColor, 0.5) }}>Interactive Map</p>
-            </div>
-          </motion.div>
+          {content.venue?.mapUrl ? (
+            <iframe
+              src={`https://maps.google.com/maps?q=${encodeURIComponent(content.venue.mapUrl)}&output=embed`}
+              className="w-full h-64 rounded-2xl border-0"
+              loading="lazy"
+              allowFullScreen
+              title="Wedding Venue Map"
+            />
+          ) : (
+            <motion.div
+              whileHover={{ scale: 1.01 }}
+              className="rounded-2xl h-72 sm:h-80 flex items-center justify-center shadow-inner"
+              style={{
+                background: `linear-gradient(to bottom right, ${withOpacity(theme.primaryColor, 0.1)}, ${withOpacity(theme.secondaryColor, 0.1)})`,
+                borderWidth: 1,
+                borderStyle: "solid",
+                borderColor: withOpacity(theme.primaryColor, 0.1),
+              }}
+            >
+              <div className="text-center">
+                <MapPin className="w-12 h-12 mx-auto mb-3" style={{ color: withOpacity(theme.primaryColor, 0.4) }} />
+                <p className="text-sm" style={{ color: withOpacity(theme.accentColor, 0.5) }}>Interactive Map</p>
+              </div>
+            </motion.div>
+          )}
+          {content.venue?.mapUrl && (
+            <a
+              href={content.venue.mapUrl.startsWith("http") ? content.venue.mapUrl : `https://maps.google.com/maps?q=${encodeURIComponent(content.venue.mapUrl)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-full text-sm"
+              style={{ color: theme.primaryColor, border: `1px solid ${withOpacity(theme.primaryColor, 0.3)}` }}
+            >
+              <MapPin className="w-4 h-4" /> Open in Google Maps
+            </a>
+          )}
         </motion.div>
       </div>
     </section>

@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import {
   Heart, Calendar, Clock, Plus, X, Save, Eye, Pencil, Smartphone,
   ChevronDown, ChevronUp, Loader2, Sparkles, Palette, LayoutList, Type,
+  MapPin, ImagePlus, Trash2,
 } from "lucide-react";
 import type { InvitationEvent } from "@/types/invitation";
 import type { TemplateConfig, ThemeConfig, SectionConfig, ContentOverrides } from "@/types/template-config";
@@ -517,6 +518,78 @@ export default function EditorPage() {
                 onChange={(v) => setContentOverrides(p => ({ ...p, footer: { ...p.footer, message: v } }))}
                 placeholder="Custom footer message (optional)"
               />
+            </Section>
+
+            {/* 7. Venue Map */}
+            <Section id="map" title="Venue Map" icon={<MapPin className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
+              <FormInput
+                label="Google Maps Link"
+                value={contentOverrides.venue?.mapUrl || ""}
+                onChange={(v) => setContentOverrides(p => ({ ...p, venue: { ...p.venue, mapUrl: v } }))}
+                placeholder="Paste Google Maps share link or address"
+              />
+              <p className="text-[10px] text-gray-400 -mt-2">
+                Open Google Maps → Search your venue → Click Share → Copy link and paste above
+              </p>
+              {contentOverrides.venue?.mapUrl && (
+                <div className="rounded-xl overflow-hidden border border-gray-200 mt-2">
+                  <iframe
+                    src={`https://maps.google.com/maps?q=${encodeURIComponent(contentOverrides.venue.mapUrl)}&output=embed`}
+                    className="w-full h-40 border-0"
+                    loading="lazy"
+                    title="Venue Map Preview"
+                  />
+                </div>
+              )}
+            </Section>
+
+            {/* 8. Gallery */}
+            <Section id="gallery" title="Photo Gallery" icon={<ImagePlus className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
+              <p className="text-[10px] text-gray-400 mb-3">Upload up to 3 photos (JPEG/PNG, max 2MB each)</p>
+              <div className="grid grid-cols-3 gap-2">
+                {(contentOverrides.gallery?.images || []).map((img, i) => (
+                  <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 group">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={img} alt={`Gallery ${i + 1}`} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const images = [...(contentOverrides.gallery?.images || [])];
+                        images.splice(i, 1);
+                        setContentOverrides(p => ({ ...p, gallery: { ...p.gallery, images } }));
+                      }}
+                      className="absolute top-1 right-1 p-1 bg-black/50 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+                {(contentOverrides.gallery?.images || []).length < 3 && (
+                  <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-rose-300 hover:bg-rose-50/50 transition-colors">
+                    <ImagePlus className="w-5 h-5 text-gray-300 mb-1" />
+                    <span className="text-[9px] text-gray-400">Add Photo</span>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        if (file.size > 2 * 1024 * 1024) { alert("Image must be under 2MB"); return; }
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                          const base64 = reader.result as string;
+                          if (!base64.startsWith("data:image/")) return;
+                          const images = [...(contentOverrides.gallery?.images || []), base64];
+                          setContentOverrides(p => ({ ...p, gallery: { ...p.gallery, images } }));
+                        };
+                        reader.readAsDataURL(file);
+                        e.target.value = "";
+                      }}
+                    />
+                  </label>
+                )}
+              </div>
             </Section>
 
             {/* Your Invitation Link */}

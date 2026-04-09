@@ -22,6 +22,12 @@ export interface ContentOverrides {
     title?: string;
     items?: { year: string; title: string; description: string }[];
   };
+  venue?: {
+    mapUrl?: string; // Google Maps share/embed URL
+  };
+  gallery?: {
+    images?: string[]; // base64 data URIs (max 3)
+  };
   rsvp?: {
     title?: string;
     deadline?: string;
