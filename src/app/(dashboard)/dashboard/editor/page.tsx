@@ -33,7 +33,7 @@ function Section({ id, title, icon, activeSection, setActiveSection, children, d
       onDragLeave={onDragLeave}
       onDrop={onDrop}
       onDragEnd={onDragEnd}
-      className={`rounded-2xl border overflow-hidden transition-all ${
+      className={`rounded-2xl border transition-all ${
         isDragging ? "opacity-40 scale-[0.98] border-gray-200" : ""
       } ${isDragOver ? "border-2 border-dashed border-rose-300 bg-rose-50/30" : "border-gray-100"
       } ${visible === false ? "opacity-50" : ""}`}
