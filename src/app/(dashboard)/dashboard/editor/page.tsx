@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import {
   Heart, Calendar, Clock, Plus, X, Save, Eye, Pencil, Smartphone,
-  ChevronDown, Loader2, Sparkles, Palette, LayoutList, Type,
+  ChevronDown, Loader2, Sparkles, Palette, Type,
   MapPin, ImagePlus, Trash2,
 } from "lucide-react";
 import type { InvitationEvent } from "@/types/invitation";
@@ -17,17 +17,48 @@ import { deepMerge } from "@/lib/deep-merge";
 /*  Reusable sub-components                                           */
 /* ------------------------------------------------------------------ */
 
-function Section({ id, title, icon, activeSection, setActiveSection, children }: {
+function Section({ id, title, icon, activeSection, setActiveSection, children, draggable: isDraggable, onDragStart, onDragOver, onDragLeave, onDrop, onDragEnd, isDragging, isDragOver, visible, onToggleVisible }: {
   id: string; title: string; icon: React.ReactNode; activeSection: string | null; setActiveSection: (id: string | null) => void; children: React.ReactNode;
+  draggable?: boolean; onDragStart?: () => void; onDragOver?: (e: React.DragEvent) => void; onDragLeave?: () => void; onDrop?: () => void; onDragEnd?: () => void;
+  isDragging?: boolean; isDragOver?: boolean; visible?: boolean; onToggleVisible?: () => void;
 }) {
   const isOpen = activeSection === id;
   return (
-    <div className="rounded-2xl border border-gray-100 overflow-hidden">
-      <button type="button" onClick={() => setActiveSection(isOpen ? null : id)}
-        className="flex items-center justify-between w-full px-5 py-3.5 hover:bg-gray-50/50 transition-colors">
-        <span className="flex items-center gap-2.5 text-sm font-semibold text-gray-800">{icon}{title}</span>
-        <ChevronDown className={`w-4 h-4 text-gray-300 transition-transform ${isOpen ? "rotate-180" : ""}`} />
-      </button>
+    <div
+      draggable={isDraggable}
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+      onDragEnd={onDragEnd}
+      className={`rounded-2xl border overflow-hidden transition-all ${
+        isDragging ? "opacity-40 scale-[0.98] border-gray-200" : ""
+      } ${isDragOver ? "border-2 border-dashed border-rose-300 bg-rose-50/30" : "border-gray-100"
+      } ${visible === false ? "opacity-50" : ""}`}
+    >
+      <div className="flex items-center gap-0">
+        {/* Drag handle */}
+        {isDraggable && (
+          <div className="pl-3 pr-1 py-3.5 cursor-grab active:cursor-grabbing flex flex-col gap-[2px] text-gray-300 select-none">
+            <div className="flex gap-[2px]"><div className="w-1 h-1 rounded-full bg-current" /><div className="w-1 h-1 rounded-full bg-current" /></div>
+            <div className="flex gap-[2px]"><div className="w-1 h-1 rounded-full bg-current" /><div className="w-1 h-1 rounded-full bg-current" /></div>
+            <div className="flex gap-[2px]"><div className="w-1 h-1 rounded-full bg-current" /><div className="w-1 h-1 rounded-full bg-current" /></div>
+          </div>
+        )}
+        {/* Section header button */}
+        <button type="button" onClick={() => setActiveSection(isOpen ? null : id)}
+          className={`flex-1 flex items-center justify-between ${isDraggable ? "pl-1 pr-3" : "px-5"} py-3.5 hover:bg-gray-50/50 transition-colors`}>
+          <span className="flex items-center gap-2.5 text-sm font-semibold text-gray-800">{icon}{title}</span>
+          <ChevronDown className={`w-4 h-4 text-gray-300 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+        </button>
+        {/* Visibility toggle */}
+        {onToggleVisible && (
+          <button onClick={(e) => { e.stopPropagation(); onToggleVisible(); }}
+            className={`mr-3 w-9 h-[18px] rounded-full transition-colors flex-shrink-0 ${visible !== false ? "bg-rose-500" : "bg-gray-200"}`}>
+            <div className={`w-3.5 h-3.5 bg-white rounded-full shadow-sm transform transition-transform ${visible !== false ? "translate-x-[18px]" : "translate-x-0.5"}`} />
+          </button>
+        )}
+      </div>
       {isOpen && <div className="px-5 pb-5 pt-1 space-y-4 border-t border-gray-50">{children}</div>}
     </div>
   );
@@ -312,109 +343,133 @@ export default function EditorPage() {
               )}
             </div>
 
-            {/* ═══ SECTION-BASED EDITING ═══ */}
+            {/* ═══ SECTION-BASED EDITING (draggable + toggleable) ═══ */}
+            <p className="text-[10px] text-gray-400 text-center -mb-2">Drag sections to reorder. Toggle to show/hide.</p>
 
-            {/* 1. Hero / Couple Intro */}
-            <Section id="hero" title="Hero / Couple Intro" icon={<Heart className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
-              <FormInput label="Groom Name" value={groomName} onChange={setGroomName} placeholder="Enter groom's name" />
-              <FormInput label="Bride Name" value={brideName} onChange={setBrideName} placeholder="Enter bride's name" />
-              <FormInput label="Subtitle" value={contentOverrides.hero?.subtitle || ""} onChange={(v) => setContentOverrides(p => ({ ...p, hero: { ...p.hero, subtitle: v } }))} placeholder={defaultConfig.content?.hero?.subtitle || "Together with their families"} />
-              <FormTextarea label="Message" value={contentOverrides.hero?.message || ""} onChange={(v) => setContentOverrides(p => ({ ...p, hero: { ...p.hero, message: v } }))} placeholder={defaultConfig.content?.hero?.message || "Request the honour of your presence"} />
-              <div className="grid grid-cols-2 gap-3">
-                <FormInput label="Wedding Date" value={weddingDate} onChange={setWeddingDate} type="date" />
-                <FormInput label="Wedding Time" value={weddingTime} onChange={setWeddingTime} type="time" />
-              </div>
-            </Section>
+            {[...sectionConfigs].sort((a, b) => a.order - b.order).map((sec) => {
+              const secVis = sec.visible;
+              const dProps = {
+                draggable: true as const,
+                onDragStart: () => handleDragStart(sec.id),
+                onDragOver: (e: React.DragEvent) => handleDragOver(e, sec.id),
+                onDragLeave: handleDragLeave,
+                onDrop: () => handleDrop(sec.id),
+                onDragEnd: handleDragEnd,
+                isDragging: dragId === sec.id,
+                isDragOver: dragOverId === sec.id && dragId !== sec.id,
+                visible: secVis,
+                onToggleVisible: () => toggleSection(sec.id),
+              };
 
-            {/* 2. Love Story */}
-            <Section id="story" title="Love Story" icon={<Heart className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
-              <FormInput label="Section Title" value={contentOverrides.story?.title || ""} onChange={(v) => setContentOverrides(p => ({ ...p, story: { ...p.story, title: v } }))} placeholder={defaultConfig.content?.story?.title || "Our Love Story"} />
-              <div className="space-y-3 mt-2">
-                {(contentOverrides.story?.items || []).map((item, i) => (
-                  <div key={i} className="relative rounded-xl border border-gray-100 bg-gray-50/80 p-3 space-y-2">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Story {i + 1}</span>
-                      <button type="button" onClick={() => { const items = [...(contentOverrides.story?.items || [])]; items.splice(i, 1); setContentOverrides(p => ({ ...p, story: { ...p.story, items } })); }} className="p-1 rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-500 transition-colors"><X className="w-3 h-3" /></button>
+              switch (sec.id) {
+                case "hero": return (
+                  <Section key="hero" id="hero" title="Hero / Couple Intro" icon={<Heart className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection} {...dProps}>
+                    <FormInput label="Groom Name" value={groomName} onChange={setGroomName} placeholder="Enter groom's name" />
+                    <FormInput label="Bride Name" value={brideName} onChange={setBrideName} placeholder="Enter bride's name" />
+                    <FormInput label="Subtitle" value={contentOverrides.hero?.subtitle || ""} onChange={(v) => setContentOverrides(p => ({ ...p, hero: { ...p.hero, subtitle: v } }))} placeholder={defaultConfig.content?.hero?.subtitle || "Together with their families"} />
+                    <FormTextarea label="Message" value={contentOverrides.hero?.message || ""} onChange={(v) => setContentOverrides(p => ({ ...p, hero: { ...p.hero, message: v } }))} placeholder={defaultConfig.content?.hero?.message || "Request the honour..."} />
+                    <div className="grid grid-cols-2 gap-3">
+                      <FormInput label="Wedding Date" value={weddingDate} onChange={setWeddingDate} type="date" />
+                      <FormInput label="Wedding Time" value={weddingTime} onChange={setWeddingTime} type="time" />
                     </div>
+                  </Section>
+                );
+                case "countdown": return (
+                  <Section key="countdown" id="countdown" title="Countdown Timer" icon={<Clock className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection} {...dProps}>
+                    <p className="text-xs text-gray-500">Countdown automatically uses the wedding date above.</p>
+                  </Section>
+                );
+                case "story": return (
+                  <Section key="story" id="story" title="Love Story" icon={<Heart className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection} {...dProps}>
+                    <FormInput label="Section Title" value={contentOverrides.story?.title || ""} onChange={(v) => setContentOverrides(p => ({ ...p, story: { ...p.story, title: v } }))} placeholder={defaultConfig.content?.story?.title || "Our Love Story"} />
+                    <div className="space-y-3 mt-2">
+                      {(contentOverrides.story?.items || []).map((item, i) => (
+                        <div key={i} className="relative rounded-xl border border-gray-100 bg-gray-50/80 p-3 space-y-2">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Story {i + 1}</span>
+                            <button type="button" onClick={() => { const items = [...(contentOverrides.story?.items || [])]; items.splice(i, 1); setContentOverrides(p => ({ ...p, story: { ...p.story, items } })); }} className="p-1 rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-500 transition-colors"><X className="w-3 h-3" /></button>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                            <FormInput label="Year" value={item.year} onChange={(v) => { const items = [...(contentOverrides.story?.items || [])]; items[i] = { ...items[i], year: v }; setContentOverrides(p => ({ ...p, story: { ...p.story, items } })); }} placeholder="2020" />
+                            <div className="col-span-2"><FormInput label="Title" value={item.title} onChange={(v) => { const items = [...(contentOverrides.story?.items || [])]; items[i] = { ...items[i], title: v }; setContentOverrides(p => ({ ...p, story: { ...p.story, items } })); }} placeholder="First Meeting" /></div>
+                          </div>
+                          <FormTextarea label="Description" value={item.description} onChange={(v) => { const items = [...(contentOverrides.story?.items || [])]; items[i] = { ...items[i], description: v }; setContentOverrides(p => ({ ...p, story: { ...p.story, items } })); }} placeholder="Tell your story..." />
+                        </div>
+                      ))}
+                    </div>
+                    <button type="button" onClick={() => { const items = [...(contentOverrides.story?.items || [])]; items.push({ year: "", title: "", description: "" }); setContentOverrides(p => ({ ...p, story: { ...p.story, items } })); }} className="flex items-center gap-1.5 text-xs text-rose-600 hover:text-rose-700 font-semibold mt-2 py-1"><Plus className="w-3.5 h-3.5" /> Add Story Item</button>
+                  </Section>
+                );
+                case "events": return (
+                  <Section key="events" id="events" title="Wedding Events" icon={<Clock className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection} {...dProps}>
+                    <div className="space-y-3">
+                      {events.map((ev, i) => (
+                        <div key={i} className="relative rounded-xl border border-gray-100 bg-gray-50/80 p-3.5 space-y-3">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Event {i + 1}</span>
+                            {events.length > 1 && (<button type="button" onClick={() => setEvents(p => p.filter((_, idx) => idx !== i))} className="p-1 rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-500 transition-colors"><X className="w-3 h-3" /></button>)}
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <FormInput label="Title" value={ev.title} onChange={(v) => updateEvent(i, "title", v)} placeholder="Ceremony" />
+                            <FormInput label="Time" value={ev.time} onChange={(v) => updateEvent(i, "time", v)} placeholder="4:00 PM" />
+                          </div>
+                          <FormInput label="Venue" value={ev.venue || ""} onChange={(v) => updateEvent(i, "venue", v)} placeholder="Event venue" />
+                          <FormTextarea label="Description" value={ev.description || ""} onChange={(v) => updateEvent(i, "description", v)} placeholder="Brief description" />
+                        </div>
+                      ))}
+                    </div>
+                    <button type="button" onClick={() => setEvents(p => [...p, { title: "", time: "", venue: "" }])} className="flex items-center gap-1.5 text-xs text-rose-600 hover:text-rose-700 font-semibold mt-2 py-1"><Plus className="w-3.5 h-3.5" /> Add Event</button>
+                  </Section>
+                );
+                case "gallery": return (
+                  <Section key="gallery" id="gallery" title="Photo Gallery" icon={<ImagePlus className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection} {...dProps}>
+                    <p className="text-[10px] text-gray-400 mb-3">Upload up to 3 photos (JPEG/PNG, max 2MB each)</p>
                     <div className="grid grid-cols-3 gap-2">
-                      <FormInput label="Year" value={item.year} onChange={(v) => { const items = [...(contentOverrides.story?.items || [])]; items[i] = { ...items[i], year: v }; setContentOverrides(p => ({ ...p, story: { ...p.story, items } })); }} placeholder="2020" />
-                      <div className="col-span-2"><FormInput label="Title" value={item.title} onChange={(v) => { const items = [...(contentOverrides.story?.items || [])]; items[i] = { ...items[i], title: v }; setContentOverrides(p => ({ ...p, story: { ...p.story, items } })); }} placeholder="First Meeting" /></div>
+                      {(contentOverrides.gallery?.images || []).map((img, i) => (
+                        <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 group">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={img} alt={`Gallery ${i + 1}`} className="w-full h-full object-cover" />
+                          <button type="button" onClick={() => { const images = [...(contentOverrides.gallery?.images || [])]; images.splice(i, 1); setContentOverrides(p => ({ ...p, gallery: { ...p.gallery, images } })); }} className="absolute top-1 right-1 p-1 bg-black/50 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 className="w-3 h-3" /></button>
+                        </div>
+                      ))}
+                      {(contentOverrides.gallery?.images || []).length < 3 && (
+                        <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-rose-300 hover:bg-rose-50/50 transition-colors">
+                          <ImagePlus className="w-5 h-5 text-gray-300 mb-1" /><span className="text-[9px] text-gray-400">Add</span>
+                          <input type="file" accept="image/jpeg,image/png" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (!file) return; if (file.size > 2 * 1024 * 1024) { alert("Max 2MB"); return; } const reader = new FileReader(); reader.onload = () => { const b = reader.result as string; if (!b.startsWith("data:image/")) return; setContentOverrides(p => ({ ...p, gallery: { ...p.gallery, images: [...(p.gallery?.images || []), b] } })); }; reader.readAsDataURL(file); e.target.value = ""; }} />
+                        </label>
+                      )}
                     </div>
-                    <FormTextarea label="Description" value={item.description} onChange={(v) => { const items = [...(contentOverrides.story?.items || [])]; items[i] = { ...items[i], description: v }; setContentOverrides(p => ({ ...p, story: { ...p.story, items } })); }} placeholder="Tell your story..." />
-                  </div>
-                ))}
-              </div>
-              <button type="button" onClick={() => { const items = [...(contentOverrides.story?.items || [])]; items.push({ year: "", title: "", description: "" }); setContentOverrides(p => ({ ...p, story: { ...p.story, items } })); }} className="flex items-center gap-1.5 text-xs text-rose-600 hover:text-rose-700 font-semibold mt-2 py-1"><Plus className="w-3.5 h-3.5" /> Add Story Item</button>
-            </Section>
+                  </Section>
+                );
+                case "venue": return (
+                  <Section key="venue" id="venue" title="Venue & Map" icon={<MapPin className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection} {...dProps}>
+                    <FormInput label="Venue Name" value={venue} onChange={setVenue} placeholder="e.g. Cinnamon Grand, Colombo" />
+                    <FormTextarea label="Address" value={venueAddress} onChange={setVenueAddress} placeholder="Full venue address" />
+                    <FormInput label="Google Maps Link" value={contentOverrides.venue?.mapUrl || ""} onChange={(v) => setContentOverrides(p => ({ ...p, venue: { ...p.venue, mapUrl: v } }))} placeholder="Paste share link for directions button" />
+                    {(contentOverrides.venue?.mapUrl || venue || venueAddress) && (
+                      <div className="rounded-xl overflow-hidden border border-gray-200 mt-1">
+                        <iframe src={`https://maps.google.com/maps?q=${encodeURIComponent(contentOverrides.venue?.mapUrl && contentOverrides.venue.mapUrl.includes("google") ? contentOverrides.venue.mapUrl : [venue, venueAddress].filter(Boolean).join(", "))}&output=embed`} className="w-full h-36 border-0" loading="lazy" title="Map" />
+                      </div>
+                    )}
+                  </Section>
+                );
+                case "rsvp": return (
+                  <Section key="rsvp" id="rsvp" title="RSVP" icon={<Type className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection} {...dProps}>
+                    <FormInput label="Title" value={contentOverrides.rsvp?.title || ""} onChange={(v) => setContentOverrides(p => ({ ...p, rsvp: { ...p.rsvp, title: v } }))} placeholder={defaultConfig.content?.rsvp?.title || "Will You Join Us?"} />
+                    <FormInput label="Deadline" value={contentOverrides.rsvp?.deadline || ""} onChange={(v) => setContentOverrides(p => ({ ...p, rsvp: { ...p.rsvp, deadline: v } }))} placeholder="Kindly respond by..." />
+                  </Section>
+                );
+                case "footer": return (
+                  <Section key="footer" id="footer-edit" title="Footer" icon={<Type className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection} {...dProps}>
+                    <FormInput label="Custom Message" value={contentOverrides.footer?.message || ""} onChange={(v) => setContentOverrides(p => ({ ...p, footer: { ...p.footer, message: v } }))} placeholder="Custom footer message (optional)" />
+                  </Section>
+                );
+                default: return null;
+              }
+            })}
 
-            {/* 3. Wedding Events */}
-            <Section id="events" title="Wedding Events" icon={<Clock className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
-              <div className="space-y-3">
-                {events.map((ev, i) => (
-                  <div key={i} className="relative rounded-xl border border-gray-100 bg-gray-50/80 p-3.5 space-y-3">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Event {i + 1}</span>
-                      {events.length > 1 && (<button type="button" onClick={() => setEvents(p => p.filter((_, idx) => idx !== i))} className="p-1 rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-500 transition-colors"><X className="w-3 h-3" /></button>)}
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <FormInput label="Title" value={ev.title} onChange={(v) => updateEvent(i, "title", v)} placeholder="Ceremony" />
-                      <FormInput label="Time" value={ev.time} onChange={(v) => updateEvent(i, "time", v)} placeholder="4:00 PM" />
-                    </div>
-                    <FormInput label="Venue" value={ev.venue || ""} onChange={(v) => updateEvent(i, "venue", v)} placeholder="Event venue" />
-                    <FormTextarea label="Description" value={ev.description || ""} onChange={(v) => updateEvent(i, "description", v)} placeholder="Brief description" />
-                  </div>
-                ))}
-              </div>
-              <button type="button" onClick={() => setEvents(p => [...p, { title: "", time: "", venue: "" }])} className="flex items-center gap-1.5 text-xs text-rose-600 hover:text-rose-700 font-semibold mt-2 py-1"><Plus className="w-3.5 h-3.5" /> Add Event</button>
-            </Section>
+            {/* ═══ GLOBAL SETTINGS (not draggable) ═══ */}
 
-            {/* 4. Photo Gallery */}
-            <Section id="gallery" title="Photo Gallery" icon={<ImagePlus className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
-              <p className="text-[10px] text-gray-400 mb-3">Upload up to 3 photos (JPEG/PNG, max 2MB each)</p>
-              <div className="grid grid-cols-3 gap-2">
-                {(contentOverrides.gallery?.images || []).map((img, i) => (
-                  <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 group">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={img} alt={`Gallery ${i + 1}`} className="w-full h-full object-cover" />
-                    <button type="button" onClick={() => { const images = [...(contentOverrides.gallery?.images || [])]; images.splice(i, 1); setContentOverrides(p => ({ ...p, gallery: { ...p.gallery, images } })); }} className="absolute top-1 right-1 p-1 bg-black/50 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 className="w-3 h-3" /></button>
-                  </div>
-                ))}
-                {(contentOverrides.gallery?.images || []).length < 3 && (
-                  <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-rose-300 hover:bg-rose-50/50 transition-colors">
-                    <ImagePlus className="w-5 h-5 text-gray-300 mb-1" /><span className="text-[9px] text-gray-400">Add Photo</span>
-                    <input type="file" accept="image/jpeg,image/png" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (!file) return; if (file.size > 2 * 1024 * 1024) { alert("Image must be under 2MB"); return; } const reader = new FileReader(); reader.onload = () => { const base64 = reader.result as string; if (!base64.startsWith("data:image/")) return; const images = [...(contentOverrides.gallery?.images || []), base64]; setContentOverrides(p => ({ ...p, gallery: { ...p.gallery, images } })); }; reader.readAsDataURL(file); e.target.value = ""; }} />
-                  </label>
-                )}
-              </div>
-            </Section>
-
-            {/* 5. Venue & Map */}
-            <Section id="venue" title="Venue & Map" icon={<MapPin className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
-              <FormInput label="Venue Name" value={venue} onChange={setVenue} placeholder="e.g. Cinnamon Grand, Colombo" />
-              <FormTextarea label="Address" value={venueAddress} onChange={setVenueAddress} placeholder="Full venue address" />
-              <FormInput label="Google Maps Link" value={contentOverrides.venue?.mapUrl || ""} onChange={(v) => setContentOverrides(p => ({ ...p, venue: { ...p.venue, mapUrl: v } }))} placeholder="Paste Google Maps share link" />
-              <p className="text-[10px] text-gray-400 -mt-2">Paste a Google Maps share link for the &quot;Open in Maps&quot; button</p>
-              {(contentOverrides.venue?.mapUrl || venue || venueAddress) && (
-                <div className="rounded-xl overflow-hidden border border-gray-200 mt-2">
-                  <iframe src={`https://maps.google.com/maps?q=${encodeURIComponent(contentOverrides.venue?.mapUrl && contentOverrides.venue.mapUrl.includes("google") ? contentOverrides.venue.mapUrl : [venue, venueAddress].filter(Boolean).join(", "))}&output=embed`} className="w-full h-40 border-0" loading="lazy" title="Venue Map Preview" />
-                </div>
-              )}
-            </Section>
-
-            {/* 6. RSVP */}
-            <Section id="rsvp" title="RSVP" icon={<Type className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
-              <FormInput label="Title" value={contentOverrides.rsvp?.title || ""} onChange={(v) => setContentOverrides(p => ({ ...p, rsvp: { ...p.rsvp, title: v } }))} placeholder={defaultConfig.content?.rsvp?.title || "Will You Join Us?"} />
-              <FormInput label="Deadline Text" value={contentOverrides.rsvp?.deadline || ""} onChange={(v) => setContentOverrides(p => ({ ...p, rsvp: { ...p.rsvp, deadline: v } }))} placeholder="Kindly respond by..." />
-            </Section>
-
-            {/* 7. Footer */}
-            <Section id="footer-edit" title="Footer" icon={<Type className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
-              <FormInput label="Custom Message" value={contentOverrides.footer?.message || ""} onChange={(v) => setContentOverrides(p => ({ ...p, footer: { ...p.footer, message: v } }))} placeholder="Custom footer message (optional)" />
-            </Section>
-
-            {/* ═══ GLOBAL SETTINGS ═══ */}
-
-            {/* 8. Style & Colors */}
             <Section id="style" title="Style & Colors" icon={<Palette className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
               <div className="space-y-4">
                 {[{ key: "primaryColor", label: "Primary" }, { key: "secondaryColor", label: "Secondary" }, { key: "backgroundColor", label: "Background" }, { key: "textColor", label: "Text" }, { key: "accentColor", label: "Accent" }].map(({ key, label }) => (
@@ -432,29 +487,6 @@ export default function EditorPage() {
                     {FONT_OPTIONS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
                   </select>
                 </div>
-              </div>
-            </Section>
-
-            {/* 9. Layout / Section Order */}
-            <Section id="layout" title="Layout & Order" icon={<LayoutList className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
-              <p className="text-[10px] text-gray-400 -mt-1 mb-2">Drag to reorder. Toggle to show/hide.</p>
-              <div className="space-y-1.5">
-                {[...sectionConfigs].sort((a, b) => a.order - b.order).map((sec) => (
-                  <div key={sec.id} draggable onDragStart={() => handleDragStart(sec.id)} onDragOver={(e) => handleDragOver(e, sec.id)} onDragLeave={handleDragLeave} onDrop={() => handleDrop(sec.id)} onDragEnd={handleDragEnd}
-                    className={`flex items-center justify-between p-3 rounded-xl cursor-grab active:cursor-grabbing select-none transition-all ${dragId === sec.id ? "opacity-40 scale-95" : ""} ${dragOverId === sec.id && dragId !== sec.id ? "border-2 border-dashed border-rose-300 bg-rose-50/50" : "bg-gray-50 border-2 border-transparent"} ${!sec.visible ? "opacity-50" : ""}`}>
-                    <div className="flex items-center gap-3">
-                      <div className="flex flex-col gap-[2px] text-gray-300">
-                        <div className="flex gap-[2px]"><div className="w-1 h-1 rounded-full bg-current" /><div className="w-1 h-1 rounded-full bg-current" /></div>
-                        <div className="flex gap-[2px]"><div className="w-1 h-1 rounded-full bg-current" /><div className="w-1 h-1 rounded-full bg-current" /></div>
-                        <div className="flex gap-[2px]"><div className="w-1 h-1 rounded-full bg-current" /><div className="w-1 h-1 rounded-full bg-current" /></div>
-                      </div>
-                      <span className="text-sm text-gray-700">{SECTION_LABELS[sec.id]}</span>
-                    </div>
-                    <button onClick={(e) => { e.stopPropagation(); toggleSection(sec.id); }} className={`w-10 h-5 rounded-full transition-colors flex-shrink-0 ${sec.visible ? "bg-rose-500" : "bg-gray-200"}`}>
-                      <div className={`w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform ${sec.visible ? "translate-x-5" : "translate-x-0.5"}`} />
-                    </button>
-                  </div>
-                ))}
               </div>
             </Section>
 
