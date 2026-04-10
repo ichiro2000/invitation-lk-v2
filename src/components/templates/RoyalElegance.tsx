@@ -678,13 +678,13 @@ export default function RoyalElegance({ data, config }: { data?: InvitationData;
             {content.footer?.groomPhone && (
               <a href={`tel:${content.footer.groomPhone}`} className="flex items-center gap-2 px-4 py-2 rounded-full text-sm transition-colors hover:opacity-80"
                 style={{ borderWidth: 1, borderStyle: "solid", borderColor: withOpacity(theme.primaryColor, 0.3), color: theme.primaryColor }}>
-                <Phone className="w-4 h-4" /> {groom}: {content.footer.groomPhone}
+                <Phone className="w-4 h-4" /> Call {groom}
               </a>
             )}
             {content.footer?.bridePhone && (
               <a href={`tel:${content.footer.bridePhone}`} className="flex items-center gap-2 px-4 py-2 rounded-full text-sm transition-colors hover:opacity-80"
                 style={{ borderWidth: 1, borderStyle: "solid", borderColor: withOpacity(theme.primaryColor, 0.3), color: theme.primaryColor }}>
-                <Phone className="w-4 h-4" /> {bride}: {content.footer.bridePhone}
+                <Phone className="w-4 h-4" /> Call {bride}
               </a>
             )}
           </div>
