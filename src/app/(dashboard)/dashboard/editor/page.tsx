@@ -526,6 +526,8 @@ export default function EditorPage() {
                 );
                 case "footer": return (
                   <Section key="footer" id="footer-edit" title="Footer" icon={<Type className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection} {...dProps}>
+                    <FormInput label="Groom's Phone" value={contentOverrides.footer?.groomPhone || ""} onChange={(v) => setContentOverrides(p => ({ ...p, footer: { ...p.footer, groomPhone: v } }))} placeholder="+94 77 XXX XXXX" />
+                    <FormInput label="Bride's Phone" value={contentOverrides.footer?.bridePhone || ""} onChange={(v) => setContentOverrides(p => ({ ...p, footer: { ...p.footer, bridePhone: v } }))} placeholder="+94 77 XXX XXXX" />
                     <FormInput label="Custom Message" value={contentOverrides.footer?.message || ""} onChange={(v) => setContentOverrides(p => ({ ...p, footer: { ...p.footer, message: v } }))} placeholder="Custom footer message (optional)" />
                   </Section>
                 );

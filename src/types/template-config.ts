@@ -34,6 +34,8 @@ export interface ContentOverrides {
   };
   footer?: {
     message?: string;
+    groomPhone?: string;
+    bridePhone?: string;
   };
 }
 

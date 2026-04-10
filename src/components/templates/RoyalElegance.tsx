@@ -671,27 +671,27 @@ export default function RoyalElegance({ data, config }: { data?: InvitationData;
           <Heart className="w-6 h-6 mx-auto mb-4" style={{ color: theme.primaryColor, fill: theme.primaryColor }} />
         </motion.div>
         <p className="text-xl font-light mb-2" style={{ color: theme.secondaryColor }}>{bride} & {groom}</p>
-        <p className="text-sm mb-8" style={{ color: theme.accentColor }}>{formattedDate} &middot; {venue}</p>
-        <div className="flex items-center justify-center gap-4 mb-8">
-          {[Phone, Mail].map((Icon, idx) => (
-            <motion.div
-              key={idx}
-              whileHover={{ scale: 1.15, borderColor: theme.primaryColor }}
-              className="w-11 h-11 rounded-full flex items-center justify-center cursor-pointer transition-colors"
-              style={{
-                borderWidth: 1,
-                borderStyle: "solid",
-                borderColor: withOpacity(theme.primaryColor, 0.3),
-              }}
-            >
-              <Icon className="w-4 h-4" style={{ color: theme.primaryColor }} />
-            </motion.div>
-          ))}
-        </div>
-        <p className="text-xs" style={{ color: withOpacity(theme.accentColor, 0.4) }}>
-          Created with <Heart className="w-3 h-3 inline" style={{ color: theme.primaryColor, fill: theme.primaryColor }} /> by{" "}
-          <Link href="/" style={{ color: theme.primaryColor }} className="hover:underline">INVITATION.LK</Link>
-        </p>
+        <p className="text-sm mb-6" style={{ color: theme.accentColor }}>{formattedDate} &middot; {venue}</p>
+        {/* Contact phones */}
+        {(content.footer?.groomPhone || content.footer?.bridePhone) && (
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-8">
+            {content.footer?.groomPhone && (
+              <a href={`tel:${content.footer.groomPhone}`} className="flex items-center gap-2 px-4 py-2 rounded-full text-sm transition-colors hover:opacity-80"
+                style={{ borderWidth: 1, borderStyle: "solid", borderColor: withOpacity(theme.primaryColor, 0.3), color: theme.primaryColor }}>
+                <Phone className="w-4 h-4" /> {groom}: {content.footer.groomPhone}
+              </a>
+            )}
+            {content.footer?.bridePhone && (
+              <a href={`tel:${content.footer.bridePhone}`} className="flex items-center gap-2 px-4 py-2 rounded-full text-sm transition-colors hover:opacity-80"
+                style={{ borderWidth: 1, borderStyle: "solid", borderColor: withOpacity(theme.primaryColor, 0.3), color: theme.primaryColor }}>
+                <Phone className="w-4 h-4" /> {bride}: {content.footer.bridePhone}
+              </a>
+            )}
+          </div>
+        )}
+        {content.footer?.message && (
+          <p className="text-sm mb-4" style={{ color: theme.accentColor }}>{content.footer.message}</p>
+        )}
       </motion.div>
     </footer>
   );
@@ -713,6 +713,13 @@ export default function RoyalElegance({ data, config }: { data?: InvitationData;
   return (
     <div className="overflow-hidden" style={{ backgroundColor: theme.backgroundColor, color: theme.textColor, fontFamily: theme.fontFamily }}>
       {sections.map(s => renderSection(s.id))}
+      {/* Mandatory branding — always visible */}
+      <div className="py-4 text-center" style={{ backgroundColor: theme.backgroundColor }}>
+        <p className="text-[10px]" style={{ color: withOpacity(theme.accentColor, 0.4) }}>
+          Created with <Heart className="w-2.5 h-2.5 inline" style={{ color: theme.primaryColor, fill: theme.primaryColor }} /> by{" "}
+          <Link href="/" style={{ color: theme.primaryColor }} className="hover:underline">INVITATION.LK</Link>
+        </p>
+      </div>
     </div>
   );
 }
