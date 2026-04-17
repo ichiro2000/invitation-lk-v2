@@ -75,11 +75,17 @@ export default async function InvitationPreviewPage({
   const TemplateComponent = templateComponents[invitation.templateSlug];
   if (!TemplateComponent) notFound();
 
+  // Extract date + time in the couple's timezone (Sri Lanka) so the published
+  // invitation always matches what the editor showed, regardless of which
+  // timezone the server happens to be running in.
+  const TZ = "Asia/Colombo";
   const data: InvitationData = {
     groomName: invitation.groomName,
     brideName: invitation.brideName,
-    weddingDate: invitation.weddingDate.toISOString().split("T")[0],
+    // sv-SE locale outputs YYYY-MM-DD, which is what templates expect
+    weddingDate: invitation.weddingDate.toLocaleDateString("sv-SE", { timeZone: TZ }),
     weddingTime: invitation.weddingDate.toLocaleTimeString("en-US", {
+      timeZone: TZ,
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
