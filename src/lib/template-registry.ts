@@ -207,6 +207,26 @@ export const TEMPLATE_REGISTRY: TemplateEntry[] = [
       content: { hero: { subtitle: "Together with their families" }, story: { title: "Our Love Story" }, rsvp: { title: "Join Us" } },
     },
   },
+  {
+    slug: "wings-of-honour",
+    name: "Wings of Honour",
+    category: "Traditional",
+    plan: "PREMIUM",
+    colorSwatch: "bg-[#0f2744]",
+    defaultTheme: {
+      primaryColor: "#c9a268",
+      secondaryColor: "#0f2744",
+      backgroundColor: "#0f2744",
+      textColor: "#ffffff",
+      accentColor: "#e6c77a",
+      fontFamily: "serif",
+    },
+    defaultConfig: {
+      theme: { primaryColor: "#c9a268", secondaryColor: "#0f2744", backgroundColor: "#0f2744", textColor: "#ffffff", accentColor: "#e6c77a", fontFamily: "serif" },
+      sections: [...DEFAULT_SECTIONS],
+      content: { hero: { subtitle: "With the blessings of our families" }, story: { title: "Our Journey" }, rsvp: { title: "Will You Stand With Us?" } },
+    },
+  },
 ];
 
 export function getTemplateEntry(slug: string): TemplateEntry | undefined {
