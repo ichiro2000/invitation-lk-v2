@@ -833,10 +833,28 @@ export default function WingsOfHonour({ data, config }: { data?: InvitationData;
   const dateObj = new Date(rawDate + "T00:00:00");
   const dayName = dateObj.toLocaleDateString("en-US", { weekday: "long" }).toUpperCase();
   const formattedDate = dateObj.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-  const formattedTime = (() => {
-    try { return new Date(`2000-01-01T${timeStr}:00`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }); } catch { return timeStr; }
+
+  // Normalize weddingTime to 24h "HH:MM" regardless of whether it comes in as
+  // "4:00 PM", "16:00", "4 PM", etc. Falls back to 15:00 if unparseable.
+  const normalizedTime = (() => {
+    const t = (timeStr || "").trim();
+    const ampm = t.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)$/i);
+    if (ampm) {
+      let h = parseInt(ampm[1], 10);
+      const m = ampm[2] || "00";
+      const period = ampm[3].toUpperCase();
+      if (period === "PM" && h !== 12) h += 12;
+      if (period === "AM" && h === 12) h = 0;
+      return `${h.toString().padStart(2, "0")}:${m}`;
+    }
+    const h24 = t.match(/^(\d{1,2}):(\d{2})/);
+    if (h24) return `${h24[1].padStart(2, "0")}:${h24[2]}`;
+    return "15:00";
   })();
-  const countdownTarget = `${rawDate}T${timeStr}:00`;
+  const formattedTime = new Date(`2000-01-01T${normalizedTime}:00`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+  const countdownTarget = `${rawDate}T${normalizedTime}:00`;
+  const mapUrl = content.venue?.mapUrl || "";
+  const mapSrc = `https://maps.google.com/maps?q=${encodeURIComponent(mapUrl && mapUrl.includes("google") ? mapUrl : [venueName, venueAddr].filter(Boolean).join(", "))}&output=embed`;
 
   // Content with defaults
   const heroSubtitle = content.hero?.subtitle || "WITH THE BLESSINGS OF OUR FAMILIES";
@@ -1016,10 +1034,11 @@ export default function WingsOfHonour({ data, config }: { data?: InvitationData;
           </p>
           <Countdown
             targetDate={countdownTarget}
-            valueClassName="text-5xl sm:text-6xl font-light text-white"
-            labelClassName="text-[10px] text-[#c9a268] tracking-[0.3em] uppercase mt-3"
-            boxClassName="flex flex-col items-center min-w-[80px] sm:min-w-[100px]"
-            separatorClassName="text-4xl font-light text-[#c9a268]/30 mx-2 self-start"
+            className="gap-1 sm:gap-4"
+            valueClassName="text-3xl sm:text-5xl md:text-6xl font-light text-white"
+            labelClassName="text-[9px] sm:text-[10px] text-[#c9a268] tracking-[0.2em] sm:tracking-[0.3em] uppercase mt-2 sm:mt-3"
+            boxClassName="flex flex-col items-center min-w-[54px] sm:min-w-[80px] md:min-w-[100px]"
+            separatorClassName="text-2xl sm:text-4xl font-light text-[#c9a268]/30 mx-0.5 sm:mx-2 self-start"
           />
         </motion.div>
       </section>
@@ -1171,13 +1190,26 @@ export default function WingsOfHonour({ data, config }: { data?: InvitationData;
             <p className="text-white/60 mb-10">{venueAddr}</p>
             <motion.div
               whileHover={{ scale: 1.01 }}
-              className="bg-gradient-to-br from-white/5 to-[#c9a268]/10 rounded-2xl h-72 sm:h-80 flex items-center justify-center border border-[#c9a268]/30 shadow-inner"
+              className="rounded-2xl h-72 sm:h-80 overflow-hidden border border-[#c9a268]/30 shadow-inner bg-[#08152b]"
             >
-              <div className="text-center">
-                <MapPin className="w-12 h-12 text-[#c9a268]/60 mx-auto mb-3" />
-                <p className="text-white/50 text-sm">Interactive Map</p>
-              </div>
+              <iframe
+                src={mapSrc}
+                className="w-full h-full border-0"
+                loading="lazy"
+                title={`${venueName} map`}
+                style={{ filter: "hue-rotate(200deg) invert(92%) contrast(0.9)" }}
+              />
             </motion.div>
+            {mapUrl && (
+              <a
+                href={mapUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 mt-4 text-[#c9a268] hover:text-[#e6c77a] text-sm transition-colors"
+              >
+                <MapPin className="w-4 h-4" /> Open in Google Maps
+              </a>
+            )}
           </motion.div>
         </div>
       </section>
