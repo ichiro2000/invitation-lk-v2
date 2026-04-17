@@ -154,9 +154,14 @@ export default function EditorPage() {
           setBrideName(inv.brideName || "");
           if (inv.weddingDate) {
             const d = new Date(inv.weddingDate);
-            setWeddingDate(d.toISOString().split("T")[0]);
-            const h = d.getUTCHours().toString().padStart(2, "0");
-            const m = d.getUTCMinutes().toString().padStart(2, "0");
+            // Read back in browser-local TZ (matches the local TZ used when saving),
+            // so a save-load round-trip doesn't drift the date/time.
+            const yyyy = d.getFullYear();
+            const mm = (d.getMonth() + 1).toString().padStart(2, "0");
+            const dd = d.getDate().toString().padStart(2, "0");
+            setWeddingDate(`${yyyy}-${mm}-${dd}`);
+            const h = d.getHours().toString().padStart(2, "0");
+            const m = d.getMinutes().toString().padStart(2, "0");
             if (h !== "00" || m !== "00") setWeddingTime(`${h}:${m}`);
           }
           setVenue(inv.venue || "");
@@ -395,7 +400,17 @@ export default function EditorPage() {
                                   captionLayout="dropdown"
                                   showOutsideDays={false}
                                   selected={weddingDate ? new Date(weddingDate + "T00:00:00") : undefined}
-                                  onSelect={(d) => { if (d) { setWeddingDate(d.toISOString().split("T")[0]); } setDatePickerOpen(false); }}
+                                  onSelect={(d) => {
+                                    if (d) {
+                                      // Use local Y-M-D so a user who picks "Apr 20" stores "2026-04-20",
+                                      // regardless of how the date would serialise in UTC.
+                                      const yyyy = d.getFullYear();
+                                      const mm = (d.getMonth() + 1).toString().padStart(2, "0");
+                                      const dd = d.getDate().toString().padStart(2, "0");
+                                      setWeddingDate(`${yyyy}-${mm}-${dd}`);
+                                    }
+                                    setDatePickerOpen(false);
+                                  }}
                                   disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
                                   startMonth={new Date()}
                                   endMonth={new Date(new Date().getFullYear() + 3, 11)}
