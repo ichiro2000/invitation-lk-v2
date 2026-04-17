@@ -9,6 +9,7 @@ import SinhalaMangalya from "@/components/templates/SinhalaMangalya";
 import VintageBotanical from "@/components/templates/VintageBotanical";
 import RoseGarden from "@/components/templates/RoseGarden";
 import ModernElegance from "@/components/templates/ModernElegance";
+import WingsOfHonour from "@/components/templates/WingsOfHonour";
 import type { Metadata } from "next";
 
 const templates: Record<string, { component: React.ComponentType; title: string; description: string }> = {
@@ -61,6 +62,11 @@ const templates: Record<string, { component: React.ComponentType; title: string;
     component: ModernElegance,
     title: "Modern Elegance — Sample Wedding Invitation",
     description: "Premium modern luxury wedding invitation with clean typography and warm tones.",
+  },
+  "wings-of-honour": {
+    component: WingsOfHonour,
+    title: "Wings of Honour — Sample Wedding Invitation",
+    description: "Sri Lanka Air Force military wedding invitation in navy and gold with aviation wings, orbiting plane, and ceremonial swords.",
   },
 };
 
