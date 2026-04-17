@@ -2,9 +2,57 @@
 
 import { motion, useScroll, useTransform, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { Heart, MapPin, Mail, Phone, Camera, ChevronDown, Award, Plane, Radio, Lock, FileText } from "lucide-react";
+import { Heart, MapPin, Mail, Phone, Camera, ChevronDown, Award, Plane, Radio, FileText } from "lucide-react";
 import Countdown from "./shared/Countdown";
 import { useState, useRef, useEffect } from "react";
+import type { InvitationData } from "@/types/invitation";
+import type { TemplateConfig } from "@/types/template-config";
+import { DEFAULT_SECTIONS } from "@/types/template-config";
+import { deepMerge } from "@/lib/deep-merge";
+
+export const DEFAULT_CONFIG: TemplateConfig = {
+  theme: {
+    primaryColor: "#c9a268",
+    secondaryColor: "#0f2744",
+    backgroundColor: "#0f2744",
+    textColor: "#ffffff",
+    accentColor: "#e6c77a",
+    fontFamily: "serif",
+  },
+  sections: [...DEFAULT_SECTIONS],
+  content: {
+    hero: {
+      subtitle: "WITH THE BLESSINGS OF OUR FAMILIES",
+      message: "we invite you to celebrate the marriage of",
+    },
+    story: {
+      title: "Chapters of Our Love",
+      items: [
+        { year: "2018", title: "First Salute", description: "We first met at an Air Force charity gala in Colombo. A shared laughter over mistaken identities began a friendship neither of us expected." },
+        { year: "2020", title: "Letters Across the Sky", description: "When deployed, handwritten letters and midnight phone calls carried our bond across distance and sky." },
+        { year: "2024", title: "The Proposal", description: "At the SLAF base, under a guard of honour arranged by his squadron, he knelt on one knee." },
+        { year: "2026", title: "The Vow", description: "With our families and his brothers-in-arms, we begin our lifelong journey." },
+      ],
+    },
+    rsvp: { title: "Will You Stand With Us?", deadline: "Kindly respond by October 15, 2026" },
+    mission: {
+      codename: "BLUE WINGS",
+      fileNo: "SLAF-2026-1114",
+      clearance: "LEVEL ∞",
+      briefing: "Contents pertain to the union of two operatives. Attendance is requested. Classification clearance granted upon receipt.",
+    },
+    atc: {
+      messages: [
+        "SLAF-114, cleared for approach, runway honour-14",
+        "Roger tower, on final, three souls on board",
+        "Winds calm, love ceiling unlimited, cleared to land",
+        "Copy that, beginning descent to forever",
+        "Welcome home, SLAF-114. Godspeed",
+      ],
+    },
+    portrait: { image: "/couple-portrait.png" },
+  },
+};
 
 /* ── Flying aircraft with contrail across the hero ── */
 function FlyingAircraft() {
@@ -145,7 +193,19 @@ function Confetti() {
 }
 
 /* ── Mission dossier intro overlay ── */
-function MissionDossier({ onOpen }: { onOpen: () => void }) {
+function MissionDossier({
+  onOpen,
+  codename = "BLUE WINGS",
+  fileNo = "SLAF-2026-1114",
+  clearance = "LEVEL ∞",
+  briefing = "Contents pertain to the union of two operatives. Attendance is requested. Classification clearance granted upon receipt.",
+}: {
+  onOpen: () => void;
+  codename?: string;
+  fileNo?: string;
+  clearance?: string;
+  briefing?: string;
+}) {
   const [stage, setStage] = useState<"closed" | "stamping" | "opening">("closed");
 
   useEffect(() => {
@@ -197,16 +257,16 @@ function MissionDossier({ onOpen }: { onOpen: () => void }) {
             <p className="text-[10px] tracking-[0.3em] mb-5">SLAF // MATRIMONIAL OPS</p>
 
             <p className="text-[10px] tracking-[0.4em] opacity-60 mb-1">OPERATION CODENAME</p>
-            <h2 className="text-3xl font-bold tracking-wider mb-5 font-serif">BLUE WINGS</h2>
+            <h2 className="text-3xl font-bold tracking-wider mb-5 font-serif">{codename}</h2>
 
             <div className="grid grid-cols-2 gap-3 text-[10px] mb-5">
               <div>
                 <p className="tracking-[0.2em] opacity-60">FILE NO.</p>
-                <p className="font-mono tracking-wider">SLAF-2026-1114</p>
+                <p className="font-mono tracking-wider">{fileNo}</p>
               </div>
               <div>
                 <p className="tracking-[0.2em] opacity-60">CLEARANCE</p>
-                <p className="font-mono tracking-wider">LEVEL ∞</p>
+                <p className="font-mono tracking-wider">{clearance}</p>
               </div>
               <div>
                 <p className="tracking-[0.2em] opacity-60">OPERATIVES</p>
@@ -220,10 +280,7 @@ function MissionDossier({ onOpen }: { onOpen: () => void }) {
 
             <div className="border-t border-dashed border-[#8b6914]/40 pt-4 mb-4">
               <p className="text-[10px] tracking-[0.3em] opacity-60 mb-2">MISSION BRIEFING ENCLOSED</p>
-              <p className="text-xs leading-relaxed italic">
-                Contents pertain to the union of two operatives.
-                Attendance is requested. Classification clearance granted upon receipt.
-              </p>
+              <p className="text-xs leading-relaxed italic">{briefing}</p>
             </div>
 
             {/* DECLASSIFIED stamp */}
@@ -258,7 +315,15 @@ function MissionDossier({ onOpen }: { onOpen: () => void }) {
 }
 
 /* ── Orbital portrait: couple photo in circle, plane orbiting around it ── */
-function OrbitalPortrait() {
+function OrbitalPortrait({
+  imageSrc = "/couple-portrait.png",
+  groom = "Sashini",
+  bride = "Wing Cmdr. Ravindu",
+}: {
+  imageSrc?: string;
+  groom?: string;
+  bride?: string;
+}) {
   return (
     <div className="relative mx-auto" style={{ width: 480, height: 480, maxWidth: "100%" }}>
       {/* Soft radial glow */}
@@ -338,8 +403,8 @@ function OrbitalPortrait() {
             style={{ boxShadow: "0 0 60px rgba(201,162,104,0.4), inset 0 0 40px rgba(201,162,104,0.15)" }}
           >
             <img
-              src="/couple-portrait.png"
-              alt="Sashini & Wing Cmdr. Ravindu"
+              src={imageSrc}
+              alt={`${groom} & ${bride}`}
               className="absolute inset-0 w-full h-full object-contain p-2"
               style={{ objectPosition: "center center" }}
             />
@@ -544,15 +609,8 @@ function FlightPathMap() {
 }
 
 /* ── ATC radio chatter ticker ── */
-function ATCTicker() {
-  const messages = [
-    "SLAF-114, cleared for approach, runway honour-14",
-    "Roger tower, on final, three souls on board",
-    "Winds calm, love ceiling unlimited, cleared to land",
-    "Copy that, beginning descent to forever",
-    "Welcome home, SLAF-114. Godspeed",
-  ];
-  const full = messages.join("  ◆  ");
+function ATCTicker({ messages }: { messages: string[] }) {
+  const full = (messages.length > 0 ? messages : ["SLAF-114, cleared for approach"]).join("  ◆  ");
   return (
     <div className="bg-[#0a1a2e] border-y border-[#c9a268]/30 py-3 overflow-hidden relative">
       <div className="absolute left-0 top-0 bottom-0 flex items-center pl-4 z-10 bg-gradient-to-r from-[#0a1a2e] via-[#0a1a2e] to-transparent pr-6">
@@ -755,7 +813,41 @@ function EpauletCorner({ position }: { position: string }) {
   );
 }
 
-export default function WingsOfHonour() {
+export default function WingsOfHonour({ data, config }: { data?: InvitationData; config?: TemplateConfig } = {}) {
+  const merged = deepMerge(DEFAULT_CONFIG as Record<string, unknown>, (config || {}) as Record<string, unknown>) as TemplateConfig;
+  const content = merged.content || {};
+
+  // Data with defaults
+  const groom = data?.groomName || "Sashini";
+  const bride = data?.brideName || "Wing Cmdr. Ravindu";
+  const rawDate = data?.weddingDate || "2026-11-14";
+  const timeStr = data?.weddingTime || "15:00";
+  const venueName = data?.venue || "SLAF Officers' Mess, Ratmalana";
+  const venueAddr = data?.venueAddress || "Air Force Base Ratmalana, Colombo, Sri Lanka";
+  const events = data?.events && data.events.length > 0 ? data.events : [
+    { title: "Poruwa Ceremony", time: "3:00 PM - 4:30 PM", venue: "Grand Ballroom", description: "Traditional Kandyan ceremony with the blessings of both families." },
+    { title: "Guard of Honour", time: "4:30 PM - 5:00 PM", venue: "Ceremonial Courtyard", description: "A formal salute by the groom's squadron as the couple pass beneath crossed swords." },
+    { title: "Wedding Reception", time: "7:00 PM - 11:30 PM", venue: "Royal Banquet Hall", description: "An evening of dinner, dancing and celebration with friends, family, and comrades-in-arms." },
+  ];
+
+  const dateObj = new Date(rawDate + "T00:00:00");
+  const dayName = dateObj.toLocaleDateString("en-US", { weekday: "long" }).toUpperCase();
+  const formattedDate = dateObj.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  const formattedTime = (() => {
+    try { return new Date(`2000-01-01T${timeStr}:00`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }); } catch { return timeStr; }
+  })();
+  const countdownTarget = `${rawDate}T${timeStr}:00`;
+
+  // Content with defaults
+  const heroSubtitle = content.hero?.subtitle || "WITH THE BLESSINGS OF OUR FAMILIES";
+  const heroMessage = content.hero?.message || "we invite you to celebrate the marriage of";
+  const storyItems = content.story?.items || [];
+  const rsvpTitle = content.rsvp?.title || "Will You Stand With Us?";
+  const rsvpDeadline = content.rsvp?.deadline || "Kindly respond by October 15, 2026";
+  const mission = content.mission || {};
+  const atcMessages = content.atc?.messages || [];
+  const portraitSrc = content.portrait?.image || "/couple-portrait.png";
+
   const [rsvpSent, setRsvpSent] = useState(false);
   const [dossierOpen, setDossierOpen] = useState(false);
   const heroRef = useRef(null);
@@ -766,7 +858,15 @@ export default function WingsOfHonour() {
   return (
     <div className="bg-[#0f2744] text-white font-serif overflow-hidden">
       <AnimatePresence>
-        {!dossierOpen && <MissionDossier onOpen={() => setDossierOpen(true)} />}
+        {!dossierOpen && (
+          <MissionDossier
+            onOpen={() => setDossierOpen(true)}
+            codename={mission.codename}
+            fileNo={mission.fileNo}
+            clearance={mission.clearance}
+            briefing={mission.briefing}
+          />
+        )}
       </AnimatePresence>
 
       {/* ═══ HERO ═══ */}
@@ -842,7 +942,7 @@ export default function WingsOfHonour() {
             animate={{ opacity: 1 }}
             transition={{ duration: 1.5, delay: 0.5 }}
           >
-            With the blessings of our families
+            {heroSubtitle}
           </motion.p>
           <motion.p
             className="text-[#e6c77a]/70 tracking-[0.3em] uppercase text-[10px] sm:text-xs mb-8"
@@ -850,7 +950,7 @@ export default function WingsOfHonour() {
             animate={{ opacity: 1 }}
             transition={{ duration: 1.5, delay: 0.7 }}
           >
-            we invite you to celebrate the marriage of
+            {heroMessage}
           </motion.p>
 
           <motion.h1
@@ -859,7 +959,7 @@ export default function WingsOfHonour() {
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             transition={{ duration: 1, delay: 0.9 }}
           >
-            Sashini
+            {groom}
           </motion.h1>
 
           <BraidDivider />
@@ -870,7 +970,7 @@ export default function WingsOfHonour() {
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             transition={{ duration: 1, delay: 1.2 }}
           >
-            Wing Cmdr. Ravindu
+            {bride}
           </motion.h1>
 
           <motion.div
@@ -880,10 +980,10 @@ export default function WingsOfHonour() {
             transition={{ duration: 0.8, delay: 1.6 }}
           >
             <div className="bg-white/5 backdrop-blur-sm rounded-xl px-10 py-5 border border-[#c9a268]/30 inline-block">
-              <p className="text-[#c9a268] tracking-[0.3em] uppercase text-xs mb-1">Saturday</p>
-              <p className="text-3xl sm:text-4xl font-light text-white">November 14, 2026</p>
+              <p className="text-[#c9a268] tracking-[0.3em] uppercase text-xs mb-1">{dayName}</p>
+              <p className="text-3xl sm:text-4xl font-light text-white">{formattedDate}</p>
               <p className="text-[#c9a268] tracking-[0.2em] uppercase text-xs mt-1">
-                at three o&apos;clock in the afternoon
+                at {formattedTime.toLowerCase()}
               </p>
             </div>
             <div className="absolute -inset-4 bg-[#c9a268]/10 rounded-2xl blur-xl -z-10" />
@@ -915,7 +1015,7 @@ export default function WingsOfHonour() {
             T&minus;Minus To Take-Off
           </p>
           <Countdown
-            targetDate="2026-11-14T15:00:00"
+            targetDate={countdownTarget}
             valueClassName="text-5xl sm:text-6xl font-light text-white"
             labelClassName="text-[10px] text-[#c9a268] tracking-[0.3em] uppercase mt-3"
             boxClassName="flex flex-col items-center min-w-[80px] sm:min-w-[100px]"
@@ -938,13 +1038,32 @@ export default function WingsOfHonour() {
             <FileText className="w-3 h-3 text-[#c9a268]" />
             <p className="text-[#c9a268] tracking-[0.3em] uppercase text-[10px] font-mono">CLASSIFIED · MISSION TRACK</p>
           </div>
-          <h2 className="text-4xl sm:text-5xl font-light text-white tracking-wide">Flight Path of a Love Story</h2>
+          <h2 className="text-4xl sm:text-5xl font-light text-white tracking-wide">{content.story?.title || "Flight Path of a Love Story"}</h2>
           <p className="text-white/50 text-sm mt-3 max-w-lg mx-auto">
-            Four waypoints. Eight years. One final destination.
+            {storyItems.length > 0 ? `${storyItems.length} chapters. One final destination.` : "Four waypoints. Eight years. One final destination."}
           </p>
         </motion.div>
 
-        <OrbitalPortrait />
+        <OrbitalPortrait imageSrc={portraitSrc} groom={groom} bride={bride} />
+
+        {storyItems.length > 0 && (
+          <div className="max-w-3xl mx-auto mt-16 grid sm:grid-cols-2 gap-5 px-2">
+            {storyItems.map((item, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+                className="bg-white/5 backdrop-blur-sm border border-[#c9a268]/30 rounded-xl p-5"
+              >
+                <p className="text-[10px] tracking-[0.3em] text-[#c9a268] font-mono mb-2">WAYPOINT · {item.year}</p>
+                <h3 className="text-lg text-white font-light mb-1 tracking-wide">{item.title}</h3>
+                <p className="text-white/60 text-sm leading-relaxed">{item.description}</p>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* ═══ EVENTS ═══ */}
@@ -963,53 +1082,34 @@ export default function WingsOfHonour() {
           </motion.div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: Award,
-                title: "Poruwa Ceremony",
-                time: "3:00 PM - 4:30 PM",
-                venue: "Grand Ballroom",
-                desc: "Traditional Kandyan ceremony with the blessings of both families and the chief guest.",
-              },
-              {
-                icon: Plane,
-                title: "Guard of Honour",
-                time: "4:30 PM - 5:00 PM",
-                venue: "Ceremonial Courtyard",
-                desc: "A formal salute by the groom's squadron as the bride and groom pass beneath crossed swords.",
-              },
-              {
-                icon: Heart,
-                title: "Wedding Reception",
-                time: "7:00 PM - 11:30 PM",
-                venue: "Royal Banquet Hall",
-                desc: "An evening of dinner, dancing and celebration with friends, family, and comrades-in-arms.",
-              },
-            ].map((event, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.7, delay: i * 0.2 }}
-                style={{ perspective: 1000 }}
-              >
-                <TiltCard className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 text-center border border-[#c9a268]/20 hover:border-[#c9a268]/60 transition-colors">
-                  <motion.div
-                    className="w-16 h-16 bg-gradient-to-br from-[#c9a268] to-[#b88b3a] rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg"
-                    whileHover={{ rotate: 12 }}
-                    style={{ transform: "translateZ(30px)" }}
-                  >
-                    <event.icon className="w-7 h-7 text-[#0f2744]" />
-                  </motion.div>
-                  <h3 className="text-lg font-semibold text-white mb-2" style={{ transform: "translateZ(20px)" }}>{event.title}</h3>
-                  <p className="text-[#c9a268] text-sm font-medium mb-1">{event.time}</p>
-                  <p className="text-white/60 text-sm mb-3">{event.venue}</p>
-                  <div className="w-8 h-px bg-[#c9a268]/40 mx-auto mb-3" />
-                  <p className="text-sm text-white/50">{event.desc}</p>
-                </TiltCard>
-              </motion.div>
-            ))}
+            {events.map((event, i) => {
+              const Icon = i === 0 ? Award : i === 1 ? Plane : Heart;
+              return (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.7, delay: i * 0.2 }}
+                  style={{ perspective: 1000 }}
+                >
+                  <TiltCard className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 text-center border border-[#c9a268]/20 hover:border-[#c9a268]/60 transition-colors">
+                    <motion.div
+                      className="w-16 h-16 bg-gradient-to-br from-[#c9a268] to-[#b88b3a] rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg"
+                      whileHover={{ rotate: 12 }}
+                      style={{ transform: "translateZ(30px)" }}
+                    >
+                      <Icon className="w-7 h-7 text-[#0f2744]" />
+                    </motion.div>
+                    <h3 className="text-lg font-semibold text-white mb-2" style={{ transform: "translateZ(20px)" }}>{event.title}</h3>
+                    <p className="text-[#c9a268] text-sm font-medium mb-1">{event.time}</p>
+                    {event.venue && <p className="text-white/60 text-sm mb-3">{event.venue}</p>}
+                    <div className="w-8 h-px bg-[#c9a268]/40 mx-auto mb-3" />
+                    {event.description && <p className="text-sm text-white/50">{event.description}</p>}
+                  </TiltCard>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -1066,9 +1166,9 @@ export default function WingsOfHonour() {
             <h2 className="text-4xl sm:text-5xl font-light text-white mb-6">Ceremony Venue</h2>
             <div className="flex items-center justify-center gap-2 mb-2">
               <MapPin className="w-5 h-5 text-[#c9a268]" />
-              <h3 className="text-xl font-semibold text-white">SLAF Officers&apos; Mess, Ratmalana</h3>
+              <h3 className="text-xl font-semibold text-white">{venueName}</h3>
             </div>
-            <p className="text-white/60 mb-10">Air Force Base Ratmalana, Colombo, Sri Lanka</p>
+            <p className="text-white/60 mb-10">{venueAddr}</p>
             <motion.div
               whileHover={{ scale: 1.01 }}
               className="bg-gradient-to-br from-white/5 to-[#c9a268]/10 rounded-2xl h-72 sm:h-80 flex items-center justify-center border border-[#c9a268]/30 shadow-inner"
@@ -1095,8 +1195,8 @@ export default function WingsOfHonour() {
               <CrossedSwords className="w-10 h-10" />
             </div>
             <p className="text-[#c9a268] tracking-[0.4em] uppercase text-xs mb-4">RSVP</p>
-            <h2 className="text-4xl sm:text-5xl font-light mb-4">Will You Stand With Us?</h2>
-            <p className="text-white/50 mb-12 text-sm">Kindly respond by October 15, 2026</p>
+            <h2 className="text-4xl sm:text-5xl font-light mb-4">{rsvpTitle}</h2>
+            <p className="text-white/50 mb-12 text-sm">{rsvpDeadline}</p>
 
             {rsvpSent ? (
               <motion.div
@@ -1168,7 +1268,7 @@ export default function WingsOfHonour() {
       </section>
 
       {/* ═══ ATC RADIO CHATTER ═══ */}
-      <ATCTicker />
+      <ATCTicker messages={atcMessages} />
 
       {/* ═══ FOOTER ═══ */}
       <footer className="py-14 text-center px-4 bg-[#0a1a35] border-t border-[#c9a268]/30">
@@ -1180,8 +1280,8 @@ export default function WingsOfHonour() {
           <div className="flex justify-center mb-4">
             <WingsEmblem className="w-24 h-auto opacity-90" />
           </div>
-          <p className="text-white text-xl font-light mb-2">Sashini &amp; Wing Cmdr. Ravindu</p>
-          <p className="text-white/60 text-sm mb-8">November 14, 2026 &middot; Ratmalana, Sri Lanka</p>
+          <p className="text-white text-xl font-light mb-2">{groom} &amp; {bride}</p>
+          <p className="text-white/60 text-sm mb-8">{formattedDate} &middot; {venueName}</p>
           <div className="flex items-center justify-center gap-4 mb-8">
             {[Phone, Mail].map((Icon, idx) => (
               <motion.div

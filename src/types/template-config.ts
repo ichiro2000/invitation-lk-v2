@@ -37,6 +37,21 @@ export interface ContentOverrides {
     groomPhone?: string;
     bridePhone?: string;
   };
+  /** Wings of Honour — mission dossier overlay */
+  mission?: {
+    codename?: string;
+    fileNo?: string;
+    clearance?: string;
+    briefing?: string;
+  };
+  /** Wings of Honour — ATC radio chatter ticker */
+  atc?: {
+    messages?: string[];
+  };
+  /** Wings of Honour — circular couple portrait */
+  portrait?: {
+    image?: string; // URL or data URI
+  };
 }
 
 export interface TemplateConfig {

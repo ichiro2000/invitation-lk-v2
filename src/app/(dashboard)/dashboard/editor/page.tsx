@@ -535,6 +535,57 @@ export default function EditorPage() {
               }
             })}
 
+            {/* ═══ WINGS OF HONOUR — TEMPLATE-SPECIFIC BLOCKS ═══ */}
+            {templateSlug === "wings-of-honour" && (
+              <Section id="mission" title="Mission Briefing (Wings of Honour)" icon={<Sparkles className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
+                <p className="text-[11px] text-gray-500 mb-1">Customise the TOP SECRET dossier overlay that greets guests before the invitation.</p>
+                <FormInput label="Operation Codename" value={contentOverrides.mission?.codename || ""} onChange={(v) => setContentOverrides(p => ({ ...p, mission: { ...p.mission, codename: v } }))} placeholder="BLUE WINGS" />
+                <FormInput label="File Number" value={contentOverrides.mission?.fileNo || ""} onChange={(v) => setContentOverrides(p => ({ ...p, mission: { ...p.mission, fileNo: v } }))} placeholder="SLAF-2026-1114" />
+                <FormInput label="Clearance Level" value={contentOverrides.mission?.clearance || ""} onChange={(v) => setContentOverrides(p => ({ ...p, mission: { ...p.mission, clearance: v } }))} placeholder="LEVEL ∞" />
+                <FormTextarea label="Briefing Text" value={contentOverrides.mission?.briefing || ""} onChange={(v) => setContentOverrides(p => ({ ...p, mission: { ...p.mission, briefing: v } }))} placeholder="Contents pertain to the union of two operatives..." />
+              </Section>
+            )}
+
+            {templateSlug === "wings-of-honour" && (
+              <Section id="atc" title="ATC Radio Chatter (Wings of Honour)" icon={<Sparkles className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
+                <p className="text-[11px] text-gray-500 mb-1">Scrolling radio messages shown near the footer. One message per line.</p>
+                <div>
+                  <label className="block text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1.5">Messages</label>
+                  <textarea
+                    value={(contentOverrides.atc?.messages || []).join("\n")}
+                    onChange={(e) => setContentOverrides(p => ({ ...p, atc: { ...p.atc, messages: e.target.value.split("\n").map(s => s.trim()).filter(Boolean) } }))}
+                    placeholder={"SLAF-114, cleared for approach\nRoger tower, on final\nCleared to land"}
+                    rows={6}
+                    className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-2xl bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 transition-all resize-none placeholder:text-gray-300 font-mono"
+                  />
+                </div>
+              </Section>
+            )}
+
+            {templateSlug === "wings-of-honour" && (
+              <Section id="portrait" title="Couple Portrait (Wings of Honour)" icon={<ImagePlus className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
+                <p className="text-[11px] text-gray-500 mb-2">Photo shown inside the orbital circle on the mission briefing section.</p>
+                {contentOverrides.portrait?.image && (
+                  <div className="relative w-32 h-32 mx-auto mb-3 rounded-full overflow-hidden border-2 border-rose-200">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={contentOverrides.portrait.image} alt="Portrait" className="w-full h-full object-cover" />
+                    <button type="button" onClick={() => setContentOverrides(p => ({ ...p, portrait: { ...p.portrait, image: "" } }))} className="absolute top-1 right-1 p-1 bg-black/50 rounded-full text-white"><Trash2 className="w-3 h-3" /></button>
+                  </div>
+                )}
+                <label className="flex flex-col items-center justify-center cursor-pointer border-2 border-dashed border-gray-200 rounded-2xl py-6 hover:border-rose-300 hover:bg-rose-50/50 transition-colors">
+                  <ImagePlus className="w-5 h-5 text-gray-300 mb-1" />
+                  <span className="text-[11px] text-gray-400">Upload portrait (max 2MB)</span>
+                  <input type="file" accept="image/jpeg,image/png" className="hidden" onChange={(e) => {
+                    const file = e.target.files?.[0]; if (!file) return;
+                    if (file.size > 2 * 1024 * 1024) { alert("Max 2MB"); return; }
+                    const reader = new FileReader();
+                    reader.onload = () => { const b = reader.result as string; if (!b.startsWith("data:image/")) return; setContentOverrides(p => ({ ...p, portrait: { ...p.portrait, image: b } })); };
+                    reader.readAsDataURL(file); e.target.value = "";
+                  }} />
+                </label>
+              </Section>
+            )}
+
             {/* ═══ GLOBAL SETTINGS (not draggable) ═══ */}
 
             <Section id="style" title="Style & Colors" icon={<Palette className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>

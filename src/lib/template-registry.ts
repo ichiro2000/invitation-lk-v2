@@ -224,7 +224,35 @@ export const TEMPLATE_REGISTRY: TemplateEntry[] = [
     defaultConfig: {
       theme: { primaryColor: "#c9a268", secondaryColor: "#0f2744", backgroundColor: "#0f2744", textColor: "#ffffff", accentColor: "#e6c77a", fontFamily: "serif" },
       sections: [...DEFAULT_SECTIONS],
-      content: { hero: { subtitle: "With the blessings of our families" }, story: { title: "Our Journey" }, rsvp: { title: "Will You Stand With Us?" } },
+      content: {
+        hero: { subtitle: "WITH THE BLESSINGS OF OUR FAMILIES", message: "we invite you to celebrate the marriage of" },
+        story: {
+          title: "Flight Path of a Love Story",
+          items: [
+            { year: "2018", title: "First Salute", description: "We first met at an Air Force charity gala in Colombo." },
+            { year: "2020", title: "Letters Across the Sky", description: "Midnight phone calls carried our bond across distance." },
+            { year: "2024", title: "The Proposal", description: "At the SLAF base, under a guard of honour, he knelt on one knee." },
+            { year: "2026", title: "The Vow", description: "With our families and his brothers-in-arms, we begin our lifelong journey." },
+          ],
+        },
+        rsvp: { title: "Will You Stand With Us?", deadline: "Kindly respond by October 15, 2026" },
+        mission: {
+          codename: "BLUE WINGS",
+          fileNo: "SLAF-2026-1114",
+          clearance: "LEVEL ∞",
+          briefing: "Contents pertain to the union of two operatives. Attendance is requested. Classification clearance granted upon receipt.",
+        },
+        atc: {
+          messages: [
+            "SLAF-114, cleared for approach, runway honour-14",
+            "Roger tower, on final, three souls on board",
+            "Winds calm, love ceiling unlimited, cleared to land",
+            "Copy that, beginning descent to forever",
+            "Welcome home, SLAF-114. Godspeed",
+          ],
+        },
+        portrait: { image: "/couple-portrait.png" },
+      },
     },
   },
 ];
