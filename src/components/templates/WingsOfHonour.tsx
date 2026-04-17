@@ -334,21 +334,15 @@ function OrbitalPortrait() {
             transition={{ duration: 3, repeat: Infinity }}
           />
           <div
-            className="relative w-80 h-80 sm:w-96 sm:h-96 rounded-full overflow-hidden border-[3px] border-[#c9a268] bg-gradient-to-b from-[#1e3a5f] to-[#0a1a35] flex items-center justify-center"
+            className="relative w-80 h-80 sm:w-96 sm:h-96 rounded-full overflow-hidden border-[3px] border-[#c9a268] bg-gradient-to-b from-[#1e3a5f] to-[#0a1a35]"
             style={{ boxShadow: "0 0 60px rgba(201,162,104,0.4), inset 0 0 40px rgba(201,162,104,0.15)" }}
           >
             <img
               src="/couple-portrait.png"
               alt="Sashini & Wing Cmdr. Ravindu"
-              className="w-full h-full object-cover object-top"
-              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+              className="absolute inset-0 w-full h-full object-contain p-2"
+              style={{ objectPosition: "center center" }}
             />
-            {/* Fallback placeholder behind image */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 -z-0">
-              <Plane className="w-10 h-10 text-[#c9a268]/40 mb-3" />
-              <p className="text-[10px] tracking-[0.3em] text-[#c9a268]/60 uppercase">Save couple photo to</p>
-              <p className="text-xs font-mono text-[#c9a268]/80 mt-1">/public/couple-portrait.png</p>
-            </div>
           </div>
         </motion.div>
       </div>
