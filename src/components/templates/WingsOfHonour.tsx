@@ -2,7 +2,7 @@
 
 import { motion, useScroll, useTransform, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { Heart, MapPin, Mail, Phone, Camera, ChevronDown, Award, Plane, Radio, FileText } from "lucide-react";
+import { Heart, MapPin, Phone, Camera, ChevronDown, Award, Plane, Radio, FileText } from "lucide-react";
 import Countdown from "./shared/Countdown";
 import { useState, useRef, useEffect } from "react";
 import type { InvitationData } from "@/types/invitation";
@@ -865,6 +865,9 @@ export default function WingsOfHonour({ data, config }: { data?: InvitationData;
   const mission = content.mission || {};
   const atcMessages = content.atc?.messages || [];
   const portraitSrc = content.portrait?.image || "/couple-portrait.png";
+  const groomPhone = content.footer?.groomPhone || "";
+  const bridePhone = content.footer?.bridePhone || "";
+  const footerMessage = content.footer?.message || "";
 
   const [rsvpSent, setRsvpSent] = useState(false);
   const [dossierOpen, setDossierOpen] = useState(false);
@@ -1314,17 +1317,35 @@ export default function WingsOfHonour({ data, config }: { data?: InvitationData;
           </div>
           <p className="text-white text-xl font-light mb-2">{groom} &amp; {bride}</p>
           <p className="text-white/60 text-sm mb-8">{formattedDate} &middot; {venueName}</p>
-          <div className="flex items-center justify-center gap-4 mb-8">
-            {[Phone, Mail].map((Icon, idx) => (
-              <motion.div
-                key={idx}
-                whileHover={{ scale: 1.15, borderColor: "#c9a268" }}
-                className="w-11 h-11 rounded-full border border-[#c9a268]/40 flex items-center justify-center cursor-pointer transition-colors"
-              >
-                <Icon className="w-4 h-4 text-[#c9a268]" />
-              </motion.div>
-            ))}
-          </div>
+          {footerMessage && (
+            <p className="text-white/70 text-sm mb-6 max-w-md mx-auto italic">{footerMessage}</p>
+          )}
+          {(groomPhone || bridePhone) && (
+            <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
+              {groomPhone && (
+                <motion.a
+                  href={`tel:${groomPhone.replace(/\s+/g, "")}`}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-[#c9a268]/50 hover:border-[#c9a268] hover:bg-[#c9a268]/10 transition-colors"
+                >
+                  <Phone className="w-4 h-4 text-[#c9a268]" />
+                  <span className="text-[#c9a268] text-sm tracking-wide">Call {groom.split(" ")[0]}</span>
+                </motion.a>
+              )}
+              {bridePhone && (
+                <motion.a
+                  href={`tel:${bridePhone.replace(/\s+/g, "")}`}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-[#c9a268]/50 hover:border-[#c9a268] hover:bg-[#c9a268]/10 transition-colors"
+                >
+                  <Phone className="w-4 h-4 text-[#c9a268]" />
+                  <span className="text-[#c9a268] text-sm tracking-wide">Call {bride.split(" ").slice(-1)[0]}</span>
+                </motion.a>
+              )}
+            </div>
+          )}
           <p className="text-xs text-white/40">
             Created with <Heart className="w-3 h-3 inline text-[#c9a268] fill-[#c9a268]" /> by{" "}
             <Link href="/" className="text-[#c9a268] hover:underline">
