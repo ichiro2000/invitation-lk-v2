@@ -51,14 +51,17 @@ export interface ContentOverrides {
     classification?: string;
     operatives?: string;
     status?: string;
+    visible?: boolean; // default true
   };
   /** Wings of Honour — ATC radio chatter ticker */
   atc?: {
     messages?: string[];
+    visible?: boolean; // default true
   };
   /** Wings of Honour — circular couple portrait */
   portrait?: {
     image?: string; // URL or data URI
+    visible?: boolean; // default true
   };
 }
 

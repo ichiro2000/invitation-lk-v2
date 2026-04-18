@@ -594,7 +594,9 @@ export default function EditorPage() {
 
             {/* ═══ WINGS OF HONOUR — TEMPLATE-SPECIFIC BLOCKS ═══ */}
             {templateSlug === "wings-of-honour" && (
-              <Section id="mission" title="Mission Briefing (Wings of Honour)" icon={<Sparkles className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
+              <Section id="mission" title="Mission Briefing (Wings of Honour)" icon={<Sparkles className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}
+                visible={contentOverrides.mission?.visible !== false}
+                onToggleVisible={() => setContentOverrides(p => ({ ...p, mission: { ...p.mission, visible: p.mission?.visible === false ? true : false } }))}>
                 <p className="text-[11px] text-gray-500 mb-1">Customise the TOP SECRET dossier overlay that greets guests before the invitation.</p>
                 <FormInput label="Classification" value={contentOverrides.mission?.classification || ""} onChange={(v) => setContentOverrides(p => ({ ...p, mission: { ...p.mission, classification: v } }))} placeholder="SLAF // MATRIMONIAL OPS" />
                 <FormInput label="Operation Codename" value={contentOverrides.mission?.codename || ""} onChange={(v) => setContentOverrides(p => ({ ...p, mission: { ...p.mission, codename: v } }))} placeholder="BLUE WINGS" />
@@ -607,7 +609,9 @@ export default function EditorPage() {
             )}
 
             {templateSlug === "wings-of-honour" && (
-              <Section id="atc" title="ATC Radio Chatter (Wings of Honour)" icon={<Sparkles className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
+              <Section id="atc" title="ATC Radio Chatter (Wings of Honour)" icon={<Sparkles className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}
+                visible={contentOverrides.atc?.visible !== false}
+                onToggleVisible={() => setContentOverrides(p => ({ ...p, atc: { ...p.atc, visible: p.atc?.visible === false ? true : false } }))}>
                 <p className="text-[11px] text-gray-500 mb-1">Scrolling radio messages shown near the footer. One message per line.</p>
                 <div>
                   <label className="block text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1.5">Messages</label>
@@ -623,7 +627,9 @@ export default function EditorPage() {
             )}
 
             {templateSlug === "wings-of-honour" && (
-              <Section id="portrait" title="Couple Portrait (Wings of Honour)" icon={<ImagePlus className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
+              <Section id="portrait" title="Couple Portrait (Wings of Honour)" icon={<ImagePlus className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}
+                visible={contentOverrides.portrait?.visible !== false}
+                onToggleVisible={() => setContentOverrides(p => ({ ...p, portrait: { ...p.portrait, visible: p.portrait?.visible === false ? true : false } }))}>
                 <p className="text-[11px] text-gray-500 mb-2">Photo shown inside the orbital circle on the mission briefing section.</p>
                 {contentOverrides.portrait?.image && (
                   <div className="relative w-32 h-32 mx-auto mb-3 rounded-full overflow-hidden border-2 border-rose-200">
