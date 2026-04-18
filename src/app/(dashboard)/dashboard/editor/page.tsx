@@ -462,6 +462,7 @@ export default function EditorPage() {
                 case "story": return (
                   <Section key="story" id="story" title="Love Story" icon={<Heart className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection} {...dProps}>
                     <FormInput label="Section Title" value={contentOverrides.story?.title || ""} onChange={(v) => setContentOverrides(p => ({ ...p, story: { ...p.story, title: v } }))} placeholder={defaultConfig.content?.story?.title || "Our Love Story"} />
+                    <FormInput label="Subtitle" value={contentOverrides.story?.subtitle || ""} onChange={(v) => setContentOverrides(p => ({ ...p, story: { ...p.story, subtitle: v } }))} placeholder={defaultConfig.content?.story?.subtitle || "Short tagline shown below the title"} />
                     <div className="space-y-3 mt-2">
                       {(contentOverrides.story?.items || []).map((item, i) => (
                         <div key={i} className="relative rounded-xl border border-gray-100 bg-gray-50/80 p-3 space-y-2">
