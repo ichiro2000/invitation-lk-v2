@@ -41,45 +41,60 @@ export const DEFAULT_CONFIG: TemplateConfig = {
   },
 };
 
-/* ── Falling petals — physics-ish drift ── */
+/* ── Falling petals — pure CSS keyframes, GPU-only (compositor-friendly) ── */
 function FallingPetals({ count = 22, color = "#ec4899" }: { count?: number; color?: string }) {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const update = () => setIsMobile(window.innerWidth < 640);
+    update();
+    window.addEventListener("resize", update, { passive: true });
+    return () => window.removeEventListener("resize", update);
+  }, []);
+  const effective = isMobile ? Math.min(count, 8) : count;
+  const petalSvg = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'><path d='M10 1 C 13 5, 17 7, 16 12 C 15 16, 11 18, 10 19 C 9 18, 5 16, 4 12 C 3 7, 7 5, 10 1 Z' fill='${encodeURIComponent(color)}' opacity='0.85'/></svg>")`;
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {Array.from({ length: count }).map((_, i) => {
+    <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+      <style>{`
+        @keyframes bw-petal-fall {
+          0%   { transform: translate3d(0, -8vh, 0) rotate(0deg); opacity: 0; }
+          10%  { opacity: 0.85; }
+          100% { transform: translate3d(var(--bw-drift, 0px), 108vh, 0) rotate(540deg); opacity: 0; }
+        }
+        .bw-petal {
+          position: absolute;
+          top: 0;
+          background-image: ${petalSvg};
+          background-size: contain;
+          background-repeat: no-repeat;
+          will-change: transform, opacity;
+          animation-name: bw-petal-fall;
+          animation-iteration-count: infinite;
+          animation-timing-function: linear;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .bw-petal { animation: none; opacity: 0; }
+        }
+      `}</style>
+      {Array.from({ length: effective }).map((_, i) => {
         const size = 10 + (i % 5) * 3;
         const left = (i * 41 + 13) % 100;
         const delay = (i * 0.8) % 10;
         const dur = 10 + (i % 6) * 2;
         const drift = ((i % 7) - 3) * 40;
-        const rot = (i * 47) % 360;
         return (
-          <motion.div
+          <span
             key={i}
-            className="absolute"
-            style={{ top: -30, left: `${left}%`, width: size, height: size }}
-            initial={{ y: -40, x: 0, rotate: rot, opacity: 0 }}
-            animate={{
-              y: ["-5vh", "110vh"],
-              x: [0, drift, -drift / 2, drift / 3, 0],
-              rotate: [rot, rot + 540],
-              opacity: [0, 0.85, 0.7, 0],
+            className="bw-petal"
+            style={{
+              left: `${left}%`,
+              width: size,
+              height: size,
+              ["--bw-drift" as string]: `${drift}px`,
+              animationDuration: `${dur}s`,
+              animationDelay: `-${delay}s`,
             }}
-            transition={{ duration: dur, repeat: Infinity, delay, ease: "linear" }}
-          >
-            <svg viewBox="0 0 20 20" className="w-full h-full drop-shadow-[0_2px_6px_rgba(236,72,153,0.25)]">
-              <path
-                d="M10 1 C 13 5, 17 7, 16 12 C 15 16, 11 18, 10 19 C 9 18, 5 16, 4 12 C 3 7, 7 5, 10 1 Z"
-                fill={color}
-                opacity="0.8"
-              />
-              <path
-                d="M10 6 C 11 9, 13 10, 13 13 C 12 15, 10 16, 10 16"
-                fill="none"
-                stroke={lighten(color, 0.4)}
-                strokeWidth="0.6"
-              />
-            </svg>
-          </motion.div>
+          />
         );
       })}
     </div>
@@ -109,22 +124,22 @@ function CursorGlow({ color }: { color: string }) {
   );
 }
 
-/* ── Liquid blob in the background — slow morph ── */
+/* ── Liquid blob — GPU-only transform/opacity, no runtime blur filter ── */
 function LiquidBlob({ color, size = 500, top = "10%", left = "-10%" }: { color: string; size?: number; top?: string; left?: string }) {
   return (
     <motion.div
       className="absolute rounded-full pointer-events-none"
       style={{
         top, left, width: size, height: size,
-        background: `radial-gradient(circle, ${withOpacity(color, 0.25)} 0%, ${withOpacity(color, 0)} 70%)`,
-        filter: "blur(60px)",
+        background: `radial-gradient(circle, ${withOpacity(color, 0.22)} 0%, ${withOpacity(color, 0)} 70%)`,
+        willChange: "transform",
       }}
       animate={{
         x: [0, 40, -30, 20, 0],
         y: [0, -30, 40, -20, 0],
-        scale: [1, 1.1, 0.95, 1.05, 1],
+        scale: [1, 1.08, 0.96, 1.04, 1],
       }}
-      transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+      transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
     />
   );
 }
