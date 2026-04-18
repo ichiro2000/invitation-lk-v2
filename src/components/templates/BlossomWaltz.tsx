@@ -595,6 +595,27 @@ export default function BlossomWaltz({ data, config }: { data?: InvitationData; 
         <LiquidBlob color={theme.accentColor} size={500} top="50%" left="70%" />
         <FallingPetals count={22} color={theme.primaryColor} />
 
+        {/* Signature rose — sits behind the names as a centrepiece. Blooms on
+             curtain-open, wraps/unwraps with scroll. */}
+        <div
+          aria-hidden="true"
+          className="absolute left-1/2 top-1/2 pointer-events-none"
+          style={{
+            width: "min(120vw, 860px)",
+            height: "min(120vw, 860px)",
+            transform: "translate(-50%, -50%)",
+            opacity: 0.55,
+          }}
+        >
+          {curtainDone && (
+            <SignatureRose
+              color={theme.primaryColor}
+              accent={theme.accentColor}
+              bloom={bloom}
+            />
+          )}
+        </div>
+
         <motion.div
           style={{ y: heroParallax }}
           className="relative z-10 max-w-3xl mx-auto"
@@ -609,7 +630,7 @@ export default function BlossomWaltz({ data, config }: { data?: InvitationData; 
             {heroSubtitle}
           </motion.p>
 
-          <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-8 mb-8">
+          <div className="flex items-center justify-center gap-3 sm:gap-6 md:gap-8 mb-8">
             <motion.h1
               initial={{ opacity: 0, x: -40 }}
               animate={{ opacity: 1, x: 0 }}
@@ -619,18 +640,15 @@ export default function BlossomWaltz({ data, config }: { data?: InvitationData; 
             >
               {groom}
             </motion.h1>
-            <div
-              className="flex-shrink-0 w-56 h-56 sm:w-72 sm:h-72 md:w-96 md:h-96"
-              aria-hidden="true"
+            <motion.div
+              initial={{ scale: 0, rotate: -90 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ duration: 0.9, delay: 0.8, ease: [0.22, 1, 0.36, 1] }}
+              className="text-4xl sm:text-5xl md:text-6xl italic flex-shrink-0"
+              style={{ color: theme.primaryColor, fontFamily: "Georgia, serif" }}
             >
-              {curtainDone && (
-                <SignatureRose
-                  color={theme.primaryColor}
-                  accent={theme.accentColor}
-                  bloom={bloom}
-                />
-              )}
-            </div>
+              &amp;
+            </motion.div>
             <motion.h1
               initial={{ opacity: 0, x: 40 }}
               animate={{ opacity: 1, x: 0 }}
