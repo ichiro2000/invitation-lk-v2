@@ -200,12 +200,18 @@ function MissionDossier({
   fileNo = "SLAF-2026-1114",
   clearance = "LEVEL ∞",
   briefing = "Contents pertain to the union of two operatives. Attendance is requested. Classification clearance granted upon receipt.",
+  classification = "SLAF // MATRIMONIAL OPS",
+  operatives = "2 PRIMARY",
+  status = "INBOUND",
 }: {
   onOpen: () => void;
   codename?: string;
   fileNo?: string;
   clearance?: string;
   briefing?: string;
+  classification?: string;
+  operatives?: string;
+  status?: string;
 }) {
   const [stage, setStage] = useState<"closed" | "stamping" | "opening">("closed");
 
@@ -255,7 +261,7 @@ function MissionDossier({
 
           <div className="mt-6 text-[#2a1f14]">
             <p className="text-[10px] tracking-[0.4em] opacity-60 mb-1">CLASSIFICATION</p>
-            <p className="text-[10px] tracking-[0.3em] mb-5">SLAF // MATRIMONIAL OPS</p>
+            <p className="text-[10px] tracking-[0.3em] mb-5">{classification}</p>
 
             <p className="text-[10px] tracking-[0.4em] opacity-60 mb-1">OPERATION CODENAME</p>
             <h2 className="text-3xl font-bold tracking-wider mb-5 font-serif">{codename}</h2>
@@ -271,11 +277,11 @@ function MissionDossier({
               </div>
               <div>
                 <p className="tracking-[0.2em] opacity-60">OPERATIVES</p>
-                <p className="font-mono tracking-wider">2 PRIMARY</p>
+                <p className="font-mono tracking-wider">{operatives}</p>
               </div>
               <div>
                 <p className="tracking-[0.2em] opacity-60">STATUS</p>
-                <p className="font-mono tracking-wider text-[#8b1a1a]">INBOUND</p>
+                <p className="font-mono tracking-wider text-[#8b1a1a]">{status}</p>
               </div>
             </div>
 
@@ -887,6 +893,9 @@ export default function WingsOfHonour({ data, config }: { data?: InvitationData;
             fileNo={mission.fileNo}
             clearance={mission.clearance}
             briefing={mission.briefing}
+            classification={mission.classification}
+            operatives={mission.operatives}
+            status={mission.status}
           />
         )}
       </AnimatePresence>
