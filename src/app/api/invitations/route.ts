@@ -14,15 +14,17 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const invitation = await prisma.invitation.findUnique({
+    const invitations = await prisma.invitation.findMany({
       where: { userId: session.user.id },
       include: { events: { orderBy: { sortOrder: "asc" } } },
+      orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ invitation });
+    // Back-compat: expose `invitation` (the most recent one) AND the full list.
+    return NextResponse.json({ invitations, invitation: invitations[0] || null });
   } catch (error) {
-    console.error("Get invitation error:", error);
-    return NextResponse.json({ error: "Failed to fetch invitation" }, { status: 500 });
+    console.error("Get invitations error:", error);
+    return NextResponse.json({ error: "Failed to fetch invitations" }, { status: 500 });
   }
 }
 
@@ -32,15 +34,6 @@ export async function POST(request: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // If invitation already exists, redirect to PATCH logic
-    const existing = await prisma.invitation.findUnique({
-      where: { userId: session.user.id },
-    });
-    if (existing) {
-      // Treat as update instead of erroring
-      return handleUpdate(session.user.id, await request.json());
     }
 
     const body = await request.json();
@@ -58,7 +51,6 @@ export async function POST(request: Request) {
     const finalVenue = (venue || user?.venue || "Wedding Venue").trim() || "Wedding Venue";
     const finalTemplate = templateSlug || "royal-elegance";
 
-    // Use raw SQL to avoid Prisma/DB schema mismatch
     const invId = `inv_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
     const slug = generateCode();
     const configJson = body.config && Object.keys(body.config).length > 0 ? JSON.stringify(body.config) : null;
@@ -71,7 +63,6 @@ export async function POST(request: Request) {
       venueAddress?.trim() || null, configJson
     );
 
-    // Create events
     try {
       const evts = events?.length ? events : [
         { title: "Wedding Ceremony", time: "4:00 PM" },
@@ -99,7 +90,9 @@ export async function POST(request: Request) {
   }
 }
 
-// PATCH — update existing invitation
+// PATCH — update existing invitation.
+// Body must include `id` to pick the invitation to update. If omitted, updates
+// the user's most recent invitation (legacy single-invitation behaviour).
 export async function PATCH(request: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -107,13 +100,29 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const existing = await prisma.invitation.findUnique({
-      where: { userId: session.user.id },
-    });
+    const body = await request.json();
+    const requestedId: string | undefined = body?.id;
 
-    // If no invitation exists, auto-create one
-    if (!existing) {
-      const body = await request.json();
+    let target = null as null | { id: string; userId: string };
+    if (requestedId) {
+      target = await prisma.invitation.findUnique({
+        where: { id: requestedId },
+        select: { id: true, userId: true },
+      });
+      if (!target || target.userId !== session.user.id) {
+        return NextResponse.json({ error: "Invitation not found" }, { status: 404 });
+      }
+    } else {
+      const latest = await prisma.invitation.findFirst({
+        where: { userId: session.user.id },
+        orderBy: { createdAt: "desc" },
+        select: { id: true, userId: true },
+      });
+      target = latest;
+    }
+
+    // If no invitation exists yet, auto-create one (legacy behaviour).
+    if (!target) {
       const user = await prisma.user.findUnique({
         where: { id: session.user.id },
         select: { yourName: true, partnerName: true, weddingDate: true, venue: true },
@@ -124,7 +133,6 @@ export async function PATCH(request: Request) {
       const date = body.weddingDate && body.weddingDate !== "" ? new Date(body.weddingDate) : (user?.weddingDate || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000));
       const ven = (body.venue || user?.venue || "Wedding Venue").trim() || "Wedding Venue";
 
-      // Use raw SQL to avoid Prisma schema mismatch with DB
       const invId = `inv_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
       const slug = generateCode();
       const configJson = body.config && Object.keys(body.config).length > 0 ? JSON.stringify(body.config) : null;
@@ -137,7 +145,6 @@ export async function PATCH(request: Request) {
         body.venueAddress?.trim() || null, configJson
       );
 
-      // Create default events
       try {
         const evts = body.events?.length ? body.events : [
           { title: "Wedding Ceremony", time: "4:00 PM" },
@@ -161,14 +168,14 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ invitation: full }, { status: 201 });
     }
 
-    return handleUpdate(session.user.id, await request.json());
+    return handleUpdate(target.id, body);
   } catch (error) {
     console.error("Update invitation error:", error);
     return NextResponse.json({ error: "Failed to update invitation" }, { status: 500 });
   }
 }
 
-async function handleUpdate(userId: string, body: Record<string, unknown>) {
+async function handleUpdate(invitationId: string, body: Record<string, unknown>) {
   const { groomName, brideName, weddingDate, venue, venueAddress, templateSlug, events, config } = body as {
     groomName?: string; brideName?: string; weddingDate?: string; venue?: string;
     venueAddress?: string; templateSlug?: string;
@@ -186,12 +193,11 @@ async function handleUpdate(userId: string, body: Record<string, unknown>) {
   if (config !== undefined) data.config = config;
 
   const invitation = await prisma.invitation.update({
-    where: { userId },
+    where: { id: invitationId },
     data,
     include: { events: { orderBy: { sortOrder: "asc" } } },
   });
 
-  // Update events if provided
   if (events !== undefined) {
     await prisma.event.deleteMany({ where: { invitationId: invitation.id } });
     if (events.length > 0) {

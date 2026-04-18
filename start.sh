@@ -63,6 +63,8 @@ async function migrate() {
     \"DO \\$\\$ BEGIN ALTER TABLE \\\"Invitation\\\" DROP COLUMN IF EXISTS \\\"orderId\\\"; EXCEPTION WHEN OTHERS THEN NULL; END \\$\\$\",
     \"DO \\$\\$ BEGIN ALTER TABLE \\\"Invitation\\\" DROP COLUMN IF EXISTS \\\"templateId\\\"; EXCEPTION WHEN OTHERS THEN NULL; END \\$\\$\",
     \"DO \\$\\$ BEGIN ALTER TABLE \\\"Invitation\\\" DROP COLUMN IF EXISTS \\\"invitationId\\\"; EXCEPTION WHEN OTHERS THEN NULL; END \\$\\$\",
+    \"ALTER TABLE \\\"Invitation\\\" DROP CONSTRAINT IF EXISTS \\\"Invitation_userId_key\\\"\",
+    \"CREATE INDEX IF NOT EXISTS \\\"Invitation_userId_idx\\\" ON \\\"Invitation\\\"(\\\"userId\\\")\",
     \"DO \\$\\$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'PaymentMethod') THEN CREATE TYPE \\\"PaymentMethod\\\" AS ENUM ('STRIPE', 'BANK_TRANSFER'); END IF; END \\$\\$\",
     \"DO \\$\\$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'PaymentStatus') THEN CREATE TYPE \\\"PaymentStatus\\\" AS ENUM ('PENDING', 'COMPLETED', 'FAILED', 'REFUNDED'); END IF; END \\$\\$\",
     \"DO \\$\\$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'BankTransferStatus') THEN CREATE TYPE \\\"BankTransferStatus\\\" AS ENUM ('PENDING_REVIEW', 'APPROVED', 'REJECTED'); END IF; END \\$\\$\",

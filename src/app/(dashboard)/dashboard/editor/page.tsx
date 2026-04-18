@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 import {
   Heart, Calendar as CalendarIcon, Clock, Plus, X, Save, Eye, Pencil, Smartphone,
   ChevronDown, Loader2, Sparkles, Palette, Type,
@@ -96,6 +97,8 @@ function FormTextarea({ label, value, onChange, placeholder }: {
 
 export default function EditorPage() {
   const { data: session } = useSession();
+  const searchParams = useSearchParams();
+  const editingId = searchParams.get("id");
 
   /* ---- Core invitation fields ---- */
   const [templateSlug, setTemplateSlug] = useState("royal-elegance");
@@ -143,7 +146,8 @@ export default function EditorPage() {
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch("/api/invitations");
+        const url = editingId ? `/api/invitations/${editingId}` : "/api/invitations";
+        const res = await fetch(url);
         const json = await res.json();
         if (json.invitation) {
           const inv = json.invitation;
@@ -183,7 +187,7 @@ export default function EditorPage() {
       finally { setLoading(false); }
     }
     load();
-  }, []);
+  }, [editingId]);
 
   /* ---- PostMessage preview updates ---- */
   const sendPreviewUpdate = useCallback(() => {
@@ -243,6 +247,7 @@ export default function EditorPage() {
       if (Object.keys(contentOverrides).length > 0) config.content = contentOverrides;
 
       const payload = {
+        ...(existingId ? { id: existingId } : {}),
         groomName,
         brideName,
         weddingDate: weddingDate ? new Date(`${weddingDate}T${weddingTime || "16:00"}:00`).toISOString() : undefined,

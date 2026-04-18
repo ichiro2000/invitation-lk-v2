@@ -34,10 +34,10 @@ model User {
   image         String?
   emailVerified DateTime?
 
-  accounts   Account[]
-  sessions   Session[]
-  invitation Invitation?
-  guests     Guest[]
+  accounts    Account[]
+  sessions    Session[]
+  invitations Invitation[]
+  guests      Guest[]
   tasks      Task[]
   vendors    Vendor[]
   budgetItems BudgetItem[]
@@ -82,7 +82,7 @@ model VerificationToken {
 // ═══ INVITATION ═══
 model Invitation {
   id         String  @id @default(cuid())
-  userId     String  @unique
+  userId     String
   templateSlug String
   slug       String  @unique // URL: /w/slug
 
@@ -104,6 +104,8 @@ model Invitation {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model Event {
