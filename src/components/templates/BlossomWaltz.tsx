@@ -163,7 +163,7 @@ function RosePetal({
       strokeWidth="0.3"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.5, delay, ease: "easeOut" }}
+      transition={{ duration: 1.2, delay, ease: "easeOut" }}
       style={{ rotate, scale, transformOrigin: "center" }}
     />
   );
@@ -177,14 +177,14 @@ function SignatureRose({
 }) {
   const petals = [
     { rot: 0, scale: 1, delay: 0 },
-    { rot: 40, scale: 0.95, delay: 0.10 },
-    { rot: 80, scale: 0.9, delay: 0.20 },
-    { rot: 120, scale: 0.85, delay: 0.30 },
-    { rot: 160, scale: 0.8, delay: 0.40 },
-    { rot: 200, scale: 0.85, delay: 0.50 },
-    { rot: 240, scale: 0.9, delay: 0.60 },
-    { rot: 280, scale: 0.95, delay: 0.70 },
-    { rot: 320, scale: 1, delay: 0.80 },
+    { rot: 40, scale: 0.95, delay: 0.25 },
+    { rot: 80, scale: 0.9, delay: 0.50 },
+    { rot: 120, scale: 0.85, delay: 0.75 },
+    { rot: 160, scale: 0.8, delay: 1.00 },
+    { rot: 200, scale: 0.85, delay: 1.25 },
+    { rot: 240, scale: 0.9, delay: 1.50 },
+    { rot: 280, scale: 0.95, delay: 1.75 },
+    { rot: 320, scale: 1, delay: 2.00 },
   ];
   // A stable motion value for callers that don't pass one (e.g. the spinning footer logo).
   const staticBloom = useMotionValue(1);
@@ -215,7 +215,7 @@ function SignatureRose({
             fill={lighten(color, 0.4)}
             initial={{ opacity: 0, scale: 0 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.9 }}
+            transition={{ duration: 1.2, delay: 2.4 }}
           />
         )}
       </svg>
