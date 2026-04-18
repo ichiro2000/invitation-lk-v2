@@ -4,6 +4,7 @@ import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion"
 import Link from "next/link";
 import { ArrowDown, MapPin } from "lucide-react";
 import Countdown from "./shared/Countdown";
+import SecondaryVenue from "./shared/SecondaryVenue";
 import { useState, useRef } from "react";
 import type { InvitationData } from "@/types/invitation";
 import { deepMerge } from "@/lib/deep-merge";
@@ -414,6 +415,7 @@ export default function ModernElegance({ data, config }: { data?: InvitationData
               <MapPin className="w-3.5 h-3.5" /> Open in Maps
             </motion.button>
           )}
+          <SecondaryVenue second={content.venue?.second} primaryColor={theme.primaryColor} secondaryColor="#faf8f5" accentColor={withOpacity("#faf8f5", 0.6)} />
         </FadeIn>
       </section>
 

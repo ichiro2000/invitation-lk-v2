@@ -24,6 +24,11 @@ export interface ContentOverrides {
   };
   venue?: {
     mapUrl?: string; // Google Maps share/embed URL
+    second?: {
+      name?: string;
+      address?: string;
+      mapUrl?: string;
+    };
   };
   gallery?: {
     images?: string[]; // base64 data URIs (max 3)

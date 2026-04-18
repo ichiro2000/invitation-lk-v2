@@ -521,7 +521,16 @@ export default function EditorPage() {
                     </div>
                   </Section>
                 );
-                case "venue": return (
+                case "venue": {
+                  const second = contentOverrides.venue?.second;
+                  const updateSecond = (patch: Partial<NonNullable<NonNullable<ContentOverrides["venue"]>["second"]>>) =>
+                    setContentOverrides(p => ({ ...p, venue: { ...p.venue, second: { ...p.venue?.second, ...patch } } }));
+                  const removeSecond = () =>
+                    setContentOverrides(p => {
+                      const { second: _omit, ...rest } = p.venue || {};
+                      return { ...p, venue: rest };
+                    });
+                  return (
                   <Section key="venue" id="venue" title="Venue & Map" icon={<MapPin className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection} {...dProps}>
                     <FormInput label="Venue Name" value={venue} onChange={setVenue} placeholder="e.g. Cinnamon Grand, Colombo" />
                     <FormTextarea label="Address" value={venueAddress} onChange={setVenueAddress} placeholder="Full venue address" />
@@ -531,8 +540,41 @@ export default function EditorPage() {
                         <iframe src={`https://maps.google.com/maps?q=${encodeURIComponent(contentOverrides.venue?.mapUrl && contentOverrides.venue.mapUrl.includes("google") ? contentOverrides.venue.mapUrl : [venue, venueAddress].filter(Boolean).join(", "))}&output=embed`} className="w-full h-36 border-0" loading="lazy" title="Map" />
                       </div>
                     )}
+
+                    {second === undefined ? (
+                      <button
+                        type="button"
+                        onClick={() => updateSecond({ name: "", address: "", mapUrl: "" })}
+                        className="flex items-center gap-1.5 text-xs text-rose-600 hover:text-rose-700 font-semibold mt-2 py-1"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Add Second Location
+                      </button>
+                    ) : (
+                      <div className="mt-4 pt-4 border-t border-dashed border-gray-200 space-y-4 relative">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Second Location</span>
+                          <button
+                            type="button"
+                            onClick={removeSecond}
+                            className="text-gray-300 hover:text-rose-500 transition-colors"
+                            title="Remove second location"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <FormInput label="Venue Name" value={second.name || ""} onChange={(v) => updateSecond({ name: v })} placeholder="e.g. After-party Hall" />
+                        <FormTextarea label="Address" value={second.address || ""} onChange={(v) => updateSecond({ address: v })} placeholder="Full venue address" />
+                        <FormInput label="Google Maps Link" value={second.mapUrl || ""} onChange={(v) => updateSecond({ mapUrl: v })} placeholder="Paste share link for directions button" />
+                        {(second.mapUrl || second.name || second.address) && (
+                          <div className="rounded-xl overflow-hidden border border-gray-200 mt-1">
+                            <iframe src={`https://maps.google.com/maps?q=${encodeURIComponent(second.mapUrl && second.mapUrl.includes("google") ? second.mapUrl : [second.name, second.address].filter(Boolean).join(", "))}&output=embed`} className="w-full h-36 border-0" loading="lazy" title="Second location map" />
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </Section>
-                );
+                  );
+                }
                 case "rsvp": return (
                   <Section key="rsvp" id="rsvp" title="RSVP" icon={<Type className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection} {...dProps}>
                     <FormInput label="Title" value={contentOverrides.rsvp?.title || ""} onChange={(v) => setContentOverrides(p => ({ ...p, rsvp: { ...p.rsvp, title: v } }))} placeholder={defaultConfig.content?.rsvp?.title || "Will You Join Us?"} />

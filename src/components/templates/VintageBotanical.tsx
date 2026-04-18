@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Heart, MapPin, Mail, Phone, Camera, ChevronDown, Leaf } from "lucide-react";
 import Link from "next/link";
 import Countdown from "./shared/Countdown";
+import SecondaryVenue from "./shared/SecondaryVenue";
 import { useState } from "react";
 import type { InvitationData } from "@/types/invitation";
 import { deepMerge } from "@/lib/deep-merge";
@@ -186,6 +187,7 @@ export default function VintageBotanical({ data, config }: { data?: InvitationDa
               <MapPin className="w-4 h-4" /> Open in Google Maps
             </a>
           )}
+          <SecondaryVenue second={content.venue?.second} primaryColor={theme.primaryColor} secondaryColor={theme.secondaryColor} accentColor={theme.accentColor} />
         </motion.div>
       </div>
     </section>

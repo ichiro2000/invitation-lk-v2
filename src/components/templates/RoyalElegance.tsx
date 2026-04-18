@@ -4,6 +4,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
 import { Heart, MapPin, Mail, Phone, Music, Camera, ChevronDown } from "lucide-react";
 import Countdown from "./shared/Countdown";
+import SecondaryVenue from "./shared/SecondaryVenue";
 import { useState, useRef } from "react";
 import type { InvitationData } from "@/types/invitation";
 import { deepMerge } from "@/lib/deep-merge";
@@ -542,6 +543,12 @@ export default function RoyalElegance({ data, config }: { data?: InvitationData;
               <MapPin className="w-4 h-4" /> Open in Google Maps
             </a>
           )}
+          <SecondaryVenue
+            second={content.venue?.second}
+            primaryColor={theme.primaryColor}
+            secondaryColor={theme.secondaryColor}
+            accentColor={theme.accentColor}
+          />
         </motion.div>
       </div>
     </section>

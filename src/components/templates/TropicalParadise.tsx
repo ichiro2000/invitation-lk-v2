@@ -4,6 +4,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
 import { Heart, MapPin, Mail, Phone, Camera, ChevronDown, Sun, Waves } from "lucide-react";
 import Countdown from "./shared/Countdown";
+import SecondaryVenue from "./shared/SecondaryVenue";
 import { useState, useRef } from "react";
 import type { InvitationData } from "@/types/invitation";
 import { deepMerge } from "@/lib/deep-merge";
@@ -288,6 +289,7 @@ export default function TropicalParadise({ data, config }: { data?: InvitationDa
             <p className="font-medium text-lg" style={{ color: theme.secondaryColor }}>Beach Formal &middot; Light Colors Encouraged</p>
             <p className="text-xs mt-1" style={{ color: withOpacity(theme.textColor, 0.4) }}>Flat shoes or bare feet recommended for the sand ceremony!</p>
           </motion.div>
+          <SecondaryVenue second={content.venue?.second} primaryColor={theme.primaryColor} secondaryColor={theme.secondaryColor} accentColor={theme.accentColor} />
         </motion.div>
       </div>
     </section>

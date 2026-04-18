@@ -4,6 +4,7 @@ import { motion, useScroll, useTransform, useMotionValue, useSpring, AnimatePres
 import Link from "next/link";
 import { Heart, MapPin, Phone, Camera, ChevronDown, Award, Plane, Radio, FileText } from "lucide-react";
 import Countdown from "./shared/Countdown";
+import SecondaryVenue from "./shared/SecondaryVenue";
 import { useState, useRef, useEffect } from "react";
 import type { InvitationData } from "@/types/invitation";
 import type { TemplateConfig } from "@/types/template-config";
@@ -1213,6 +1214,7 @@ export default function WingsOfHonour({ data, config }: { data?: InvitationData;
                 <MapPin className="w-4 h-4" /> Open in Google Maps
               </a>
             )}
+            <SecondaryVenue second={content.venue?.second} primaryColor="#c9a268" secondaryColor="#e6c77a" accentColor="#e6c77a" />
           </motion.div>
         </div>
       </section>
