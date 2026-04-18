@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     // Try to create invitation separately (won't block registration if it fails)
     try {
       const code = Math.random().toString(36).slice(2, 8);
-      await prisma.invitation.create({
+      const inv = await prisma.invitation.create({
         data: {
           userId: user.id,
           templateSlug: "royal-elegance",
@@ -59,15 +59,12 @@ export async function POST(request: Request) {
       });
       // Create default events
       try {
-        const inv = await prisma.invitation.findUnique({ where: { userId: user.id } });
-        if (inv) {
-          await prisma.event.createMany({
-            data: [
-              { invitationId: inv.id, title: "Wedding Ceremony", time: "4:00 PM", sortOrder: 0 },
-              { invitationId: inv.id, title: "Reception", time: "7:00 PM", sortOrder: 1 },
-            ],
-          });
-        }
+        await prisma.event.createMany({
+          data: [
+            { invitationId: inv.id, title: "Wedding Ceremony", time: "4:00 PM", sortOrder: 0 },
+            { invitationId: inv.id, title: "Reception", time: "7:00 PM", sortOrder: 1 },
+          ],
+        });
       } catch { /* events creation is optional */ }
     } catch (invError) {
       console.error("Auto-create invitation failed (non-blocking):", invError);
