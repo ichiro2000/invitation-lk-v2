@@ -596,9 +596,12 @@ export default function EditorPage() {
             {templateSlug === "wings-of-honour" && (
               <Section id="mission" title="Mission Briefing (Wings of Honour)" icon={<Sparkles className="w-4 h-4 text-rose-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
                 <p className="text-[11px] text-gray-500 mb-1">Customise the TOP SECRET dossier overlay that greets guests before the invitation.</p>
+                <FormInput label="Classification" value={contentOverrides.mission?.classification || ""} onChange={(v) => setContentOverrides(p => ({ ...p, mission: { ...p.mission, classification: v } }))} placeholder="SLAF // MATRIMONIAL OPS" />
                 <FormInput label="Operation Codename" value={contentOverrides.mission?.codename || ""} onChange={(v) => setContentOverrides(p => ({ ...p, mission: { ...p.mission, codename: v } }))} placeholder="BLUE WINGS" />
                 <FormInput label="File Number" value={contentOverrides.mission?.fileNo || ""} onChange={(v) => setContentOverrides(p => ({ ...p, mission: { ...p.mission, fileNo: v } }))} placeholder="SLAF-2026-1114" />
                 <FormInput label="Clearance Level" value={contentOverrides.mission?.clearance || ""} onChange={(v) => setContentOverrides(p => ({ ...p, mission: { ...p.mission, clearance: v } }))} placeholder="LEVEL ∞" />
+                <FormInput label="Operatives" value={contentOverrides.mission?.operatives || ""} onChange={(v) => setContentOverrides(p => ({ ...p, mission: { ...p.mission, operatives: v } }))} placeholder="2 PRIMARY" />
+                <FormInput label="Status" value={contentOverrides.mission?.status || ""} onChange={(v) => setContentOverrides(p => ({ ...p, mission: { ...p.mission, status: v } }))} placeholder="INBOUND" />
                 <FormTextarea label="Briefing Text" value={contentOverrides.mission?.briefing || ""} onChange={(v) => setContentOverrides(p => ({ ...p, mission: { ...p.mission, briefing: v } }))} placeholder="Contents pertain to the union of two operatives..." />
               </Section>
             )}

@@ -48,6 +48,9 @@ export interface ContentOverrides {
     fileNo?: string;
     clearance?: string;
     briefing?: string;
+    classification?: string;
+    operatives?: string;
+    status?: string;
   };
   /** Wings of Honour — ATC radio chatter ticker */
   atc?: {
