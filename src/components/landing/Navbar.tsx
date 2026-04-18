@@ -5,6 +5,7 @@ import { Heart, Menu, X, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
+import DevNoticeBanner from "./DevNoticeBanner";
 
 const links = [
   { href: "/features", label: "Features" },
@@ -30,14 +31,16 @@ export default function Navbar() {
   useEffect(() => { setMobileOpen(false); }, [pathname]);
 
   return (
-    <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out ${
-        scrolled ? "glass border-b border-slate-200/50 shadow-sm py-3" : "bg-transparent py-5"
-      }`}
-      role="navigation"
-      aria-label="Main navigation"
-    >
-      <div className="max-w-6xl mx-auto px-5 sm:px-8">
+    <div className="fixed top-0 left-0 right-0 z-50">
+      <DevNoticeBanner />
+      <nav
+        className={`transition-all duration-300 ease-out ${
+          scrolled ? "glass border-b border-slate-200/50 shadow-sm py-3" : "bg-transparent py-5"
+        }`}
+        role="navigation"
+        aria-label="Main navigation"
+      >
+        <div className="max-w-6xl mx-auto px-5 sm:px-8">
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 group" aria-label="INVITATION.LK Home">
@@ -139,6 +142,7 @@ export default function Navbar() {
           </div>
         </div>
       </div>
-    </nav>
+      </nav>
+    </div>
   );
 }
