@@ -746,7 +746,7 @@ export default function BlossomWaltz({ data, config }: { data?: InvitationData; 
             className="text-center mb-20"
           >
             <p className="tracking-[0.4em] uppercase text-xs mb-4" style={{ color: theme.primaryColor }}>Love Story</p>
-            <h2 className="text-4xl sm:text-5xl font-light mb-3" style={{ color: theme.secondaryColor, fontFamily: "Georgia, serif" }}>
+            <h2 className="text-[28px] sm:text-5xl font-light mb-3" style={{ color: theme.secondaryColor, fontFamily: "Georgia, serif" }}>
               {storyTitle}
             </h2>
             <p className="text-sm italic" style={{ color: withOpacity(theme.textColor, 0.6) }}>{storySubtitle}</p>
@@ -816,7 +816,7 @@ export default function BlossomWaltz({ data, config }: { data?: InvitationData; 
             className="text-center mb-16"
           >
             <p className="tracking-[0.4em] uppercase text-xs mb-4" style={{ color: theme.primaryColor }}>Order of Ceremony</p>
-            <h2 className="text-4xl sm:text-5xl font-light" style={{ color: theme.secondaryColor, fontFamily: "Georgia, serif" }}>
+            <h2 className="text-[28px] sm:text-5xl font-light" style={{ color: theme.secondaryColor, fontFamily: "Georgia, serif" }}>
               Two Sacred Moments
             </h2>
             <div className="w-20 h-px mx-auto mt-6" style={{ background: `linear-gradient(to right, transparent, ${theme.primaryColor}, transparent)` }} />
@@ -947,7 +947,7 @@ export default function BlossomWaltz({ data, config }: { data?: InvitationData; 
             className="text-center mb-16"
           >
             <p className="tracking-[0.4em] uppercase text-xs mb-4" style={{ color: theme.primaryColor }}>Moments</p>
-            <h2 className="text-4xl sm:text-5xl font-light" style={{ color: theme.secondaryColor, fontFamily: "Georgia, serif" }}>Captured in Bloom</h2>
+            <h2 className="text-[28px] sm:text-5xl font-light" style={{ color: theme.secondaryColor, fontFamily: "Georgia, serif" }}>Captured in Bloom</h2>
             <div className="w-20 h-px mx-auto mt-6" style={{ background: `linear-gradient(to right, transparent, ${theme.primaryColor}, transparent)` }} />
           </motion.div>
 
@@ -988,7 +988,7 @@ export default function BlossomWaltz({ data, config }: { data?: InvitationData; 
             className="text-center"
           >
             <p className="tracking-[0.4em] uppercase text-xs mb-4" style={{ color: theme.primaryColor }}>Location</p>
-            <h2 className="text-4xl sm:text-5xl font-light mb-6" style={{ color: theme.secondaryColor, fontFamily: "Georgia, serif" }}>Where We Waltz</h2>
+            <h2 className="text-[28px] sm:text-5xl font-light mb-6" style={{ color: theme.secondaryColor, fontFamily: "Georgia, serif" }}>Where We Waltz</h2>
             <div className="flex items-center justify-center gap-2 mb-2">
               <MapPin className="w-5 h-5" style={{ color: theme.primaryColor }} />
               <h3 className="text-xl font-semibold" style={{ color: theme.secondaryColor }}>{venue}</h3>
@@ -1046,7 +1046,7 @@ export default function BlossomWaltz({ data, config }: { data?: InvitationData; 
               <Heart className="w-10 h-10 text-white fill-white opacity-80" />
             </motion.div>
             <p className="tracking-[0.4em] uppercase text-xs mb-4 text-white/70">RSVP</p>
-            <h2 className="text-4xl sm:text-5xl font-light mb-3 text-white" style={{ fontFamily: "Georgia, serif" }}>{rsvpTitle}</h2>
+            <h2 className="text-[28px] sm:text-5xl font-light mb-3 text-white" style={{ fontFamily: "Georgia, serif" }}>{rsvpTitle}</h2>
             {rsvpDeadline && <p className="text-white/70 text-sm mb-10 italic">{rsvpDeadline}</p>}
 
             <AnimatePresence mode="wait">
