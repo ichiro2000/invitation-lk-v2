@@ -13,6 +13,7 @@ import SinhalaMangalya from "@/components/templates/SinhalaMangalya";
 import VintageBotanical from "@/components/templates/VintageBotanical";
 import RoseGarden from "@/components/templates/RoseGarden";
 import WingsOfHonour from "@/components/templates/WingsOfHonour";
+import BlossomWaltz from "@/components/templates/BlossomWaltz";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const templateComponents: Record<string, React.ComponentType<any>> = {
@@ -26,6 +27,7 @@ const templateComponents: Record<string, React.ComponentType<any>> = {
   "vintage-botanical": VintageBotanical,
   "rose-garden": RoseGarden,
   "wings-of-honour": WingsOfHonour,
+  "blossom-waltz": BlossomWaltz,
 };
 
 async function getInvitation(code: string) {

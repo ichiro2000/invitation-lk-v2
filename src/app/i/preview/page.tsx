@@ -18,6 +18,7 @@ const templates: Record<string, React.ComponentType<any>> = {
   "vintage-botanical": dynamic(() => import("@/components/templates/VintageBotanical"), { ssr: false }),
   "rose-garden": dynamic(() => import("@/components/templates/RoseGarden"), { ssr: false }),
   "wings-of-honour": dynamic(() => import("@/components/templates/WingsOfHonour"), { ssr: false }),
+  "blossom-waltz": dynamic(() => import("@/components/templates/BlossomWaltz"), { ssr: false }),
 };
 
 interface PreviewMessage {
