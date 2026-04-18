@@ -1,6 +1,7 @@
 "use client";
 
-import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import { motion, useScroll, useTransform, AnimatePresence, useMotionValue } from "framer-motion";
+import type { MotionValue } from "framer-motion";
 import Link from "next/link";
 import { Heart, MapPin, Mail, Phone, Camera, ChevronDown, Sparkles, Star } from "lucide-react";
 import Countdown from "./shared/Countdown";
@@ -144,19 +145,50 @@ function LiquidBlob({ color, size = 500, top = "10%", left = "-10%" }: { color: 
   );
 }
 
-/* ── Signature rose — layered petals that unfurl on mount ── */
-function SignatureRose({ color, accent }: { color: string; accent: string }) {
+/* ── One rose petal — its rotate & scale are driven by the shared bloom value ── */
+function RosePetal({
+  rot, scl, delay, bloom, color,
+}: {
+  rot: number; scl: number; delay: number; bloom: MotionValue<number>; color: string;
+}) {
+  // bloom: 0 = wrapped (closed bud), 1 = fully open
+  const rotate = useTransform(bloom, [0, 1], [0, rot]);
+  const scale = useTransform(bloom, [0, 1], [0.12, scl]);
+  return (
+    <motion.path
+      d="M 0 -4 C 6 -14, 14 -20, 0 -42 C -14 -20, -6 -14, 0 -4 Z"
+      fill="url(#rose-petal-grad)"
+      stroke={color}
+      strokeOpacity="0.2"
+      strokeWidth="0.3"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5, delay, ease: "easeOut" }}
+      style={{ rotate, scale, transformOrigin: "center" }}
+    />
+  );
+}
+
+/* ── Signature rose — petals fade-in on mount, wrap/unwrap with `bloom` (0–1) ── */
+function SignatureRose({
+  color, accent, bloom: externalBloom, compact,
+}: {
+  color: string; accent: string; bloom?: MotionValue<number>; compact?: boolean;
+}) {
   const petals = [
     { rot: 0, scale: 1, delay: 0 },
-    { rot: 40, scale: 0.95, delay: 0.12 },
-    { rot: 80, scale: 0.9, delay: 0.24 },
-    { rot: 120, scale: 0.85, delay: 0.36 },
-    { rot: 160, scale: 0.8, delay: 0.48 },
-    { rot: 200, scale: 0.85, delay: 0.60 },
-    { rot: 240, scale: 0.9, delay: 0.72 },
-    { rot: 280, scale: 0.95, delay: 0.84 },
-    { rot: 320, scale: 1, delay: 0.96 },
+    { rot: 40, scale: 0.95, delay: 0.10 },
+    { rot: 80, scale: 0.9, delay: 0.20 },
+    { rot: 120, scale: 0.85, delay: 0.30 },
+    { rot: 160, scale: 0.8, delay: 0.40 },
+    { rot: 200, scale: 0.85, delay: 0.50 },
+    { rot: 240, scale: 0.9, delay: 0.60 },
+    { rot: 280, scale: 0.95, delay: 0.70 },
+    { rot: 320, scale: 1, delay: 0.80 },
   ];
+  // A stable motion value for callers that don't pass one (e.g. the spinning footer logo).
+  const staticBloom = useMotionValue(1);
+  const bloom = externalBloom ?? staticBloom;
   return (
     <div className="relative w-full h-full" aria-hidden="true">
       <svg viewBox="-50 -50 100 100" className="w-full h-full">
@@ -172,37 +204,20 @@ function SignatureRose({ color, accent }: { color: string; accent: string }) {
           </radialGradient>
         </defs>
         {petals.map((p, i) => (
-          <motion.path
-            key={i}
-            d="M 0 -4 C 6 -14, 14 -20, 0 -42 C -14 -20, -6 -14, 0 -4 Z"
-            fill="url(#rose-petal-grad)"
-            stroke={color}
-            strokeOpacity="0.2"
-            strokeWidth="0.3"
-            initial={{ scale: 0, rotate: 0, opacity: 0 }}
-            animate={{ scale: p.scale, rotate: p.rot, opacity: 1 }}
-            transition={{ duration: 1.1, delay: p.delay, ease: [0.22, 1, 0.36, 1] }}
-            style={{ transformOrigin: "center" }}
-          />
+          <RosePetal key={i} rot={p.rot} scl={p.scale} delay={p.delay} bloom={bloom} color={color} />
         ))}
-        <motion.circle
-          cx="0"
-          cy="0"
-          r="8"
-          fill="url(#rose-center-grad)"
-          initial={{ scale: 0 }}
-          animate={{ scale: [1, 1.08, 1] }}
-          transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.circle
-          cx="0"
-          cy="0"
-          r="3"
-          fill={lighten(color, 0.6)}
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 0.8, delay: 1.0 }}
-        />
+        {/* Smaller pistil dot (no large glowing circle) */}
+        {!compact && (
+          <motion.circle
+            cx="0"
+            cy="0"
+            r="2.2"
+            fill={lighten(color, 0.4)}
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.9 }}
+          />
+        )}
       </svg>
     </div>
   );
@@ -542,11 +557,11 @@ export default function BlossomWaltz({ data, config }: { data?: InvitationData; 
     }
   }, [curtainDone]);
 
-  // Scroll-linked rose rotation in the hero
+  // Scroll-linked bloom: 1 = fully open at top, 0 = wrapped as you scroll past the hero.
+  // Scrolling back up reverses the wrap — petals re-open.
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const roseRotate = useTransform(scrollYProgress, [0, 1], [0, 45]);
-  const roseScale = useTransform(scrollYProgress, [0, 1], [1, 0.85]);
+  const bloom = useTransform(scrollYProgress, [0, 1], [1, 0]);
   const heroParallax = useTransform(scrollYProgress, [0, 1], [0, 120]);
 
   const fontClass = theme.fontFamily === "cursive" ? "font-serif italic" : theme.fontFamily === "sans-serif" ? "font-sans" : "font-serif";
@@ -580,24 +595,6 @@ export default function BlossomWaltz({ data, config }: { data?: InvitationData; 
         <LiquidBlob color={theme.accentColor} size={500} top="50%" left="70%" />
         <FallingPetals count={22} color={theme.primaryColor} />
 
-        {/* Big rose in the background */}
-        <motion.div
-          className="absolute"
-          style={{
-            width: "min(85vw, 720px)",
-            height: "min(85vw, 720px)",
-            top: "50%",
-            left: "50%",
-            x: "-50%",
-            y: "-50%",
-            rotate: roseRotate,
-            scale: roseScale,
-            opacity: 0.18,
-          }}
-        >
-          <SignatureRose color={theme.primaryColor} accent={theme.accentColor} />
-        </motion.div>
-
         <motion.div
           style={{ y: heroParallax }}
           className="relative z-10 max-w-3xl mx-auto"
@@ -622,15 +619,18 @@ export default function BlossomWaltz({ data, config }: { data?: InvitationData; 
             >
               {groom}
             </motion.h1>
-            <motion.div
-              initial={{ scale: 0, rotate: -90 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ duration: 0.9, delay: 0.8, ease: [0.22, 1, 0.36, 1] }}
-              className="text-4xl sm:text-5xl italic"
-              style={{ color: theme.primaryColor, fontFamily: "Georgia, serif" }}
+            <div
+              className="flex-shrink-0 w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32"
+              aria-hidden="true"
             >
-              &amp;
-            </motion.div>
+              {curtainDone && (
+                <SignatureRose
+                  color={theme.primaryColor}
+                  accent={theme.accentColor}
+                  bloom={bloom}
+                />
+              )}
+            </div>
             <motion.h1
               initial={{ opacity: 0, x: 40 }}
               animate={{ opacity: 1, x: 0 }}
