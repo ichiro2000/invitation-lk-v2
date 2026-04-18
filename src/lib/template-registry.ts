@@ -208,6 +208,49 @@ export const TEMPLATE_REGISTRY: TemplateEntry[] = [
     },
   },
   {
+    slug: "blossom-waltz",
+    name: "Blossom Waltz",
+    category: "Modern",
+    plan: "PREMIUM",
+    colorSwatch: "bg-pink-500",
+    defaultTheme: {
+      primaryColor: "#ec4899",
+      secondaryColor: "#831843",
+      backgroundColor: "#fff0f5",
+      textColor: "#4a1130",
+      accentColor: "#f9a8d4",
+      fontFamily: "serif",
+    },
+    defaultConfig: {
+      theme: {
+        primaryColor: "#ec4899",
+        secondaryColor: "#831843",
+        backgroundColor: "#fff0f5",
+        textColor: "#4a1130",
+        accentColor: "#f9a8d4",
+        fontFamily: "serif",
+      },
+      sections: [...DEFAULT_SECTIONS],
+      content: {
+        hero: {
+          subtitle: "TWO HEARTS · ONE WALTZ",
+          message: "You are warmly invited to witness our vows",
+        },
+        story: {
+          title: "Chapters of Our Love",
+          subtitle: "Every step led us here.",
+          items: [
+            { year: "2020", title: "First Glance", description: "A crowded room. A shared laugh. The beginning of everything." },
+            { year: "2022", title: "First Trip", description: "The coast, salt in the air, and the quiet realisation that this was it." },
+            { year: "2024", title: "The Yes", description: "Under a canopy of fairy lights, on bended knee, with trembling hands." },
+            { year: "2026", title: "Forever", description: "Today we waltz into the rest of our lives. Thank you for dancing with us." },
+          ],
+        },
+        rsvp: { title: "Will You Dance With Us?", deadline: "Kindly respond by May 15, 2026" },
+      },
+    },
+  },
+  {
     slug: "wings-of-honour",
     name: "Wings of Honour",
     category: "Traditional",
