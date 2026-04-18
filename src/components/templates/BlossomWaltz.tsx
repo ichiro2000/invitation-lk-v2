@@ -227,90 +227,23 @@ function SignatureRose({
 function ChurchArch({ color }: { color: string }) {
   return (
     <svg viewBox="0 0 80 80" className="w-full h-full" aria-hidden="true">
-      {/* Main building */}
-      <motion.rect
-        x="16" y="44" width="48" height="28"
-        fill="none"
-        stroke={color}
-        strokeWidth="1.4"
-        strokeLinejoin="round"
-        initial={{ pathLength: 0, opacity: 0 }}
-        whileInView={{ pathLength: 1, opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 1.2, ease: "easeInOut" }}
-      />
-      {/* Steeple body */}
-      <motion.rect
-        x="35" y="22" width="10" height="22"
-        fill="none"
-        stroke={color} strokeWidth="1.2"
-        initial={{ pathLength: 0, opacity: 0 }}
-        whileInView={{ pathLength: 1, opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8, delay: 0.5 }}
-      />
-      {/* Steeple spire */}
-      <motion.path
-        d="M 33 22 L 40 10 L 47 22"
-        fill="none"
-        stroke={color} strokeWidth="1.2"
-        strokeLinejoin="round"
-        initial={{ pathLength: 0 }} whileInView={{ pathLength: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6, delay: 0.9 }}
-      />
-      {/* Cross on top */}
-      <motion.line
-        x1="40" y1="2" x2="40" y2="10"
-        stroke={color} strokeWidth="1.2"
-        initial={{ pathLength: 0 }} whileInView={{ pathLength: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.4, delay: 1.3 }}
-      />
-      <motion.line
-        x1="37" y1="5" x2="43" y2="5"
-        stroke={color} strokeWidth="1.2"
-        initial={{ pathLength: 0 }} whileInView={{ pathLength: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.4, delay: 1.5 }}
-      />
-      {/* Arched door */}
-      <motion.path
-        d="M 36 72 L 36 62 Q 40 56 44 62 L 44 72"
-        fill="none"
-        stroke={color} strokeWidth="1.1"
-        initial={{ pathLength: 0 }} whileInView={{ pathLength: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.7, delay: 0.7 }}
-      />
-      {/* Left window */}
-      <motion.rect
-        x="21" y="52" width="6" height="10" rx="3"
-        fill="none"
-        stroke={color} strokeWidth="0.9"
-        initial={{ pathLength: 0, opacity: 0 }}
-        whileInView={{ pathLength: 1, opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6, delay: 1.0 }}
-      />
-      {/* Right window */}
-      <motion.rect
-        x="53" y="52" width="6" height="10" rx="3"
-        fill="none"
-        stroke={color} strokeWidth="0.9"
-        initial={{ pathLength: 0, opacity: 0 }}
-        whileInView={{ pathLength: 1, opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6, delay: 1.0 }}
-      />
       {/* Base step */}
-      <motion.line
-        x1="10" y1="72" x2="70" y2="72"
-        stroke={color} strokeWidth="1.2"
-        initial={{ pathLength: 0 }} whileInView={{ pathLength: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6, delay: 0.2 }}
-      />
+      <line x1="10" y1="72" x2="70" y2="72" stroke={color} strokeWidth="1.2" />
+      {/* Main building */}
+      <rect x="16" y="44" width="48" height="28" fill="none" stroke={color} strokeWidth="1.4" strokeLinejoin="round" />
+      {/* Steeple body */}
+      <rect x="35" y="22" width="10" height="22" fill="none" stroke={color} strokeWidth="1.2" />
+      {/* Steeple spire */}
+      <path d="M 33 22 L 40 10 L 47 22" fill="none" stroke={color} strokeWidth="1.2" strokeLinejoin="round" />
+      {/* Cross on top */}
+      <line x1="40" y1="2" x2="40" y2="10" stroke={color} strokeWidth="1.2" />
+      <line x1="37" y1="5" x2="43" y2="5" stroke={color} strokeWidth="1.2" />
+      {/* Arched door */}
+      <path d="M 36 72 L 36 62 Q 40 56 44 62 L 44 72" fill="none" stroke={color} strokeWidth="1.1" />
+      {/* Left window */}
+      <rect x="21" y="52" width="6" height="10" rx="3" fill="none" stroke={color} strokeWidth="0.9" />
+      {/* Right window */}
+      <rect x="53" y="52" width="6" height="10" rx="3" fill="none" stroke={color} strokeWidth="0.9" />
     </svg>
   );
 }
@@ -319,51 +252,21 @@ function ChurchArch({ color }: { color: string }) {
 function PoruwaCanopy({ color, accent }: { color: string; accent: string }) {
   return (
     <svg viewBox="0 0 80 80" className="w-full h-full" aria-hidden="true">
-      {/* Canopy roof */}
-      <motion.path
-        d="M 10 35 L 40 15 L 70 35 Z"
-        fill={withOpacity(color, 0.15)}
-        stroke={color}
-        strokeWidth="1"
-        initial={{ pathLength: 0, opacity: 0 }}
-        whileInView={{ pathLength: 1, opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 1.2 }}
-      />
-      {/* Pillars */}
-      <motion.rect
-        x="16" y="35" width="2" height="30" fill={color}
-        initial={{ scaleY: 0 }} whileInView={{ scaleY: 1 }} viewport={{ once: true }}
-        transition={{ duration: 0.5, delay: 0.8 }} style={{ transformOrigin: "16px 65px" }}
-      />
-      <motion.rect
-        x="62" y="35" width="2" height="30" fill={color}
-        initial={{ scaleY: 0 }} whileInView={{ scaleY: 1 }} viewport={{ once: true }}
-        transition={{ duration: 0.5, delay: 0.8 }} style={{ transformOrigin: "62px 65px" }}
-      />
-      {/* Base platform */}
-      <motion.rect
-        x="14" y="64" width="52" height="4" fill={color} rx="1"
-        initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={{ once: true }}
-        transition={{ duration: 0.6, delay: 1.1 }} style={{ transformOrigin: "center" }}
-      />
-      {/* Decorative swags */}
-      <motion.path
-        d="M 18 35 Q 28 42 40 38 Q 52 42 62 35"
-        fill="none" stroke={accent} strokeWidth="0.8"
-        initial={{ pathLength: 0 }} whileInView={{ pathLength: 1 }} viewport={{ once: true }}
-        transition={{ duration: 1, delay: 1.3 }}
-      />
       {/* Lotus on top */}
-      <motion.g
-        initial={{ scale: 0, y: 5 }} whileInView={{ scale: 1, y: 0 }} viewport={{ once: true }}
-        transition={{ duration: 0.8, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        style={{ transformOrigin: "40px 15px" }}
-      >
+      <g>
         <path d="M 40 8 L 38 14 L 42 14 Z" fill={accent} />
         <path d="M 36 14 L 44 14 L 40 10 Z" fill={color} opacity="0.8" />
         <circle cx="40" cy="14" r="1.2" fill={lighten(color, 0.4)} />
-      </motion.g>
+      </g>
+      {/* Canopy roof */}
+      <path d="M 10 35 L 40 15 L 70 35 Z" fill={withOpacity(color, 0.15)} stroke={color} strokeWidth="1" />
+      {/* Decorative swags */}
+      <path d="M 18 35 Q 28 42 40 38 Q 52 42 62 35" fill="none" stroke={accent} strokeWidth="0.8" />
+      {/* Pillars */}
+      <rect x="16" y="35" width="2" height="30" fill={color} />
+      <rect x="62" y="35" width="2" height="30" fill={color} />
+      {/* Base platform */}
+      <rect x="14" y="64" width="52" height="4" fill={color} rx="1" />
     </svg>
   );
 }
@@ -373,44 +276,14 @@ function WeddingRings({ color, accent }: { color: string; accent: string }) {
   return (
     <svg viewBox="0 0 80 80" className="w-full h-full" aria-hidden="true">
       {/* Left ring */}
-      <motion.circle
-        cx="32" cy="44" r="16"
-        fill="none" stroke={color} strokeWidth="1.6"
-        initial={{ pathLength: 0, opacity: 0 }}
-        whileInView={{ pathLength: 1, opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 1.2, ease: "easeInOut" }}
-      />
+      <circle cx="32" cy="44" r="16" fill="none" stroke={color} strokeWidth="1.6" />
       {/* Right ring */}
-      <motion.circle
-        cx="48" cy="44" r="16"
-        fill="none" stroke={color} strokeWidth="1.6"
-        initial={{ pathLength: 0, opacity: 0 }}
-        whileInView={{ pathLength: 1, opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 1.2, delay: 0.3, ease: "easeInOut" }}
-      />
+      <circle cx="48" cy="44" r="16" fill="none" stroke={color} strokeWidth="1.6" />
       {/* Gem on the right ring */}
-      <motion.path
-        d="M 48 24 L 45 28 L 48 32 L 51 28 Z"
-        fill={accent} stroke={color} strokeWidth="0.6"
-        initial={{ scale: 0, opacity: 0 }}
-        whileInView={{ scale: 1, opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5, delay: 1.4, ease: [0.22, 1, 0.36, 1] }}
-        style={{ transformOrigin: "48px 28px" }}
-      />
+      <path d="M 48 24 L 45 28 L 48 32 L 51 28 Z" fill={accent} stroke={color} strokeWidth="0.6" />
       {/* Sparkle accents */}
-      <motion.circle
-        cx="18" cy="22" r="1.2" fill={accent}
-        initial={{ scale: 0 }} whileInView={{ scale: 1 }} viewport={{ once: true }}
-        transition={{ duration: 0.4, delay: 1.7 }}
-      />
-      <motion.circle
-        cx="64" cy="60" r="1.2" fill={accent}
-        initial={{ scale: 0 }} whileInView={{ scale: 1 }} viewport={{ once: true }}
-        transition={{ duration: 0.4, delay: 1.9 }}
-      />
+      <circle cx="18" cy="22" r="1.2" fill={accent} />
+      <circle cx="64" cy="60" r="1.2" fill={accent} />
     </svg>
   );
 }
