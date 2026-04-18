@@ -823,6 +823,11 @@ function EpauletCorner({ position }: { position: string }) {
 export default function WingsOfHonour({ data, config }: { data?: InvitationData; config?: TemplateConfig } = {}) {
   const merged = deepMerge(DEFAULT_CONFIG as Record<string, unknown>, (config || {}) as Record<string, unknown>) as TemplateConfig;
   const content = merged.content || {};
+  const sectionConfigs = merged.sections || DEFAULT_SECTIONS;
+  const isVisible = (id: string) => {
+    const s = sectionConfigs.find(x => x.id === id);
+    return !s || s.visible !== false;
+  };
 
   // Data with defaults
   const groom = data?.groomName || "Sashini";
@@ -907,6 +912,7 @@ export default function WingsOfHonour({ data, config }: { data?: InvitationData;
       <section
         ref={heroRef}
         className="relative min-h-screen flex flex-col items-center justify-center text-center px-4 overflow-hidden bg-gradient-to-br from-[#0f2744] via-[#1e3a5f] to-[#0f2744]"
+        style={isVisible("hero") ? undefined : { display: "none" }}
       >
         {/* Animated background shimmer */}
         <motion.div
@@ -1034,6 +1040,7 @@ export default function WingsOfHonour({ data, config }: { data?: InvitationData;
       </section>
 
       {/* ═══ COUNTDOWN ═══ */}
+      {isVisible("countdown") && (
       <section className="relative py-24 bg-[#08152b] text-center overflow-hidden border-y border-[#c9a268]/30">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -1058,8 +1065,10 @@ export default function WingsOfHonour({ data, config }: { data?: InvitationData;
           />
         </motion.div>
       </section>
+      )}
 
       {/* ═══ FLIGHT PATH MAP ═══ */}
+      {isVisible("story") && (
       <section className="relative py-28 px-4 bg-gradient-to-b from-[#0f2744] via-[#08152b] to-[#0f2744] overflow-hidden">
         <MedalStars count={15} />
 
@@ -1100,8 +1109,10 @@ export default function WingsOfHonour({ data, config }: { data?: InvitationData;
           </div>
         )}
       </section>
+      )}
 
       {/* ═══ EVENTS ═══ */}
+      {isVisible("events") && (
       <section className="relative py-28 px-4 bg-gradient-to-br from-[#0f2744] via-[#1e3a5f] to-[#0f2744] overflow-hidden">
         <MedalStars count={12} />
         <div className="max-w-5xl mx-auto relative z-10">
@@ -1148,8 +1159,10 @@ export default function WingsOfHonour({ data, config }: { data?: InvitationData;
           </div>
         </div>
       </section>
+      )}
 
       {/* ═══ GALLERY ═══ */}
+      {isVisible("gallery") && (
       <section className="py-28 px-4 bg-[#0f2744]">
         <div className="max-w-6xl mx-auto">
           <motion.div
@@ -1188,8 +1201,10 @@ export default function WingsOfHonour({ data, config }: { data?: InvitationData;
           </div>
         </div>
       </section>
+      )}
 
       {/* ═══ VENUE ═══ */}
+      {isVisible("venue") && (
       <section className="py-28 bg-[#08152b] border-t border-[#c9a268]/30 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div
@@ -1230,8 +1245,10 @@ export default function WingsOfHonour({ data, config }: { data?: InvitationData;
           </motion.div>
         </div>
       </section>
+      )}
 
       {/* ═══ RSVP ═══ */}
+      {isVisible("rsvp") && (
       <section className="relative py-28 bg-gradient-to-br from-[#0f2744] via-[#1e3a5f] to-[#0f2744] text-white px-4 overflow-hidden">
         <MedalStars count={10} />
         <div className="max-w-lg mx-auto text-center relative z-10">
@@ -1315,11 +1332,13 @@ export default function WingsOfHonour({ data, config }: { data?: InvitationData;
           </motion.div>
         </div>
       </section>
+      )}
 
       {/* ═══ ATC RADIO CHATTER ═══ */}
       {atcVisible && <ATCTicker messages={atcMessages} />}
 
       {/* ═══ FOOTER ═══ */}
+      {isVisible("footer") && (
       <footer className="py-14 text-center px-4 bg-[#0a1a35] border-t border-[#c9a268]/30">
         <motion.div
           initial={{ opacity: 0 }}
@@ -1368,6 +1387,7 @@ export default function WingsOfHonour({ data, config }: { data?: InvitationData;
           </p>
         </motion.div>
       </footer>
+      )}
     </div>
   );
 }
