@@ -870,8 +870,11 @@ export default function WingsOfHonour({ data, config }: { data?: InvitationData;
   const rsvpTitle = content.rsvp?.title || "Will You Stand With Us?";
   const rsvpDeadline = content.rsvp?.deadline || "Kindly respond by October 15, 2026";
   const mission = content.mission || {};
+  const missionVisible = content.mission?.visible !== false;
   const atcMessages = content.atc?.messages || [];
+  const atcVisible = content.atc?.visible !== false;
   const portraitSrc = content.portrait?.image || "/couple-portrait.png";
+  const portraitVisible = content.portrait?.visible !== false;
   const groomPhone = content.footer?.groomPhone || "";
   const bridePhone = content.footer?.bridePhone || "";
   const footerMessage = content.footer?.message || "";
@@ -886,7 +889,7 @@ export default function WingsOfHonour({ data, config }: { data?: InvitationData;
   return (
     <div className="bg-[#0f2744] text-white font-serif overflow-hidden">
       <AnimatePresence>
-        {!dossierOpen && (
+        {missionVisible && !dossierOpen && (
           <MissionDossier
             onOpen={() => setDossierOpen(true)}
             codename={mission.codename}
@@ -1076,7 +1079,7 @@ export default function WingsOfHonour({ data, config }: { data?: InvitationData;
           </p>
         </motion.div>
 
-        <OrbitalPortrait imageSrc={portraitSrc} groom={groom} bride={bride} />
+        {portraitVisible && <OrbitalPortrait imageSrc={portraitSrc} groom={groom} bride={bride} />}
 
         {storyItems.length > 0 && (
           <div className="max-w-3xl mx-auto mt-16 grid sm:grid-cols-2 gap-5 px-2">
@@ -1314,7 +1317,7 @@ export default function WingsOfHonour({ data, config }: { data?: InvitationData;
       </section>
 
       {/* ═══ ATC RADIO CHATTER ═══ */}
-      <ATCTicker messages={atcMessages} />
+      {atcVisible && <ATCTicker messages={atcMessages} />}
 
       {/* ═══ FOOTER ═══ */}
       <footer className="py-14 text-center px-4 bg-[#0a1a35] border-t border-[#c9a268]/30">
