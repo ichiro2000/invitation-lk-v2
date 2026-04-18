@@ -297,6 +297,175 @@ function PoruwaCanopy({ color, accent }: { color: string; accent: string }) {
   );
 }
 
+/* ── Curtain reveal overlay — velvet panels part on tap ── */
+function CurtainReveal({
+  groom,
+  bride,
+  color,
+  secondary,
+  accent,
+  onDone,
+}: {
+  groom: string;
+  bride: string;
+  color: string;
+  secondary: string;
+  accent: string;
+  onDone: () => void;
+}) {
+  const [opening, setOpening] = useState(false);
+  const handleOpen = () => {
+    if (opening) return;
+    setOpening(true);
+    // Give the curtain animation time to finish before unmounting
+    setTimeout(onDone, 1600);
+  };
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-[100] pointer-events-auto"
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5, delay: 1.3 }}
+      aria-label="Tap to open the invitation"
+      role="dialog"
+    >
+      {/* Stage backdrop — deep velvet behind the curtains */}
+      <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at center, ${lighten(color, 0.2)}, ${secondary})` }} />
+
+      {/* Curtain rod */}
+      <div
+        className="absolute top-0 left-0 right-0 h-3 z-10"
+        style={{ background: `linear-gradient(to bottom, ${accent}, ${lighten(accent, 0.3)}, ${accent})`, boxShadow: "0 3px 10px rgba(0,0,0,0.2)" }}
+      />
+
+      {/* LEFT curtain */}
+      <motion.div
+        initial={{ x: 0 }}
+        animate={{ x: opening ? "-110%" : 0 }}
+        transition={{ duration: 1.5, ease: [0.7, 0, 0.3, 1] }}
+        className="absolute top-0 left-0 h-full w-1/2 origin-left overflow-hidden"
+        style={{
+          background: `
+            repeating-linear-gradient(90deg,
+              ${color} 0px,
+              ${lighten(color, 0.15)} 18px,
+              ${color} 36px,
+              ${secondary} 56px,
+              ${color} 72px
+            )
+          `,
+          boxShadow: "inset -20px 0 40px rgba(0,0,0,0.35), 0 10px 30px rgba(0,0,0,0.4)",
+        }}
+      >
+        {/* Decorative folds — subtle vertical shadows */}
+        <div
+          className="absolute inset-0 opacity-60"
+          style={{
+            background: "repeating-linear-gradient(90deg, transparent 0px, transparent 50px, rgba(0,0,0,0.12) 54px, transparent 62px)",
+          }}
+        />
+        {/* Gold tassel tie */}
+        <div
+          className="absolute top-1/2 -right-2 w-4 h-24 rounded-full -translate-y-1/2"
+          style={{ background: `linear-gradient(to bottom, ${accent}, ${lighten(accent, 0.3)}, ${accent})` }}
+        />
+      </motion.div>
+
+      {/* RIGHT curtain */}
+      <motion.div
+        initial={{ x: 0 }}
+        animate={{ x: opening ? "110%" : 0 }}
+        transition={{ duration: 1.5, ease: [0.7, 0, 0.3, 1] }}
+        className="absolute top-0 right-0 h-full w-1/2 origin-right overflow-hidden"
+        style={{
+          background: `
+            repeating-linear-gradient(90deg,
+              ${color} 0px,
+              ${secondary} 16px,
+              ${color} 36px,
+              ${lighten(color, 0.15)} 54px,
+              ${color} 72px
+            )
+          `,
+          boxShadow: "inset 20px 0 40px rgba(0,0,0,0.35), 0 10px 30px rgba(0,0,0,0.4)",
+        }}
+      >
+        <div
+          className="absolute inset-0 opacity-60"
+          style={{
+            background: "repeating-linear-gradient(90deg, transparent 0px, transparent 50px, rgba(0,0,0,0.12) 54px, transparent 62px)",
+          }}
+        />
+        <div
+          className="absolute top-1/2 -left-2 w-4 h-24 rounded-full -translate-y-1/2"
+          style={{ background: `linear-gradient(to bottom, ${accent}, ${lighten(accent, 0.3)}, ${accent})` }}
+        />
+      </motion.div>
+
+      {/* Centre invite card */}
+      <motion.div
+        initial={{ opacity: 0, y: 30, scale: 0.95 }}
+        animate={{ opacity: opening ? 0 : 1, y: 0, scale: opening ? 0.9 : 1 }}
+        transition={{ duration: opening ? 0.5 : 0.9, delay: opening ? 0 : 0.4, ease: [0.22, 1, 0.36, 1] }}
+        className="absolute inset-0 z-20 flex items-center justify-center p-6 pointer-events-none"
+      >
+        <div className="text-center pointer-events-auto max-w-sm">
+          <motion.div
+            animate={{ scale: [1, 1.08, 1] }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+            className="flex justify-center mb-5"
+          >
+            <Heart className="w-10 h-10 fill-current" style={{ color: accent }} />
+          </motion.div>
+
+          <p className="tracking-[0.5em] uppercase text-[10px] mb-3" style={{ color: accent }}>
+            You&apos;re Invited
+          </p>
+
+          <h2
+            className="text-3xl sm:text-4xl font-light leading-tight mb-2"
+            style={{ color: "#ffffff", fontFamily: "Georgia, serif", textShadow: "0 2px 12px rgba(0,0,0,0.3)" }}
+          >
+            {groom} <span style={{ color: accent, fontStyle: "italic" }}>&amp;</span> {bride}
+          </h2>
+
+          <p className="text-sm italic mb-8" style={{ color: withOpacity("#ffffff", 0.85) }}>
+            Request the honour of your presence
+          </p>
+
+          <motion.button
+            type="button"
+            onClick={handleOpen}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.97 }}
+            className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full font-medium tracking-wider uppercase text-xs sm:text-sm shadow-2xl"
+            style={{
+              background: `linear-gradient(135deg, #ffffff, ${lighten(accent, 0.4)})`,
+              color: secondary,
+              boxShadow: `0 10px 30px ${withOpacity(secondary, 0.5)}, 0 0 0 1px ${withOpacity("#ffffff", 0.6)}`,
+            }}
+            aria-label="Open invitation"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            Open Invitation
+          </motion.button>
+
+          {/* Small hint */}
+          <motion.p
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="text-[10px] tracking-[0.3em] uppercase mt-6"
+            style={{ color: withOpacity("#ffffff", 0.6) }}
+          >
+            Tap to begin
+          </motion.p>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 /* ── Main template ── */
 export default function BlossomWaltz({ data, config }: { data?: InvitationData; config?: TemplateConfig } = {}) {
   const merged = deepMerge(DEFAULT_CONFIG as Record<string, unknown>, (config || {}) as Record<string, unknown>) as TemplateConfig;
@@ -356,6 +525,17 @@ export default function BlossomWaltz({ data, config }: { data?: InvitationData; 
   const footerMessage = content.footer?.message || "";
 
   const [rsvpSent, setRsvpSent] = useState(false);
+  const [curtainDone, setCurtainDone] = useState(false);
+
+  // Lock scroll while the curtain is up so the page doesn't peek behind it
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (!curtainDone) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = prev; };
+    }
+  }, [curtainDone]);
 
   // Scroll-linked rose rotation in the hero
   const heroRef = useRef(null);
@@ -368,6 +548,20 @@ export default function BlossomWaltz({ data, config }: { data?: InvitationData; 
 
   return (
     <div className={`${fontClass} overflow-hidden relative`} style={{ backgroundColor: theme.backgroundColor, color: theme.textColor }}>
+      <AnimatePresence>
+        {!curtainDone && (
+          <CurtainReveal
+            key="curtain"
+            groom={groom}
+            bride={bride}
+            color={theme.primaryColor}
+            secondary={theme.secondaryColor}
+            accent={theme.accentColor}
+            onDone={() => setCurtainDone(true)}
+          />
+        )}
+      </AnimatePresence>
+
       <CursorGlow color={theme.primaryColor} />
 
       {/* ═══ HERO ═══ */}
