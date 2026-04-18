@@ -223,37 +223,93 @@ function SignatureRose({
   );
 }
 
-/* ── Church arch — stylised SVG for Church Ceremony card ── */
+/* ── Church — stylised chapel with steeple, cross, arched door & windows ── */
 function ChurchArch({ color }: { color: string }) {
   return (
     <svg viewBox="0 0 80 80" className="w-full h-full" aria-hidden="true">
-      <motion.path
-        d="M 20 70 L 20 40 Q 40 10 60 40 L 60 70 Z"
+      {/* Main building */}
+      <motion.rect
+        x="16" y="44" width="48" height="28"
         fill="none"
         stroke={color}
-        strokeWidth="1.2"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
         initial={{ pathLength: 0, opacity: 0 }}
         whileInView={{ pathLength: 1, opacity: 1 }}
         viewport={{ once: true }}
-        transition={{ duration: 1.4, ease: "easeInOut" }}
+        transition={{ duration: 1.2, ease: "easeInOut" }}
       />
+      {/* Steeple body */}
+      <motion.rect
+        x="35" y="22" width="10" height="22"
+        fill="none"
+        stroke={color} strokeWidth="1.2"
+        initial={{ pathLength: 0, opacity: 0 }}
+        whileInView={{ pathLength: 1, opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.8, delay: 0.5 }}
+      />
+      {/* Steeple spire */}
+      <motion.path
+        d="M 33 22 L 40 10 L 47 22"
+        fill="none"
+        stroke={color} strokeWidth="1.2"
+        strokeLinejoin="round"
+        initial={{ pathLength: 0 }} whileInView={{ pathLength: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6, delay: 0.9 }}
+      />
+      {/* Cross on top */}
       <motion.line
-        x1="40" y1="26" x2="40" y2="38"
+        x1="40" y1="2" x2="40" y2="10"
         stroke={color} strokeWidth="1.2"
         initial={{ pathLength: 0 }} whileInView={{ pathLength: 1 }}
-        viewport={{ once: true }} transition={{ duration: 0.6, delay: 1.2 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.4, delay: 1.3 }}
       />
       <motion.line
-        x1="35" y1="31" x2="45" y2="31"
+        x1="37" y1="5" x2="43" y2="5"
         stroke={color} strokeWidth="1.2"
         initial={{ pathLength: 0 }} whileInView={{ pathLength: 1 }}
-        viewport={{ once: true }} transition={{ duration: 0.6, delay: 1.4 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.4, delay: 1.5 }}
       />
-      <motion.circle
-        cx="40" cy="48" r="2"
-        fill={color}
-        initial={{ scale: 0 }} whileInView={{ scale: 1 }}
-        viewport={{ once: true }} transition={{ duration: 0.4, delay: 1.6 }}
+      {/* Arched door */}
+      <motion.path
+        d="M 36 72 L 36 62 Q 40 56 44 62 L 44 72"
+        fill="none"
+        stroke={color} strokeWidth="1.1"
+        initial={{ pathLength: 0 }} whileInView={{ pathLength: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.7, delay: 0.7 }}
+      />
+      {/* Left window */}
+      <motion.rect
+        x="21" y="52" width="6" height="10" rx="3"
+        fill="none"
+        stroke={color} strokeWidth="0.9"
+        initial={{ pathLength: 0, opacity: 0 }}
+        whileInView={{ pathLength: 1, opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6, delay: 1.0 }}
+      />
+      {/* Right window */}
+      <motion.rect
+        x="53" y="52" width="6" height="10" rx="3"
+        fill="none"
+        stroke={color} strokeWidth="0.9"
+        initial={{ pathLength: 0, opacity: 0 }}
+        whileInView={{ pathLength: 1, opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6, delay: 1.0 }}
+      />
+      {/* Base step */}
+      <motion.line
+        x1="10" y1="72" x2="70" y2="72"
+        stroke={color} strokeWidth="1.2"
+        initial={{ pathLength: 0 }} whileInView={{ pathLength: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6, delay: 0.2 }}
       />
     </svg>
   );
@@ -865,7 +921,7 @@ export default function BlossomWaltz({ data, config }: { data?: InvitationData; 
           >
             <p className="tracking-[0.4em] uppercase text-xs mb-4" style={{ color: theme.primaryColor }}>Order of Ceremony</p>
             <h2 className="text-[28px] sm:text-5xl font-light" style={{ color: theme.secondaryColor, fontFamily: "Georgia, serif" }}>
-              Two Sacred Moments
+              The Celebration Plan
             </h2>
             <div className="w-20 h-px mx-auto mt-6" style={{ background: `linear-gradient(to right, transparent, ${theme.primaryColor}, transparent)` }} />
           </motion.div>
