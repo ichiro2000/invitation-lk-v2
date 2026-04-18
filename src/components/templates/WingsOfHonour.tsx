@@ -1084,7 +1084,7 @@ export default function WingsOfHonour({ data, config }: { data?: InvitationData;
           </div>
           <h2 className="text-4xl sm:text-5xl font-light text-white tracking-wide">{content.story?.title || "Flight Path of a Love Story"}</h2>
           <p className="text-white/50 text-sm mt-3 max-w-lg mx-auto">
-            {storyItems.length > 0 ? `${storyItems.length} chapters. One final destination.` : "Four waypoints. Eight years. One final destination."}
+            {content.story?.subtitle || (storyItems.length > 0 ? `${storyItems.length} chapters. One final destination.` : "Four waypoints. Eight years. One final destination.")}
           </p>
         </motion.div>
 

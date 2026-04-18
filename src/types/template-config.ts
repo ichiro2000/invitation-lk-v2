@@ -20,6 +20,7 @@ export interface ContentOverrides {
   };
   story?: {
     title?: string;
+    subtitle?: string;
     items?: { year: string; title: string; description: string }[];
   };
   venue?: {
