@@ -4,7 +4,7 @@ import { useSession, signOut } from "next-auth/react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Heart, LayoutDashboard, Pencil, Users, UserPlus, ListTodo, DollarSign, Store, LogOut, CreditCard, ShieldCheck, FileText } from "lucide-react";
+import { Heart, LayoutDashboard, Pencil, Users, UserPlus, ListTodo, DollarSign, Store, LogOut, CreditCard, ShieldCheck, FileText, LayoutGrid } from "lucide-react";
 
 const sidebarLinks = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -12,6 +12,7 @@ const sidebarLinks = [
   { href: "/dashboard/editor", label: "Edit Invitation", icon: Pencil },
   { href: "/dashboard/guests", label: "Add Guests", icon: UserPlus },
   { href: "/dashboard/guests/links", label: "Guest List & Links", icon: Users },
+  { href: "/dashboard/guests/tables", label: "Table Arrangement", icon: LayoutGrid },
   { href: "/dashboard/tools/tasks", label: "Task Checklist", icon: ListTodo },
   { href: "/dashboard/tools/budget", label: "Budget Management", icon: DollarSign },
   { href: "/dashboard/tools/vendors", label: "Vendor List", icon: Store },
@@ -47,7 +48,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           {/* Guest Management */}
           <p className="text-[10px] text-gray-400 uppercase tracking-wider px-4 pt-4 pb-1">Guest Management</p>
-          {sidebarLinks.slice(3, 5).map((link) => (
+          {sidebarLinks.slice(3, 6).map((link) => (
             <Link key={link.href} href={link.href} className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${pathname === link.href ? "bg-rose-50 text-rose-600" : "text-gray-600 hover:bg-gray-50 hover:text-rose-600"}`}>
               <link.icon className="w-4 h-4" /> {link.label}
             </Link>
@@ -55,7 +56,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           {/* Wedding Tools */}
           <p className="text-[10px] text-gray-400 uppercase tracking-wider px-4 pt-4 pb-1">Wedding Plan Tools</p>
-          {sidebarLinks.slice(5).map((link) => {
+          {sidebarLinks.slice(6).map((link) => {
             const planRequired = true; // Standard+ only
             const userPlan = session.user?.plan;
             const hasAccess = userPlan === "STANDARD" || userPlan === "PREMIUM" || userPlan === "ADMIN";
