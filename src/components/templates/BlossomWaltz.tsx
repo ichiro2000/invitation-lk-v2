@@ -317,8 +317,8 @@ function CurtainReveal({
   const handleOpen = () => {
     if (opening) return;
     setOpening(true);
-    // Give the curtain animation time to finish before unmounting
-    setTimeout(onDone, 1600);
+    // Unmount right as the slide finishes — no extra hang.
+    setTimeout(onDone, 1450);
   };
 
   return (
@@ -326,12 +326,17 @@ function CurtainReveal({
       className="fixed inset-0 z-[100] pointer-events-auto"
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.5, delay: 1.3 }}
+      transition={{ duration: 0.2 }}
       aria-label="Tap to open the invitation"
       role="dialog"
     >
-      {/* Stage backdrop — deep velvet behind the curtains */}
-      <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at center, ${lighten(color, 0.2)}, ${secondary})` }} />
+      {/* Stage backdrop — deep velvet behind the curtains, fades out as they part */}
+      <motion.div
+        className="absolute inset-0"
+        style={{ background: `radial-gradient(ellipse at center, ${lighten(color, 0.2)}, ${secondary})` }}
+        animate={{ opacity: opening ? 0 : 1 }}
+        transition={{ duration: 0.9, delay: opening ? 0.5 : 0, ease: "easeOut" }}
+      />
 
       {/* Curtain rod */}
       <div
