@@ -710,7 +710,7 @@ export default function BlossomWaltz({ data, config }: { data?: InvitationData; 
 
       {/* ═══ STORY ═══ */}
       {isVisible("story") && (
-      <section className="relative py-28 px-4 overflow-hidden">
+      <section className="relative py-12 sm:py-20 px-4 overflow-hidden">
         <LiquidBlob color={theme.accentColor} size={500} top="30%" left="-10%" />
         <LiquidBlob color={theme.primaryColor} size={400} top="70%" left="90%" />
         <FallingPetals count={10} color={theme.accentColor} />
@@ -720,7 +720,7 @@ export default function BlossomWaltz({ data, config }: { data?: InvitationData; 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-20"
+            className="text-center mb-10 sm:mb-20"
           >
             <p className="tracking-[0.4em] uppercase text-xs mb-4" style={{ color: theme.primaryColor }}>Love Story</p>
             <h2 className="text-[28px] sm:text-5xl font-light mb-3" style={{ color: theme.secondaryColor, fontFamily: "Georgia, serif" }}>
@@ -744,7 +744,7 @@ export default function BlossomWaltz({ data, config }: { data?: InvitationData; 
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-80px" }}
                 transition={{ duration: 0.7, delay: i * 0.08 }}
-                className={`relative mb-10 sm:mb-16 flex flex-col sm:flex-row items-center gap-6 ${i % 2 === 0 ? "" : "sm:flex-row-reverse"}`}
+                className={`relative mb-6 last:mb-0 sm:mb-16 sm:last:mb-0 flex flex-col sm:flex-row items-center gap-6 ${i % 2 === 0 ? "" : "sm:flex-row-reverse"}`}
               >
                 <div className="flex-1 text-center sm:text-left">
                   <div className={`inline-block rounded-2xl p-6 backdrop-blur-sm ${i % 2 === 0 ? "sm:text-right" : "sm:text-left"}`}
@@ -784,13 +784,13 @@ export default function BlossomWaltz({ data, config }: { data?: InvitationData; 
 
       {/* ═══ EVENTS ═══ (Church Ceremony + Poruwa Ceremony) */}
       {isVisible("events") && (
-      <section className="relative py-28 px-4 overflow-hidden" style={{ background: `linear-gradient(to bottom, ${theme.backgroundColor}, ${lighten(theme.accentColor, 0.2)})` }}>
+      <section className="relative py-12 sm:py-20 px-4 overflow-hidden" style={{ background: `linear-gradient(to bottom, ${theme.backgroundColor}, ${lighten(theme.accentColor, 0.2)})` }}>
         <div className="max-w-5xl mx-auto relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="text-center mb-10 sm:mb-14"
           >
             <p className="tracking-[0.4em] uppercase text-xs mb-4" style={{ color: theme.primaryColor }}>Order of Ceremony</p>
             <h2 className="text-[28px] sm:text-5xl font-light" style={{ color: theme.secondaryColor, fontFamily: "Georgia, serif" }}>
@@ -917,7 +917,7 @@ export default function BlossomWaltz({ data, config }: { data?: InvitationData; 
 
       {/* ═══ GALLERY ═══ */}
       {isVisible("gallery") && galleryImages.length > 0 && (
-      <section className="relative py-28 px-4 overflow-hidden">
+      <section className="relative py-12 sm:py-20 px-4 overflow-hidden">
         <LiquidBlob color={theme.primaryColor} size={400} top="40%" left="80%" />
         <div className="max-w-5xl mx-auto relative z-10">
           <motion.div
@@ -958,7 +958,7 @@ export default function BlossomWaltz({ data, config }: { data?: InvitationData; 
 
       {/* ═══ VENUE ═══ */}
       {isVisible("venue") && (
-      <section className="relative py-28 px-4 overflow-hidden" style={{ background: `linear-gradient(to bottom, ${lighten(theme.accentColor, 0.2)}, ${theme.backgroundColor})` }}>
+      <section className="relative py-12 sm:py-20 px-4 overflow-hidden" style={{ background: `linear-gradient(to bottom, ${lighten(theme.accentColor, 0.2)}, ${theme.backgroundColor})` }}>
         <LiquidBlob color={theme.primaryColor} size={500} top="10%" left="-15%" />
         <div className="max-w-4xl mx-auto relative z-10">
           <motion.div
@@ -1009,7 +1009,7 @@ export default function BlossomWaltz({ data, config }: { data?: InvitationData; 
 
       {/* ═══ RSVP ═══ */}
       {isVisible("rsvp") && (
-      <section className="relative py-28 px-4 overflow-hidden" style={{ background: `linear-gradient(135deg, ${theme.primaryColor}, ${theme.secondaryColor})` }}>
+      <section className="relative py-12 sm:py-20 px-4 overflow-hidden" style={{ background: `linear-gradient(135deg, ${theme.primaryColor}, ${theme.secondaryColor})` }}>
         <FallingPetals count={14} color={theme.accentColor} />
         <div className="max-w-lg mx-auto text-center relative z-10">
           <motion.div
