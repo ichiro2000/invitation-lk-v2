@@ -312,6 +312,53 @@ function PoruwaCanopy({ color, accent }: { color: string; accent: string }) {
   );
 }
 
+/* ── Wedding rings — stylised motif for Wedding Reception card ── */
+function WeddingRings({ color, accent }: { color: string; accent: string }) {
+  return (
+    <svg viewBox="0 0 80 80" className="w-full h-full" aria-hidden="true">
+      {/* Left ring */}
+      <motion.circle
+        cx="32" cy="44" r="16"
+        fill="none" stroke={color} strokeWidth="1.6"
+        initial={{ pathLength: 0, opacity: 0 }}
+        whileInView={{ pathLength: 1, opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 1.2, ease: "easeInOut" }}
+      />
+      {/* Right ring */}
+      <motion.circle
+        cx="48" cy="44" r="16"
+        fill="none" stroke={color} strokeWidth="1.6"
+        initial={{ pathLength: 0, opacity: 0 }}
+        whileInView={{ pathLength: 1, opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 1.2, delay: 0.3, ease: "easeInOut" }}
+      />
+      {/* Gem on the right ring */}
+      <motion.path
+        d="M 48 24 L 45 28 L 48 32 L 51 28 Z"
+        fill={accent} stroke={color} strokeWidth="0.6"
+        initial={{ scale: 0, opacity: 0 }}
+        whileInView={{ scale: 1, opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay: 1.4, ease: [0.22, 1, 0.36, 1] }}
+        style={{ transformOrigin: "48px 28px" }}
+      />
+      {/* Sparkle accents */}
+      <motion.circle
+        cx="18" cy="22" r="1.2" fill={accent}
+        initial={{ scale: 0 }} whileInView={{ scale: 1 }} viewport={{ once: true }}
+        transition={{ duration: 0.4, delay: 1.7 }}
+      />
+      <motion.circle
+        cx="64" cy="60" r="1.2" fill={accent}
+        initial={{ scale: 0 }} whileInView={{ scale: 1 }} viewport={{ once: true }}
+        transition={{ duration: 0.4, delay: 1.9 }}
+      />
+    </svg>
+  );
+}
+
 /* ── Curtain reveal overlay — velvet panels part on tap ── */
 function CurtainReveal({
   groom,
@@ -506,6 +553,7 @@ export default function BlossomWaltz({ data, config }: { data?: InvitationData; 
   const events = data?.events && data.events.length > 0 ? data.events : [
     { title: "Church Ceremony", time: "10:00 AM", venue: "St. Andrew's Church", description: "Join us as we exchange vows and celebrate the sacrament of marriage." },
     { title: "Poruwa Ceremony", time: "4:00 PM", venue: "Cinnamon Grand, Grand Ballroom", description: "A traditional Kandyan Poruwa, the ceremonial rite of our heritage, followed by dinner and dancing." },
+    { title: "Wedding Reception", time: "7:00 PM", venue: "Cinnamon Grand, Grand Ballroom", description: "Dinner, dancing and a toast under the stars — the waltz continues into the night." },
   ];
 
   // Normalise time
@@ -822,12 +870,18 @@ export default function BlossomWaltz({ data, config }: { data?: InvitationData; 
             <div className="w-20 h-px mx-auto mt-6" style={{ background: `linear-gradient(to right, transparent, ${theme.primaryColor}, transparent)` }} />
           </motion.div>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {events.slice(0, 2).map((event, i) => {
-              const isChurch = /church/i.test(event.title) || i === 0;
-              const iconSvg = isChurch ? ChurchArch : PoruwaCanopy;
-              const Icon = iconSvg;
-              const labelA = isChurch ? "CEREMONY · I" : "CEREMONY · II";
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {events.slice(0, 3).map((event, i) => {
+              const isReception = /reception/i.test(event.title);
+              const isChurch = !isReception && (/church/i.test(event.title) || i === 0);
+              const Icon = isReception ? WeddingRings : isChurch ? ChurchArch : PoruwaCanopy;
+              const romanNumeral = ["I", "II", "III"][i] || `${i + 1}`;
+              const labelA = isReception ? `RECEPTION · ${romanNumeral}` : `CEREMONY · ${romanNumeral}`;
+              const cardBg = isReception
+                ? `linear-gradient(135deg, ${withOpacity(theme.accentColor, 0.25)}, ${withOpacity("#ffffff", 0.85)})`
+                : isChurch
+                ? `linear-gradient(135deg, ${withOpacity("#ffffff", 0.9)}, ${withOpacity(theme.accentColor, 0.3)})`
+                : `linear-gradient(135deg, ${withOpacity(theme.primaryColor, 0.1)}, ${withOpacity(theme.secondaryColor, 0.15)})`;
               return (
                 <motion.div
                   key={i}
@@ -841,14 +895,10 @@ export default function BlossomWaltz({ data, config }: { data?: InvitationData; 
                 >
                   <div
                     className="absolute inset-0"
-                    style={{
-                      background: isChurch
-                        ? `linear-gradient(135deg, ${withOpacity("#ffffff", 0.9)}, ${withOpacity(theme.accentColor, 0.3)})`
-                        : `linear-gradient(135deg, ${withOpacity(theme.primaryColor, 0.1)}, ${withOpacity(theme.secondaryColor, 0.15)})`,
-                    }}
+                    style={{ background: cardBg }}
                   />
                   <div
-                    className="relative z-10 p-8 sm:p-10"
+                    className="relative z-10 p-8 sm:p-10 text-center"
                     style={{
                       border: `1px solid ${withOpacity(theme.primaryColor, 0.2)}`,
                       borderRadius: "1.5rem",
@@ -866,7 +916,7 @@ export default function BlossomWaltz({ data, config }: { data?: InvitationData; 
                     </p>
 
                     {/* Icon */}
-                    <div className="w-20 h-20 mb-5">
+                    <div className="w-20 h-20 mb-5 mx-auto">
                       <Icon color={theme.secondaryColor} accent={theme.primaryColor} />
                     </div>
 
@@ -876,9 +926,10 @@ export default function BlossomWaltz({ data, config }: { data?: InvitationData; 
                     </h3>
 
                     {/* Time */}
-                    <div className="flex items-center gap-2 mb-2 text-sm font-medium" style={{ color: theme.primaryColor }}>
+                    <div className="flex items-center justify-center gap-2 mb-2 text-sm font-medium" style={{ color: theme.primaryColor }}>
                       <span className="w-6 h-px" style={{ backgroundColor: theme.primaryColor }} />
                       <span>{event.time}</span>
+                      <span className="w-6 h-px" style={{ backgroundColor: theme.primaryColor }} />
                     </div>
 
                     {/* Venue */}
@@ -901,8 +952,8 @@ export default function BlossomWaltz({ data, config }: { data?: InvitationData; 
                       whileInView={{ scaleX: 1 }}
                       viewport={{ once: true }}
                       transition={{ duration: 0.8, delay: i * 0.2 + 0.5 }}
-                      className="mt-6 h-px"
-                      style={{ background: `linear-gradient(to right, ${theme.primaryColor}, transparent)`, transformOrigin: "left" }}
+                      className="mt-6 h-px mx-auto w-24"
+                      style={{ background: `linear-gradient(to right, transparent, ${theme.primaryColor}, transparent)` }}
                     />
                   </div>
                 </motion.div>
@@ -910,15 +961,15 @@ export default function BlossomWaltz({ data, config }: { data?: InvitationData; 
             })}
           </div>
 
-          {/* Any additional events beyond the first two render as small chips */}
-          {events.length > 2 && (
+          {/* Any additional events beyond the first three render as small chips */}
+          {events.length > 3 && (
             <motion.div
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
               className="flex flex-wrap justify-center gap-3 mt-10"
             >
-              {events.slice(2).map((e, i) => (
+              {events.slice(3).map((e, i) => (
                 <div
                   key={i}
                   className="px-5 py-3 rounded-full backdrop-blur-sm text-sm"
