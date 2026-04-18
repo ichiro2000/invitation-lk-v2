@@ -4,6 +4,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { Heart, MapPin, Mail, Phone, Camera, ChevronDown, Calendar as CalendarIcon, Clock, Music, Utensils, GlassWater } from "lucide-react";
 import Link from "next/link";
 import Countdown from "./shared/Countdown";
+import SecondaryVenue from "./shared/SecondaryVenue";
 import { useState, useRef } from "react";
 import type { InvitationData } from "@/types/invitation";
 import { deepMerge } from "@/lib/deep-merge";
@@ -363,6 +364,7 @@ export default function RoseGarden({ data, config }: { data?: InvitationData; co
             <p className="text-sm mb-1" style={{ color: withOpacity(theme.textColor, 0.5) }}>Dress Code</p>
             <p className="font-medium text-lg" style={{ color: theme.primaryColor }}>Semi-Formal &middot; Evening Attire</p>
           </motion.div>
+          <SecondaryVenue second={content.venue?.second} primaryColor={theme.primaryColor} secondaryColor={theme.secondaryColor} accentColor={theme.accentColor} />
         </motion.div>
       </div>
     </section>
