@@ -56,17 +56,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           {/* Wedding Tools */}
           <p className="text-[10px] text-gray-400 uppercase tracking-wider px-4 pt-4 pb-1">Wedding Plan Tools</p>
-          {sidebarLinks.slice(6).map((link) => {
-            const planRequired = true; // Standard+ only
-            const userPlan = session.user?.plan;
-            const hasAccess = userPlan === "STANDARD" || userPlan === "PREMIUM" || userPlan === "ADMIN";
-            return (
-              <Link key={link.href} href={link.href} className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${pathname === link.href ? "bg-rose-50 text-rose-600" : hasAccess ? "text-gray-600 hover:bg-gray-50 hover:text-rose-600" : "text-gray-300 cursor-not-allowed"}`}>
-                <link.icon className="w-4 h-4" /> {link.label}
-                {!hasAccess && <span className="ml-auto text-[9px] bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded-full">Standard+</span>}
-              </Link>
-            );
-          })}
+          {sidebarLinks.slice(6).map((link) => (
+            <Link key={link.href} href={link.href} className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${pathname === link.href ? "bg-rose-50 text-rose-600" : "text-gray-600 hover:bg-gray-50 hover:text-rose-600"}`}>
+              <link.icon className="w-4 h-4" /> {link.label}
+            </Link>
+          ))}
 
           {/* Billing */}
           {session.user?.plan === "FREE" && (

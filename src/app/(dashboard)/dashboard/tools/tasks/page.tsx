@@ -1,9 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "next-auth/react";
-import { CheckSquare, Plus, X, Circle, CheckCircle2, Clock, Lock } from "lucide-react";
-import Link from "next/link";
+import { CheckSquare, Plus, X, Circle, CheckCircle2, Clock } from "lucide-react";
 
 const defaultTasks = [
   { title: "Book venue", category: "Venue", priority: "HIGH" },
@@ -26,24 +24,9 @@ const statusIcons: Record<string, React.ReactNode> = {
 const priorityColors: Record<string, string> = { LOW: "text-gray-400", MEDIUM: "text-blue-500", HIGH: "text-amber-500", URGENT: "text-red-500" };
 
 export default function TasksPage() {
-  const { data: session } = useSession();
-  const plan = session?.user?.plan || "FREE";
-  const hasAccess = plan === "STANDARD" || plan === "PREMIUM";
-
   const [tasks, setTasks] = useState<Task[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ title: "", priority: "MEDIUM", category: "" });
-
-  if (!hasAccess) {
-    return (
-      <div className="text-center py-20">
-        <Lock className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Standard Plan Required</h2>
-        <p className="text-gray-400 mb-6">Task checklist is available on Standard and Premium plans.</p>
-        <Link href="/pricing" className="bg-rose-600 text-white px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-rose-700">Upgrade Now</Link>
-      </div>
-    );
-  }
 
   const addTask = () => {
     if (!form.title) return;
