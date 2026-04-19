@@ -1,33 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "next-auth/react";
-import { DollarSign, Plus, Trash2, Lock } from "lucide-react";
-import Link from "next/link";
+import { DollarSign, Plus, Trash2 } from "lucide-react";
 
 type BudgetItem = { id: string; name: string; category: string; estimated: string; actual: string; isPaid: boolean };
 
 const categories = ["Venue", "Catering", "Photography", "Decoration", "Attire", "Music", "Transport", "Cake", "Flowers", "Other"];
 
 export default function BudgetPage() {
-  const { data: session } = useSession();
-  const plan = session?.user?.plan || "FREE";
-  const hasAccess = plan === "STANDARD" || plan === "PREMIUM";
-
   const [items, setItems] = useState<BudgetItem[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ name: "", category: "Venue", estimated: "", actual: "" });
-
-  if (!hasAccess) {
-    return (
-      <div className="text-center py-20">
-        <Lock className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Standard Plan Required</h2>
-        <p className="text-gray-400 mb-6">Budget management is available on Standard and Premium plans.</p>
-        <Link href="/pricing" className="bg-rose-600 text-white px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-rose-700">Upgrade Now</Link>
-      </div>
-    );
-  }
 
   const addItem = () => {
     if (!form.name || !form.estimated) return;

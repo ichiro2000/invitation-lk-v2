@@ -1,33 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "next-auth/react";
-import { Store, Plus, Trash2, Edit3, X, Phone, Mail, Lock } from "lucide-react";
-import Link from "next/link";
+import { Store, Plus, Trash2, Phone, Mail } from "lucide-react";
 
 type Vendor = { id: string; name: string; category: string; phone: string; email: string; cost: string; isPaid: boolean; notes: string };
 
 const categories = ["Photographer", "Videographer", "Decorator", "Catering", "Florist", "DJ/Music", "Cake", "Transport", "Venue", "Makeup", "Attire", "Other"];
 
 export default function VendorsPage() {
-  const { data: session } = useSession();
-  const plan = session?.user?.plan || "FREE";
-  const hasAccess = plan === "STANDARD" || plan === "PREMIUM";
-
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ name: "", category: "Photographer", phone: "", email: "", cost: "", notes: "" });
-
-  if (!hasAccess) {
-    return (
-      <div className="text-center py-20">
-        <Lock className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Standard Plan Required</h2>
-        <p className="text-gray-400 mb-6">Vendor list is available on Standard and Premium plans.</p>
-        <Link href="/pricing" className="bg-rose-600 text-white px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-rose-700">Upgrade Now</Link>
-      </div>
-    );
-  }
 
   const addVendor = () => {
     if (!form.name) return;
