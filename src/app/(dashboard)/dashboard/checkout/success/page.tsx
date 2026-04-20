@@ -1,21 +1,20 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle, Loader2, ArrowRight } from "lucide-react";
 
-// Module-level guards — survive remount cycles caused by update() flipping the
-// dashboard layout into its session-loading branch (which unmounts us).
-// Keyed by order id so a second checkout in the same tab still refreshes.
-const sessionRefreshedForOrder = new Set<string>();
+// No useSession / update() here. Calling update() on this page causes the
+// parent dashboard layout to flip into its session-loading branch, which
+// unmounts us mid-fetch; we then remount, retry, and the page sticks on
+// "Verifying your payment...". The user's plan is already correct in the
+// DB — the sidebar will pick it up on the next navigation.
 
 function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
   const orderId = searchParams.get("order_id");
-  const { update } = useSession();
 
   const [loading, setLoading] = useState(true);
   const [plan, setPlan] = useState("");
@@ -30,7 +29,6 @@ function CheckoutSuccessContent() {
       return;
     }
 
-    const refKey = orderId ?? sessionId!;
     const query = orderId ? `order_id=${orderId}` : `session_id=${sessionId}`;
     let cancelled = false;
 
@@ -43,10 +41,6 @@ function CheckoutSuccessContent() {
           setPlan(data.plan);
           setAmount(data.amount);
           setStatus(data.status);
-          if (data.status === "COMPLETED" && !sessionRefreshedForOrder.has(refKey)) {
-            sessionRefreshedForOrder.add(refKey);
-            update().catch(() => {});
-          }
           return data.status as string;
         }
         setError(data.error || "Failed to verify payment");
@@ -58,8 +52,8 @@ function CheckoutSuccessContent() {
     };
 
     (async () => {
-      // Poll up to ~30s (2s interval, 15 tries) while status is PENDING,
-      // so the webhook has time to land and flip us to COMPLETED.
+      // Poll up to ~30s while status is PENDING so the webhook has time to
+      // land and flip us to COMPLETED. Once status is non-PENDING we stop.
       for (let attempt = 0; attempt < 15; attempt++) {
         if (cancelled) return;
         const s = await verifyOnce();
@@ -73,10 +67,6 @@ function CheckoutSuccessContent() {
     return () => {
       cancelled = true;
     };
-    // `update` intentionally excluded — calling it would flip session status
-    // to "loading", the dashboard layout would unmount us, and the effect
-    // would restart. The module-level guard above protects against that.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, orderId]);
 
   const isPending = status === "PENDING";
@@ -120,10 +110,10 @@ function CheckoutSuccessContent() {
             </h2>
             <p className="text-gray-400 text-sm mb-6">
               {isPending
-                ? "We're still confirming your payment with the bank. This page will update once confirmed."
+                ? "We're still confirming your payment with the bank. This page will update shortly."
                 : isFailed
                 ? "The payment did not go through. Please try again."
-                : "Your plan has been upgraded successfully."}
+                : "Your plan has been upgraded successfully. Open your dashboard to see your new plan."}
             </p>
             <div className="bg-gray-50 rounded-2xl p-5 mb-8">
               <div className="flex items-center justify-between mb-2">
