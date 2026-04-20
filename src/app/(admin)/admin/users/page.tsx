@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Loader2, Users, Search } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { Loader2, Users, Search, Trash2, X, AlertTriangle } from "lucide-react";
 
 interface User {
   id: string;
@@ -29,10 +30,14 @@ const roleBadge: Record<string, string> = {
 const plans = ["FREE", "BASIC", "STANDARD", "PREMIUM"] as const;
 
 export default function AdminUsersPage() {
+  const { data: session } = useSession();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [planLoading, setPlanLoading] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -54,6 +59,28 @@ export default function AdminUsersPage() {
     }, 300);
     return () => clearTimeout(timeout);
   }, [fetchUsers]);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    setDeleteError(null);
+    try {
+      const res = await fetch(`/api/admin/users/${deleteTarget.id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setDeleteError(body.error || "Failed to delete user");
+        return;
+      }
+      setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id));
+      setDeleteTarget(null);
+    } catch {
+      setDeleteError("Failed to delete user");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   const handlePlanChange = async (userId: string, newPlan: string) => {
     setPlanLoading(userId);
@@ -122,6 +149,7 @@ export default function AdminUsersPage() {
                   <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Plan</th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
+                  <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -160,10 +188,98 @@ export default function AdminUsersPage() {
                       </span>
                     </td>
                     <td className="px-5 py-4 text-gray-500">{formatDate(user.createdAt)}</td>
+                    <td className="px-5 py-4">
+                      {user.id === session?.user?.id ? (
+                        <span className="text-xs text-gray-300">You</span>
+                      ) : user.role === "ADMIN" ? (
+                        <span
+                          className="text-xs text-gray-300"
+                          title="Demote this admin to CUSTOMER before deleting"
+                        >
+                          Admin
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setDeleteError(null);
+                            setDeleteTarget(user);
+                          }}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 transition-colors"
+                          aria-label={`Delete ${user.email}`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> Delete
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirm Modal */}
+      {deleteTarget && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => !deleteLoading && setDeleteTarget(null)}
+        >
+          <div
+            className="bg-white rounded-2xl p-6 max-w-md w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-gray-900">Delete user?</h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  <span className="font-medium text-gray-900">
+                    {deleteTarget.yourName || deleteTarget.email}
+                  </span>
+                  {" — "}
+                  <span className="text-gray-500">{deleteTarget.email}</span>
+                </p>
+                <p className="text-xs text-gray-400 mt-2">
+                  This permanently removes the account and all linked data —
+                  invitation, guests, orders, tasks, vendors, budget, and sign-in
+                  sessions. This cannot be undone.
+                </p>
+              </div>
+              <button
+                onClick={() => !deleteLoading && setDeleteTarget(null)}
+                className="text-gray-400 hover:text-gray-600"
+                disabled={deleteLoading}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {deleteError && (
+              <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2 mb-4">
+                {deleteError}
+              </p>
+            )}
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleteLoading}
+                className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleteLoading}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {deleteLoading && <Loader2 className="w-3 h-3 animate-spin" />}
+                Delete user
+              </button>
+            </div>
           </div>
         </div>
       )}

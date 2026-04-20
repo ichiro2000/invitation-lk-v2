@@ -78,3 +78,64 @@ export async function PATCH(
     );
   }
 }
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const currentUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { role: true },
+    });
+
+    if (currentUser?.role !== "ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const { id } = await params;
+
+    if (id === session.user.id) {
+      return NextResponse.json(
+        { error: "Cannot delete your own account" },
+        { status: 400 }
+      );
+    }
+
+    const target = await prisma.user.findUnique({
+      where: { id },
+      select: { role: true },
+    });
+
+    if (!target) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Guard against accidentally removing another admin from the panel —
+    // demote them first if that's really the intent.
+    if (target.role === "ADMIN") {
+      return NextResponse.json(
+        { error: "Demote this admin to CUSTOMER before deleting" },
+        { status: 400 }
+      );
+    }
+
+    // User has onDelete: Cascade on accounts, sessions, invitations, guests,
+    // tasks, vendors, budgetItems, and orders (which cascades into
+    // bankTransfers), so a single delete cleans everything up.
+    await prisma.user.delete({ where: { id } });
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("Admin delete user error:", error);
+    return NextResponse.json(
+      { error: "Failed to delete user" },
+      { status: 500 }
+    );
+  }
+}
