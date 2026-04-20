@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import Link from "next/link";
 import { Heart, Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 
@@ -17,12 +17,13 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    const result = await signIn("credentials", { email, password, redirect: false, callbackUrl: "/dashboard" });
+    const result = await signIn("credentials", { email, password, redirect: false });
     if (result?.error) {
       setError("Invalid email or password");
       setLoading(false);
-    } else if (result?.url) {
-      window.location.href = result.url;
+    } else if (result?.ok) {
+      const session = await getSession();
+      window.location.href = session?.user?.role === "ADMIN" ? "/admin" : "/dashboard";
     }
   };
 
