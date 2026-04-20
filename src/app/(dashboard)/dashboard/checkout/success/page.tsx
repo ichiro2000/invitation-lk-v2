@@ -1,22 +1,21 @@
 "use client";
 
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle, Loader2, ArrowRight } from "lucide-react";
+
+// Module-level guards — survive remount cycles caused by update() flipping the
+// dashboard layout into its session-loading branch (which unmounts us).
+// Keyed by order id so a second checkout in the same tab still refreshes.
+const sessionRefreshedForOrder = new Set<string>();
 
 function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
   const orderId = searchParams.get("order_id");
   const { update } = useSession();
-
-  // Keep `update` in a ref so the polling effect doesn't restart when NextAuth
-  // refreshes the session (await update() changes its identity on re-render,
-  // and including it in the deps spins the effect in a tight loop).
-  const updateRef = useRef(update);
-  updateRef.current = update;
 
   const [loading, setLoading] = useState(true);
   const [plan, setPlan] = useState("");
@@ -31,9 +30,9 @@ function CheckoutSuccessContent() {
       return;
     }
 
+    const refKey = orderId ?? sessionId!;
     const query = orderId ? `order_id=${orderId}` : `session_id=${sessionId}`;
     let cancelled = false;
-    let sessionRefreshed = false;
 
     const verifyOnce = async (): Promise<string | null> => {
       try {
@@ -44,9 +43,9 @@ function CheckoutSuccessContent() {
           setPlan(data.plan);
           setAmount(data.amount);
           setStatus(data.status);
-          if (data.status === "COMPLETED" && !sessionRefreshed) {
-            sessionRefreshed = true;
-            updateRef.current().catch(() => {});
+          if (data.status === "COMPLETED" && !sessionRefreshedForOrder.has(refKey)) {
+            sessionRefreshedForOrder.add(refKey);
+            update().catch(() => {});
           }
           return data.status as string;
         }
@@ -74,7 +73,9 @@ function CheckoutSuccessContent() {
     return () => {
       cancelled = true;
     };
-    // `update` is intentionally excluded — see updateRef above.
+    // `update` intentionally excluded — calling it would flip session status
+    // to "loading", the dashboard layout would unmount us, and the effect
+    // would restart. The module-level guard above protects against that.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, orderId]);
 
