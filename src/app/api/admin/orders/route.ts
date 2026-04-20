@@ -38,11 +38,18 @@ export async function GET(request: Request) {
         user: {
           select: { email: true, yourName: true, partnerName: true },
         },
+        bankTransfer: {
+          select: {
+            id: true,
+            receiptImage: true,
+            status: true,
+            adminNotes: true,
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
     });
 
-    // Flatten data to match frontend interface
     const orders = rawOrders.map((o) => ({
       id: o.id,
       userName: `${o.user.yourName} & ${o.user.partnerName}`,
@@ -52,6 +59,14 @@ export async function GET(request: Request) {
       paymentMethod: o.paymentMethod,
       status: o.paymentStatus,
       createdAt: o.createdAt.toISOString(),
+      bankTransfer: o.bankTransfer
+        ? {
+            id: o.bankTransfer.id,
+            receiptUrl: o.bankTransfer.receiptImage,
+            status: o.bankTransfer.status,
+            adminNotes: o.bankTransfer.adminNotes,
+          }
+        : null,
     }));
 
     return NextResponse.json({ orders });

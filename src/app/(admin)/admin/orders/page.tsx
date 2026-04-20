@@ -1,11 +1,20 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Loader2, FileText, CreditCard, Building2 } from "lucide-react";
+import {
+  Loader2, FileText, CreditCard, Building2, Eye, X,
+  Image as ImageIcon, Clock, CheckCircle, XCircle,
+} from "lucide-react";
+
+interface OrderBankTransfer {
+  id: string;
+  receiptUrl: string;
+  status: string;
+  adminNotes: string | null;
+}
 
 interface Order {
   id: string;
-  userId: string;
   userName: string;
   userEmail: string;
   plan: string;
@@ -13,6 +22,7 @@ interface Order {
   paymentMethod: string;
   status: string;
   createdAt: string;
+  bankTransfer: OrderBankTransfer | null;
 }
 
 const statusTabs = ["ALL", "COMPLETED", "PENDING", "FAILED"] as const;
@@ -21,16 +31,42 @@ const statusBadge: Record<string, string> = {
   PENDING: "bg-amber-100 text-amber-700",
   COMPLETED: "bg-green-100 text-green-700",
   FAILED: "bg-red-100 text-red-700",
+  REFUNDED: "bg-gray-100 text-gray-600",
 };
 
-const methodBadge: Record<string, { class: string; icon: React.ReactNode }> = {
+const methodBadge: Record<string, { class: string; label: string; icon: React.ReactNode }> = {
   STRIPE: {
     class: "bg-violet-100 text-violet-700",
+    label: "Stripe",
+    icon: <CreditCard className="w-3 h-3" />,
+  },
+  PAYHERE: {
+    class: "bg-emerald-100 text-emerald-700",
+    label: "PayHere",
     icon: <CreditCard className="w-3 h-3" />,
   },
   BANK_TRANSFER: {
     class: "bg-blue-100 text-blue-700",
+    label: "Bank",
     icon: <Building2 className="w-3 h-3" />,
+  },
+};
+
+const transferStatusBadge: Record<string, { class: string; label: string; icon: React.ReactNode }> = {
+  PENDING_REVIEW: {
+    class: "bg-amber-100 text-amber-700",
+    label: "Review",
+    icon: <Clock className="w-3 h-3" />,
+  },
+  APPROVED: {
+    class: "bg-green-100 text-green-700",
+    label: "Approved",
+    icon: <CheckCircle className="w-3 h-3" />,
+  },
+  REJECTED: {
+    class: "bg-red-100 text-red-700",
+    label: "Rejected",
+    icon: <XCircle className="w-3 h-3" />,
   },
 };
 
@@ -38,6 +74,10 @@ export default function AdminOrdersPage() {
   const [activeTab, setActiveTab] = useState<string>("ALL");
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewImage, setViewImage] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [rejectTransferId, setRejectTransferId] = useState<string | null>(null);
+  const [rejectNotes, setRejectNotes] = useState("");
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -57,15 +97,36 @@ export default function AdminOrdersPage() {
     fetchOrders();
   }, [fetchOrders]);
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("en-US", {
+  const handleTransferAction = async (
+    transferId: string,
+    action: "approve" | "reject",
+    adminNotes?: string,
+  ) => {
+    setActionLoading(transferId);
+    try {
+      await fetch(`/api/admin/bank-transfers/${transferId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, adminNotes }),
+      });
+      setRejectTransferId(null);
+      setRejectNotes("");
+      await fetchOrders();
+    } catch {
+      console.error("Failed to update transfer");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const formatDate = (dateStr: string) =>
+    new Date(dateStr).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     });
-  };
 
   return (
     <div>
@@ -113,14 +174,20 @@ export default function AdminOrdersPage() {
                   <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Receipt</th>
+                  <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {orders.map((order) => {
                   const method = methodBadge[order.paymentMethod] || {
                     class: "bg-gray-100 text-gray-600",
+                    label: order.paymentMethod,
                     icon: null,
                   };
+                  const bt = order.bankTransfer;
+                  const transferStatus = bt ? transferStatusBadge[bt.status] : null;
+
                   return (
                     <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
                       <td className="px-5 py-4">
@@ -134,20 +201,116 @@ export default function AdminOrdersPage() {
                       <td className="px-5 py-4">
                         <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${method.class}`}>
                           {method.icon}
-                          {order.paymentMethod === "BANK_TRANSFER" ? "Bank" : "Stripe"}
+                          {method.label}
                         </span>
                       </td>
                       <td className="px-5 py-4">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${statusBadge[order.status] || "bg-gray-100 text-gray-600"}`}>
-                          {order.status}
-                        </span>
+                        <div className="flex flex-col gap-1">
+                          <span className={`inline-flex w-fit items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${statusBadge[order.status] || "bg-gray-100 text-gray-600"}`}>
+                            {order.status}
+                          </span>
+                          {transferStatus && (
+                            <span className={`inline-flex w-fit items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${transferStatus.class}`}>
+                              {transferStatus.icon}
+                              {transferStatus.label}
+                            </span>
+                          )}
+                        </div>
                       </td>
-                      <td className="px-5 py-4 text-gray-500">{formatDate(order.createdAt)}</td>
+                      <td className="px-5 py-4 text-gray-500 whitespace-nowrap">{formatDate(order.createdAt)}</td>
+                      <td className="px-5 py-4">
+                        {bt ? (
+                          <button
+                            onClick={() => setViewImage(bt.receiptUrl)}
+                            className="flex items-center gap-1.5 text-rose-600 hover:text-rose-700 text-xs font-medium"
+                          >
+                            <Eye className="w-3.5 h-3.5" /> View
+                          </button>
+                        ) : (
+                          <span className="text-xs text-gray-300">—</span>
+                        )}
+                      </td>
+                      <td className="px-5 py-4">
+                        {bt && bt.status === "PENDING_REVIEW" ? (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleTransferAction(bt.id, "approve")}
+                              disabled={actionLoading === bt.id}
+                              className="px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                            >
+                              {actionLoading === bt.id ? <Loader2 className="w-3 h-3 animate-spin" /> : "Approve"}
+                            </button>
+                            <button
+                              onClick={() => setRejectTransferId(bt.id)}
+                              disabled={actionLoading === bt.id}
+                              className="px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        ) : bt?.adminNotes ? (
+                          <p className="text-xs text-gray-400 max-w-[200px] truncate" title={bt.adminNotes}>
+                            Note: {bt.adminNotes}
+                          </p>
+                        ) : (
+                          <span className="text-xs text-gray-300">—</span>
+                        )}
+                      </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Image Modal */}
+      {viewImage && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setViewImage(null)}>
+          <div className="bg-white rounded-2xl p-4 max-w-lg w-full max-h-[80vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <p className="font-semibold text-gray-900 flex items-center gap-2">
+                <ImageIcon className="w-4 h-4" /> Receipt Image
+              </p>
+              <button onClick={() => setViewImage(null)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={viewImage} alt="Receipt" className="w-full rounded-xl" />
+          </div>
+        </div>
+      )}
+
+      {/* Reject Modal */}
+      {rejectTransferId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setRejectTransferId(null)}>
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-semibold text-gray-900 mb-4">Reject Transfer</h3>
+            <textarea
+              value={rejectNotes}
+              onChange={(e) => setRejectNotes(e.target.value)}
+              placeholder="Reason for rejection (optional)"
+              rows={3}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 text-sm mb-4"
+            />
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => { setRejectTransferId(null); setRejectNotes(""); }}
+                className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleTransferAction(rejectTransferId, "reject", rejectNotes)}
+                disabled={actionLoading === rejectTransferId}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {actionLoading === rejectTransferId ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                Reject
+              </button>
+            </div>
           </div>
         </div>
       )}

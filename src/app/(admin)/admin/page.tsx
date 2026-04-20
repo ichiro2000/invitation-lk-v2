@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Users, CreditCard, FileText, Palette, ArrowRight, Loader2, BarChart3, ExternalLink } from "lucide-react";
+import { Users, FileText, Palette, ArrowRight, Loader2, BarChart3, ExternalLink } from "lucide-react";
 
 const quickLinks = [
-  { href: "/admin/bank-transfers", label: "Bank Transfers", desc: "Review pending payment receipts", icon: CreditCard, color: "bg-rose-50 text-rose-600" },
-  { href: "/admin/orders", label: "Orders", desc: "View all orders & payments", icon: FileText, color: "bg-amber-50 text-amber-600" },
+  { href: "/admin/orders", label: "Orders", desc: "Review payments & approve bank transfers", icon: FileText, color: "bg-amber-50 text-amber-600" },
   { href: "/admin/users", label: "Users", desc: "Manage registered users", icon: Users, color: "bg-blue-50 text-blue-600" },
   { href: "/admin/templates", label: "Templates", desc: "Manage invitation templates", icon: Palette, color: "bg-purple-50 text-purple-600" },
 ];

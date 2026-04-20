@@ -80,8 +80,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {session.user?.role === "ADMIN" && (
             <>
               <p className="text-[10px] text-gray-400 uppercase tracking-wider px-4 pt-4 pb-1">Admin</p>
-              <Link href="/admin/bank-transfers" className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${pathname === "/admin/bank-transfers" ? "bg-rose-50 text-rose-600" : "text-gray-600 hover:bg-gray-50 hover:text-rose-600"}`}>
-                <ShieldCheck className="w-4 h-4" /> Bank Transfers
+              <Link href="/admin/orders" className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${pathname === "/admin/orders" ? "bg-rose-50 text-rose-600" : "text-gray-600 hover:bg-gray-50 hover:text-rose-600"}`}>
+                <ShieldCheck className="w-4 h-4" /> Orders
               </Link>
             </>
           )}
