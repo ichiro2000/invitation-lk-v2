@@ -230,16 +230,14 @@ enum BankTransferStatus {
 }
 
 model Order {
-  id                    String        @id @default(cuid())
-  userId                String
-  plan                  Plan
-  amount                Decimal       @db.Decimal(10, 2)
-  currency              String        @default("LKR")
-  paymentMethod         PaymentMethod
-  paymentStatus         PaymentStatus @default(PENDING)
-  stripeSessionId       String?       @unique
-  stripePaymentIntentId String?       @unique
-  paymentRef            String?
+  id            String        @id @default(cuid())
+  userId        String
+  plan          Plan
+  amount        Decimal       @db.Decimal(10, 2)
+  currency      String        @default("LKR")
+  paymentMethod PaymentMethod
+  paymentStatus PaymentStatus @default(PENDING)
+  paymentRef    String?       @unique
 
   bankTransfer BankTransfer?
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)

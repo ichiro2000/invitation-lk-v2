@@ -76,5 +76,8 @@ export function verifyNotifyMd5Sig(params: {
       params.statusCode +
       secretHash
   );
-  return expected === params.receivedMd5Sig.toUpperCase();
+  const received = params.receivedMd5Sig.toUpperCase();
+  if (expected.length !== received.length) return false;
+  // Constant-time compare to avoid leaking the MD5 byte-by-byte via timing.
+  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(received));
 }

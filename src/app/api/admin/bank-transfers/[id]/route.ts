@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/db";
-import { PLAN_NAMES, PLAN_AMOUNTS } from "@/lib/stripe";
+import { PLAN_NAMES, PLAN_AMOUNTS, PLAN_RANK } from "@/lib/plans";
 import { sendPaymentConfirmationEmail, sendAdminPaymentNotification } from "@/lib/resend";
 
 export async function PATCH(
@@ -46,6 +46,19 @@ export async function PATCH(
       );
     }
 
+    // Idempotency: a previously approved or rejected transfer must not be
+    // re-processed. Re-running approve would re-send emails and re-apply
+    // plan updates; re-running reject would flip a COMPLETED order to FAILED.
+    if (bankTransfer.status !== "PENDING_REVIEW") {
+      return NextResponse.json(
+        {
+          error: `Already ${bankTransfer.status.toLowerCase()}`,
+          status: bankTransfer.status,
+        },
+        { status: 409 }
+      );
+    }
+
     if (action === "approve") {
       // Update BankTransfer
       const updatedTransfer = await prisma.bankTransfer.update({
@@ -64,11 +77,23 @@ export async function PATCH(
         data: { paymentStatus: "COMPLETED" },
       });
 
-      // Update User plan
-      await prisma.user.update({
+      // Update User plan — only if the new plan outranks what the user
+      // already has. Prevents accidental downgrades when a user submits a
+      // lower-tier bank transfer after upgrading via another flow.
+      const currentUser = await prisma.user.findUnique({
         where: { id: bankTransfer.order.userId },
-        data: { plan: bankTransfer.order.plan },
+        select: { plan: true },
       });
+      if (
+        currentUser &&
+        (PLAN_RANK[bankTransfer.order.plan] ?? 0) >
+          (PLAN_RANK[currentUser.plan] ?? 0)
+      ) {
+        await prisma.user.update({
+          where: { id: bankTransfer.order.userId },
+          data: { plan: bankTransfer.order.plan },
+        });
+      }
 
       // Update Invitation if exists
       await prisma.invitation.updateMany({

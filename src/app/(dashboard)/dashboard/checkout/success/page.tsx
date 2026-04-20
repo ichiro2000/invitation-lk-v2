@@ -13,7 +13,6 @@ import { CheckCircle, Loader2, ArrowRight } from "lucide-react";
 
 function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
-  const sessionId = searchParams.get("session_id");
   const orderId = searchParams.get("order_id");
 
   const [loading, setLoading] = useState(true);
@@ -23,13 +22,13 @@ function CheckoutSuccessContent() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!sessionId && !orderId) {
+    if (!orderId) {
       setError("Invalid session. No payment reference found.");
       setLoading(false);
       return;
     }
 
-    const query = orderId ? `order_id=${orderId}` : `session_id=${sessionId}`;
+    const query = `order_id=${orderId}`;
     let cancelled = false;
 
     const verifyOnce = async (): Promise<string | null> => {
@@ -67,7 +66,7 @@ function CheckoutSuccessContent() {
     return () => {
       cancelled = true;
     };
-  }, [sessionId, orderId]);
+  }, [orderId]);
 
   const isPending = status === "PENDING";
   const isFailed = status === "FAILED";
