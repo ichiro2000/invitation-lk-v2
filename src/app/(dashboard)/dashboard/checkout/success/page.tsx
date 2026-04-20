@@ -26,27 +26,48 @@ function CheckoutSuccessContent() {
     }
 
     const query = orderId ? `order_id=${orderId}` : `session_id=${sessionId}`;
+    let cancelled = false;
+    let lastStatus: string | null = null;
 
-    const verify = async () => {
+    const verifyOnce = async (): Promise<string | null> => {
       try {
-        const res = await fetch(`/api/checkout/verify?${query}`);
+        const res = await fetch(`/api/checkout/verify?${query}`, { cache: "no-store" });
         const data = await res.json();
+        if (cancelled) return null;
         if (res.ok) {
           setPlan(data.plan);
           setAmount(data.amount);
           setStatus(data.status);
-          await update();
-        } else {
-          setError(data.error || "Failed to verify payment");
+          if (data.status !== lastStatus) {
+            lastStatus = data.status;
+            await update();
+          }
+          return data.status as string;
         }
+        setError(data.error || "Failed to verify payment");
+        return null;
       } catch {
-        setError("Something went wrong verifying your payment.");
-      } finally {
-        setLoading(false);
+        if (!cancelled) setError("Something went wrong verifying your payment.");
+        return null;
       }
     };
 
-    verify();
+    (async () => {
+      // Poll up to ~30s (2s interval, 15 tries) while status is PENDING,
+      // so the webhook has time to land and flip us to COMPLETED.
+      for (let attempt = 0; attempt < 15; attempt++) {
+        if (cancelled) return;
+        const s = await verifyOnce();
+        if (cancelled) return;
+        setLoading(false);
+        if (!s || s !== "PENDING") return;
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [sessionId, orderId, update]);
 
   const isPending = status === "PENDING";
