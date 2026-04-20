@@ -25,6 +25,23 @@ async function migrate() {
   ];
   for (const sql of enums) { try { await pool.query(sql); } catch(e) {} }
 
+  // Step 2b: Convert legacy text columns to the proper enum types.
+  // Some early prod rows were created before the enum types existed, so
+  // Order.paymentMethod / paymentStatus / plan came up as plain text. Prisma
+  // now generates casts like \`\"paymentMethod\" = \$1::\"PaymentMethod\"\`,
+  // which fail with \"operator does not exist: text = PaymentMethod\" until
+  // the column itself becomes the enum. Idempotent via data_type guard.
+  const columnConversions = [
+    \"DO \\$\\$ BEGIN IF (SELECT data_type FROM information_schema.columns WHERE table_name='Order' AND column_name='paymentMethod') = 'text' THEN ALTER TABLE \\\"Order\\\" ALTER COLUMN \\\"paymentMethod\\\" TYPE \\\"PaymentMethod\\\" USING \\\"paymentMethod\\\"::\\\"PaymentMethod\\\"; END IF; END \\$\\$\",
+    \"DO \\$\\$ BEGIN IF (SELECT data_type FROM information_schema.columns WHERE table_name='Order' AND column_name='paymentStatus') = 'text' THEN ALTER TABLE \\\"Order\\\" ALTER COLUMN \\\"paymentStatus\\\" TYPE \\\"PaymentStatus\\\" USING \\\"paymentStatus\\\"::\\\"PaymentStatus\\\"; END IF; END \\$\\$\",
+    \"DO \\$\\$ BEGIN IF (SELECT data_type FROM information_schema.columns WHERE table_name='Order' AND column_name='plan') = 'text' THEN ALTER TABLE \\\"Order\\\" ALTER COLUMN \\\"plan\\\" TYPE \\\"Plan\\\" USING \\\"plan\\\"::\\\"Plan\\\"; END IF; END \\$\\$\",
+    \"DO \\$\\$ BEGIN IF (SELECT data_type FROM information_schema.columns WHERE table_name='BankTransfer' AND column_name='status') = 'text' THEN ALTER TABLE \\\"BankTransfer\\\" ALTER COLUMN \\\"status\\\" TYPE \\\"BankTransferStatus\\\" USING \\\"status\\\"::\\\"BankTransferStatus\\\"; END IF; END \\$\\$\",
+  ];
+  for (const sql of columnConversions) {
+    try { await pool.query(sql); }
+    catch(e) { console.log('Column conversion error:', e.message.substring(0, 120)); }
+  }
+
   // Step 3: Create tables and alter columns
   const tables = [
     \"CREATE TABLE IF NOT EXISTS \\\"User\\\" (id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, email TEXT NOT NULL UNIQUE, \\\"passwordHash\\\" TEXT, \\\"yourName\\\" TEXT DEFAULT '', \\\"partnerName\\\" TEXT DEFAULT '', \\\"weddingDate\\\" TIMESTAMP, venue TEXT, phone TEXT, role \\\"Role\\\" DEFAULT 'CUSTOMER', plan \\\"Plan\\\" DEFAULT 'FREE', image TEXT, \\\"emailVerified\\\" TIMESTAMP, \\\"createdAt\\\" TIMESTAMP DEFAULT NOW(), \\\"updatedAt\\\" TIMESTAMP DEFAULT NOW())\",
