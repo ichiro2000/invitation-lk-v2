@@ -35,21 +35,42 @@ function CheckoutContent() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/checkout/stripe", {
+      const res = await fetch("/api/checkout/payhere", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plan: selectedPlan }),
       });
       const data = await res.json();
-      if (data.url && data.url.startsWith("https://checkout.stripe.com/")) {
-        window.location.href = data.url;
-      } else if (data.url) {
-        setError("Invalid checkout URL");
+      if (!res.ok || !data.checkoutUrl || !data.fields) {
+        setError(data.error || "Failed to start payment");
         setLoading(false);
-      } else {
-        setError(data.error || "Failed to create checkout session");
-        setLoading(false);
+        return;
       }
+      const allowedHosts = ["sandbox.payhere.lk", "www.payhere.lk"];
+      try {
+        const host = new URL(data.checkoutUrl).host;
+        if (!allowedHosts.includes(host)) {
+          setError("Invalid payment gateway URL");
+          setLoading(false);
+          return;
+        }
+      } catch {
+        setError("Invalid payment gateway URL");
+        setLoading(false);
+        return;
+      }
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = data.checkoutUrl;
+      for (const [name, value] of Object.entries(data.fields)) {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = name;
+        input.value = String(value ?? "");
+        form.appendChild(input);
+      }
+      document.body.appendChild(form);
+      form.submit();
     } catch {
       setError("Something went wrong. Please try again.");
       setLoading(false);

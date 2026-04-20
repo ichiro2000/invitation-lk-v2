@@ -12,14 +12,18 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const sessionId = searchParams.get("session_id");
+    const orderId = searchParams.get("order_id");
 
-    if (!sessionId) {
-      return NextResponse.json({ error: "session_id required" }, { status: 400 });
+    if (!sessionId && !orderId) {
+      return NextResponse.json(
+        { error: "order_id or session_id required" },
+        { status: 400 }
+      );
     }
 
-    const order = await prisma.order.findUnique({
-      where: { stripeSessionId: sessionId },
-    });
+    const order = orderId
+      ? await prisma.order.findUnique({ where: { id: orderId } })
+      : await prisma.order.findUnique({ where: { stripeSessionId: sessionId! } });
 
     if (!order || order.userId !== session.user.id) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
