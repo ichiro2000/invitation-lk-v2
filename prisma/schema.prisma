@@ -212,6 +212,7 @@ model BudgetItem {
 // ═══ PAYMENTS ═══
 enum PaymentMethod {
   STRIPE
+  PAYHERE
   BANK_TRANSFER
 }
 
@@ -238,6 +239,7 @@ model Order {
   paymentStatus         PaymentStatus @default(PENDING)
   stripeSessionId       String?       @unique
   stripePaymentIntentId String?       @unique
+  paymentRef            String?
 
   bankTransfer BankTransfer?
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
