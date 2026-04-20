@@ -5,13 +5,12 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Heart, LayoutDashboard, CreditCard, Users, FileText,
+  Heart, LayoutDashboard, Users, FileText,
   Palette, LogOut, ShieldCheck,
 } from "lucide-react";
 
 const adminLinks = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
-  { href: "/admin/bank-transfers", label: "Bank Transfers", icon: CreditCard },
   { href: "/admin/orders", label: "Orders", icon: FileText },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/templates", label: "Templates", icon: Palette },
