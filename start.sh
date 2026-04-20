@@ -31,11 +31,14 @@ async function migrate() {
   // now generates casts like \`\"paymentMethod\" = \$1::\"PaymentMethod\"\`,
   // which fail with \"operator does not exist: text = PaymentMethod\" until
   // the column itself becomes the enum. Idempotent via data_type guard.
+  // Uppercase legacy lowercase values before the USING cast — prod had a
+  // row with 'bank_transfer' in Order.paymentMethod, which would otherwise
+  // fail with \"invalid input value for enum\".
   const columnConversions = [
-    \"DO \\$\\$ BEGIN IF (SELECT data_type FROM information_schema.columns WHERE table_name='Order' AND column_name='paymentMethod') = 'text' THEN ALTER TABLE \\\"Order\\\" ALTER COLUMN \\\"paymentMethod\\\" TYPE \\\"PaymentMethod\\\" USING \\\"paymentMethod\\\"::\\\"PaymentMethod\\\"; END IF; END \\$\\$\",
-    \"DO \\$\\$ BEGIN IF (SELECT data_type FROM information_schema.columns WHERE table_name='Order' AND column_name='paymentStatus') = 'text' THEN ALTER TABLE \\\"Order\\\" ALTER COLUMN \\\"paymentStatus\\\" TYPE \\\"PaymentStatus\\\" USING \\\"paymentStatus\\\"::\\\"PaymentStatus\\\"; END IF; END \\$\\$\",
-    \"DO \\$\\$ BEGIN IF (SELECT data_type FROM information_schema.columns WHERE table_name='Order' AND column_name='plan') = 'text' THEN ALTER TABLE \\\"Order\\\" ALTER COLUMN \\\"plan\\\" TYPE \\\"Plan\\\" USING \\\"plan\\\"::\\\"Plan\\\"; END IF; END \\$\\$\",
-    \"DO \\$\\$ BEGIN IF (SELECT data_type FROM information_schema.columns WHERE table_name='BankTransfer' AND column_name='status') = 'text' THEN ALTER TABLE \\\"BankTransfer\\\" ALTER COLUMN \\\"status\\\" TYPE \\\"BankTransferStatus\\\" USING \\\"status\\\"::\\\"BankTransferStatus\\\"; END IF; END \\$\\$\",
+    \"DO \\$\\$ BEGIN IF (SELECT data_type FROM information_schema.columns WHERE table_name='Order' AND column_name='paymentMethod') = 'text' THEN UPDATE \\\"Order\\\" SET \\\"paymentMethod\\\" = UPPER(\\\"paymentMethod\\\") WHERE \\\"paymentMethod\\\" IS NOT NULL AND \\\"paymentMethod\\\" <> UPPER(\\\"paymentMethod\\\"); ALTER TABLE \\\"Order\\\" ALTER COLUMN \\\"paymentMethod\\\" TYPE \\\"PaymentMethod\\\" USING \\\"paymentMethod\\\"::\\\"PaymentMethod\\\"; END IF; END \\$\\$\",
+    \"DO \\$\\$ BEGIN IF (SELECT data_type FROM information_schema.columns WHERE table_name='Order' AND column_name='paymentStatus') = 'text' THEN UPDATE \\\"Order\\\" SET \\\"paymentStatus\\\" = UPPER(\\\"paymentStatus\\\") WHERE \\\"paymentStatus\\\" IS NOT NULL AND \\\"paymentStatus\\\" <> UPPER(\\\"paymentStatus\\\"); ALTER TABLE \\\"Order\\\" ALTER COLUMN \\\"paymentStatus\\\" TYPE \\\"PaymentStatus\\\" USING \\\"paymentStatus\\\"::\\\"PaymentStatus\\\"; END IF; END \\$\\$\",
+    \"DO \\$\\$ BEGIN IF (SELECT data_type FROM information_schema.columns WHERE table_name='Order' AND column_name='plan') = 'text' THEN UPDATE \\\"Order\\\" SET \\\"plan\\\" = UPPER(\\\"plan\\\") WHERE \\\"plan\\\" IS NOT NULL AND \\\"plan\\\" <> UPPER(\\\"plan\\\"); ALTER TABLE \\\"Order\\\" ALTER COLUMN \\\"plan\\\" TYPE \\\"Plan\\\" USING \\\"plan\\\"::\\\"Plan\\\"; END IF; END \\$\\$\",
+    \"DO \\$\\$ BEGIN IF (SELECT data_type FROM information_schema.columns WHERE table_name='BankTransfer' AND column_name='status') = 'text' THEN UPDATE \\\"BankTransfer\\\" SET \\\"status\\\" = UPPER(\\\"status\\\") WHERE \\\"status\\\" IS NOT NULL AND \\\"status\\\" <> UPPER(\\\"status\\\"); ALTER TABLE \\\"BankTransfer\\\" ALTER COLUMN \\\"status\\\" TYPE \\\"BankTransferStatus\\\" USING \\\"status\\\"::\\\"BankTransferStatus\\\"; END IF; END \\$\\$\",
   ];
   for (const sql of columnConversions) {
     try { await pool.query(sql); }
