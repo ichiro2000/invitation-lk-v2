@@ -12,6 +12,9 @@ async function migrate() {
   try {
     await pool.query(\"ALTER TYPE \\\"RsvpStatus\\\" ADD VALUE IF NOT EXISTS 'MAYBE'\");
   } catch(e) {}
+  try {
+    await pool.query(\"ALTER TYPE \\\"PaymentMethod\\\" ADD VALUE IF NOT EXISTS 'PAYHERE'\");
+  } catch(e) {}
 
   // Step 2: Create enums if they don't exist
   const enums = [
@@ -65,10 +68,12 @@ async function migrate() {
     \"DO \\$\\$ BEGIN ALTER TABLE \\\"Invitation\\\" DROP COLUMN IF EXISTS \\\"invitationId\\\"; EXCEPTION WHEN OTHERS THEN NULL; END \\$\\$\",
     \"ALTER TABLE \\\"Invitation\\\" DROP CONSTRAINT IF EXISTS \\\"Invitation_userId_key\\\"\",
     \"CREATE INDEX IF NOT EXISTS \\\"Invitation_userId_idx\\\" ON \\\"Invitation\\\"(\\\"userId\\\")\",
-    \"DO \\$\\$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'PaymentMethod') THEN CREATE TYPE \\\"PaymentMethod\\\" AS ENUM ('STRIPE', 'BANK_TRANSFER'); END IF; END \\$\\$\",
+    \"DO \\$\\$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'PaymentMethod') THEN CREATE TYPE \\\"PaymentMethod\\\" AS ENUM ('STRIPE', 'PAYHERE', 'BANK_TRANSFER'); END IF; END \\$\\$\",
     \"DO \\$\\$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'PaymentStatus') THEN CREATE TYPE \\\"PaymentStatus\\\" AS ENUM ('PENDING', 'COMPLETED', 'FAILED', 'REFUNDED'); END IF; END \\$\\$\",
     \"DO \\$\\$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'BankTransferStatus') THEN CREATE TYPE \\\"BankTransferStatus\\\" AS ENUM ('PENDING_REVIEW', 'APPROVED', 'REJECTED'); END IF; END \\$\\$\",
-    \"CREATE TABLE IF NOT EXISTS \\\"Order\\\" (id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, \\\"userId\\\" TEXT NOT NULL REFERENCES \\\"User\\\"(id) ON DELETE CASCADE, plan \\\"Plan\\\" NOT NULL, amount DECIMAL(10,2) NOT NULL, currency TEXT DEFAULT 'LKR', \\\"paymentMethod\\\" \\\"PaymentMethod\\\" NOT NULL, \\\"paymentStatus\\\" \\\"PaymentStatus\\\" DEFAULT 'PENDING', \\\"stripeSessionId\\\" TEXT UNIQUE, \\\"stripePaymentIntentId\\\" TEXT UNIQUE, \\\"createdAt\\\" TIMESTAMP DEFAULT NOW(), \\\"updatedAt\\\" TIMESTAMP DEFAULT NOW())\",
+    \"CREATE TABLE IF NOT EXISTS \\\"Order\\\" (id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, \\\"userId\\\" TEXT NOT NULL REFERENCES \\\"User\\\"(id) ON DELETE CASCADE, plan \\\"Plan\\\" NOT NULL, amount DECIMAL(10,2) NOT NULL, currency TEXT DEFAULT 'LKR', \\\"paymentMethod\\\" \\\"PaymentMethod\\\" NOT NULL, \\\"paymentStatus\\\" \\\"PaymentStatus\\\" DEFAULT 'PENDING', \\\"paymentRef\\\" TEXT, \\\"stripeSessionId\\\" TEXT UNIQUE, \\\"stripePaymentIntentId\\\" TEXT UNIQUE, \\\"createdAt\\\" TIMESTAMP DEFAULT NOW(), \\\"updatedAt\\\" TIMESTAMP DEFAULT NOW())\",
+    \"ALTER TABLE \\\"Order\\\" ADD COLUMN IF NOT EXISTS \\\"paymentRef\\\" TEXT\",
+    \"CREATE UNIQUE INDEX IF NOT EXISTS \\\"Order_paymentRef_key\\\" ON \\\"Order\\\"(\\\"paymentRef\\\") WHERE \\\"paymentRef\\\" IS NOT NULL\",
     \"CREATE TABLE IF NOT EXISTS \\\"BankTransfer\\\" (id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, \\\"orderId\\\" TEXT NOT NULL UNIQUE REFERENCES \\\"Order\\\"(id) ON DELETE CASCADE, \\\"receiptImage\\\" TEXT NOT NULL, \\\"bankReference\\\" TEXT, status \\\"BankTransferStatus\\\" DEFAULT 'PENDING_REVIEW', \\\"adminNotes\\\" TEXT, \\\"reviewedBy\\\" TEXT, \\\"reviewedAt\\\" TIMESTAMP, \\\"createdAt\\\" TIMESTAMP DEFAULT NOW(), \\\"updatedAt\\\" TIMESTAMP DEFAULT NOW())\",
     \"CREATE TABLE IF NOT EXISTS \\\"PasswordResetToken\\\" (id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, email TEXT NOT NULL, token TEXT NOT NULL UNIQUE, expires TIMESTAMP NOT NULL, \\\"createdAt\\\" TIMESTAMP DEFAULT NOW(), UNIQUE(email, token))\",
   ];
