@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -11,6 +11,12 @@ function CheckoutSuccessContent() {
   const sessionId = searchParams.get("session_id");
   const orderId = searchParams.get("order_id");
   const { update } = useSession();
+
+  // Keep `update` in a ref so the polling effect doesn't restart when NextAuth
+  // refreshes the session (await update() changes its identity on re-render,
+  // and including it in the deps spins the effect in a tight loop).
+  const updateRef = useRef(update);
+  updateRef.current = update;
 
   const [loading, setLoading] = useState(true);
   const [plan, setPlan] = useState("");
@@ -27,7 +33,7 @@ function CheckoutSuccessContent() {
 
     const query = orderId ? `order_id=${orderId}` : `session_id=${sessionId}`;
     let cancelled = false;
-    let lastStatus: string | null = null;
+    let sessionRefreshed = false;
 
     const verifyOnce = async (): Promise<string | null> => {
       try {
@@ -38,9 +44,9 @@ function CheckoutSuccessContent() {
           setPlan(data.plan);
           setAmount(data.amount);
           setStatus(data.status);
-          if (data.status !== lastStatus) {
-            lastStatus = data.status;
-            await update();
+          if (data.status === "COMPLETED" && !sessionRefreshed) {
+            sessionRefreshed = true;
+            updateRef.current().catch(() => {});
           }
           return data.status as string;
         }
@@ -68,7 +74,9 @@ function CheckoutSuccessContent() {
     return () => {
       cancelled = true;
     };
-  }, [sessionId, orderId, update]);
+    // `update` is intentionally excluded — see updateRef above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, orderId]);
 
   const isPending = status === "PENDING";
   const isFailed = status === "FAILED";
