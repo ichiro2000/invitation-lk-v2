@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Heart, LayoutDashboard, Pencil, Users, UserPlus, ListTodo, DollarSign, Store, LogOut, CreditCard, ShieldCheck, FileText, LayoutGrid, Mail, Loader2, Check } from "lucide-react";
+
+// Module-level guard — survives re-mount cycles triggered by update().
+let bannerHasRefreshed = false;
 
 const sidebarLinks = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -112,14 +115,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
 function VerifyEmailBanner() {
   const { update } = useSession();
-  const refreshed = useRef(false);
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [msg, setMsg] = useState<string | null>(null);
 
-  // If the user verified in another tab, refresh the JWT once so this banner unmounts.
+  // If the user verified in another tab, refresh the JWT once per page load so
+  // this banner unmounts. A module-level flag (not useRef) is required because
+  // calling update() flips session status to "loading" → layout unmounts us →
+  // we remount with a fresh ref and would loop forever.
   useEffect(() => {
-    if (refreshed.current) return;
-    refreshed.current = true;
+    if (bannerHasRefreshed) return;
+    bannerHasRefreshed = true;
     update().catch(() => {});
   }, [update]);
 
