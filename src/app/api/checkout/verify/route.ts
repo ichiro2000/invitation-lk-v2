@@ -11,27 +11,16 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const sessionId = searchParams.get("session_id");
     const orderId = searchParams.get("order_id");
 
-    if (!sessionId && !orderId) {
+    if (!orderId) {
       return NextResponse.json(
-        { error: "order_id or session_id required" },
+        { error: "order_id required" },
         { status: 400 }
       );
     }
 
-    console.log("[verify] lookup", { orderId, sessionId, userId: session.user.id });
-
-    const order = orderId
-      ? await prisma.order.findUnique({ where: { id: orderId } })
-      : await prisma.order.findUnique({ where: { stripeSessionId: sessionId! } });
-
-    console.log("[verify] order", {
-      found: !!order,
-      ownerMatch: order?.userId === session.user.id,
-      status: order?.paymentStatus,
-    });
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
 
     if (!order || order.userId !== session.user.id) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });

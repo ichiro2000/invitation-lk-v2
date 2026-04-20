@@ -2,16 +2,33 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/db";
-import { PLAN_AMOUNTS } from "@/lib/stripe";
+import { PLAN_AMOUNTS } from "@/lib/plans";
+import { checkoutLimiter } from "@/lib/rate-limit";
 import type { Plan } from "@/generated/prisma/client";
 
 const VALID_PLANS = ["BASIC", "STANDARD", "PREMIUM"];
+
+// TODO: receiptImage is stored as base64 TEXT in Postgres. Once traffic picks
+// up, move to DO Spaces / S3 and keep only the key here. Current cap is ~5MB
+// per row so it's manageable for now.
 
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const ip = request.headers.get("x-forwarded-for") || "unknown";
+    const { success } = checkoutLimiter.check(
+      5,
+      `bank-transfer:${session.user.id}:${ip}`
+    );
+    if (!success) {
+      return NextResponse.json(
+        { error: "Too many submissions — please wait a moment" },
+        { status: 429 }
+      );
     }
 
     const { plan, receiptImage, bankReference } = await request.json();

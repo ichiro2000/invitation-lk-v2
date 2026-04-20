@@ -26,3 +26,7 @@ export const authLimiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval:
 
 // 3 attempts per hour for email-sending endpoints
 export const emailLimiter = rateLimit({ interval: 3_600_000, uniqueTokenPerInterval: 500 });
+
+// 10 checkout attempts per minute per token (user id or ip) — protects against
+// double-clicks spraying PENDING orders and against scripted abuse.
+export const checkoutLimiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });

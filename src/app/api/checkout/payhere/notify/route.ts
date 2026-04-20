@@ -5,14 +5,18 @@ import {
   verifyNotifyMd5Sig,
   PAYHERE_STATUS,
 } from "@/lib/payhere";
-import type { Plan } from "@/generated/prisma/client";
+import { PLAN_RANK } from "@/lib/plans";
 
-const PLAN_RANK: Record<string, number> = {
-  FREE: 0,
-  BASIC: 1,
-  STANDARD: 2,
-  PREMIUM: 3,
-};
+// PayHere retries any non-2xx response, which is useless for permanent
+// failures (bad signature, unknown order, already-processed). Always ack 200
+// to stop the retry loop; use `handled: false` + a reason in the body so we
+// can still see the failure in logs / offline audits.
+function ack(reason: string, extra?: Record<string, unknown>) {
+  return NextResponse.json(
+    { handled: false, reason, ...extra },
+    { status: 200 }
+  );
+}
 
 export async function POST(request: Request) {
   try {
@@ -38,19 +42,18 @@ export async function POST(request: Request) {
       status_code,
       payhere_amount,
       payhere_currency,
-      merchant_id_match: merchant_id === process.env.PAYHERE_MERCHANT_ID,
     });
 
     if (!order_id || !md5sig || !status_code) {
       console.warn("[payhere-notify] missing params");
-      return NextResponse.json({ error: "Missing params" }, { status: 400 });
+      return ack("missing_params");
     }
 
     const config = getPayHereConfig();
 
     if (merchant_id !== config.merchantId) {
-      console.warn("PayHere notify merchant_id mismatch", { order_id });
-      return NextResponse.json({ error: "Invalid merchant" }, { status: 403 });
+      console.warn("[payhere-notify] merchant_id mismatch", { order_id });
+      return ack("merchant_mismatch");
     }
 
     const valid = verifyNotifyMd5Sig({
@@ -64,13 +67,44 @@ export async function POST(request: Request) {
     });
 
     if (!valid) {
-      console.warn("PayHere notify md5sig mismatch", { order_id });
-      return NextResponse.json({ error: "Invalid signature" }, { status: 403 });
+      console.warn("[payhere-notify] md5sig mismatch", { order_id });
+      return ack("invalid_signature");
     }
 
     const order = await prisma.order.findUnique({ where: { id: order_id } });
     if (!order) {
-      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+      console.warn("[payhere-notify] order not found", { order_id });
+      return ack("order_not_found");
+    }
+
+    if (order.paymentMethod !== "PAYHERE") {
+      console.warn("[payhere-notify] order payment method mismatch", {
+        order_id,
+        paymentMethod: order.paymentMethod,
+      });
+      return ack("wrong_payment_method");
+    }
+
+    // Validate the amount + currency PayHere claims against what we charged.
+    // Signature only proves authenticity, not that the payment matches the
+    // order — without this an attacker (or a merchant misconfiguration)
+    // could settle the order for a different amount.
+    const expectedAmount = Number(order.amount).toFixed(2);
+    if (payhere_amount !== expectedAmount) {
+      console.warn("[payhere-notify] amount mismatch", {
+        order_id,
+        expected: expectedAmount,
+        got: payhere_amount,
+      });
+      return ack("amount_mismatch");
+    }
+    if (payhere_currency !== order.currency) {
+      console.warn("[payhere-notify] currency mismatch", {
+        order_id,
+        expected: order.currency,
+        got: payhere_currency,
+      });
+      return ack("currency_mismatch");
     }
 
     let nextStatus: "PENDING" | "COMPLETED" | "FAILED" = "PENDING";
@@ -80,6 +114,17 @@ export async function POST(request: Request) {
       status_code === PAYHERE_STATUS.CANCELED
     )
       nextStatus = "FAILED";
+
+    // Idempotency: if the order is already in the status the webhook is
+    // trying to set, don't re-run side effects (plan upgrade, future email
+    // sends). PayHere retries on any perceived failure.
+    if (order.paymentStatus === nextStatus) {
+      console.log("[payhere-notify] already processed", {
+        order_id,
+        paymentStatus: order.paymentStatus,
+      });
+      return NextResponse.json({ handled: true, deduped: true });
+    }
 
     await prisma.$transaction(async (tx) => {
       await tx.order.update({
@@ -95,9 +140,11 @@ export async function POST(request: Request) {
           where: { id: order.userId },
           select: { plan: true },
         });
+        // Only upgrade — never downgrade — if a stale order finally settles
+        // for a user who has since bought a higher tier.
         if (
           user &&
-          (PLAN_RANK[order.plan as Plan] ?? 0) > (PLAN_RANK[user.plan] ?? 0)
+          (PLAN_RANK[order.plan] ?? 0) > (PLAN_RANK[user.plan] ?? 0)
         ) {
           await tx.user.update({
             where: { id: order.userId },
@@ -108,9 +155,10 @@ export async function POST(request: Request) {
     });
 
     console.log("[payhere-notify] processed", { order_id, nextStatus });
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ handled: true, status: nextStatus });
   } catch (error) {
     console.error("PayHere notify error:", error);
+    // 500 here because it IS our fault — PayHere's retry is actually useful.
     return NextResponse.json(
       { error: "Failed to process notification" },
       { status: 500 }
