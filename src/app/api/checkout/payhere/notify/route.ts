@@ -32,7 +32,17 @@ export async function POST(request: Request) {
       md5sig,
     } = params;
 
+    console.log("[payhere-notify] received", {
+      order_id,
+      payment_id,
+      status_code,
+      payhere_amount,
+      payhere_currency,
+      merchant_id_match: merchant_id === process.env.PAYHERE_MERCHANT_ID,
+    });
+
     if (!order_id || !md5sig || !status_code) {
+      console.warn("[payhere-notify] missing params");
       return NextResponse.json({ error: "Missing params" }, { status: 400 });
     }
 
@@ -97,6 +107,7 @@ export async function POST(request: Request) {
       }
     });
 
+    console.log("[payhere-notify] processed", { order_id, nextStatus });
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("PayHere notify error:", error);
