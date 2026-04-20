@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Heart, Menu, X, LayoutDashboard } from "lucide-react";
+import { Heart, Menu, X, LayoutDashboard, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -20,6 +20,8 @@ export default function Navbar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const isLoggedIn = !!session?.user;
+  const isAdmin = session?.user?.role === "ADMIN";
+  const homeHref = isAdmin ? "/admin" : "/dashboard";
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -73,8 +75,9 @@ export default function Navbar() {
           {/* Desktop actions */}
           <div className="hidden md:flex items-center gap-2">
             {isLoggedIn ? (
-              <Link href="/dashboard" className="btn-primary text-[0.8125rem] py-2.5 px-5 flex items-center gap-2">
-                <LayoutDashboard className="w-4 h-4" /> Dashboard
+              <Link href={homeHref} className="btn-primary text-[0.8125rem] py-2.5 px-5 flex items-center gap-2">
+                {isAdmin ? <ShieldCheck className="w-4 h-4" /> : <LayoutDashboard className="w-4 h-4" />}
+                {isAdmin ? "Admin" : "Dashboard"}
               </Link>
             ) : (
               <>
@@ -126,8 +129,9 @@ export default function Navbar() {
           })}
           <div className="border-t border-slate-100 mt-2 pt-2">
             {isLoggedIn ? (
-              <Link href="/dashboard" className="block mt-1 btn-primary w-full text-center flex items-center justify-center gap-2">
-                <LayoutDashboard className="w-4 h-4" /> Go to Dashboard
+              <Link href={homeHref} className="block mt-1 btn-primary w-full text-center flex items-center justify-center gap-2">
+                {isAdmin ? <ShieldCheck className="w-4 h-4" /> : <LayoutDashboard className="w-4 h-4" />}
+                {isAdmin ? "Go to Admin" : "Go to Dashboard"}
               </Link>
             ) : (
               <>
