@@ -57,7 +57,7 @@ export async function sendEmailVerificationEmail(
   name: string,
   token: string
 ) {
-  const verifyUrl = `${APP_URL}/verify-email?token=${token}`;
+  const verifyUrl = `${APP_URL}/api/auth/verify-email?token=${token}`;
   try {
     const resend = getResend();
     if (!resend) return { success: false, error: "Email not configured" };
