@@ -3,7 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Calendar, MapPin, Pencil, ExternalLink, Copy, Check, Palette, FileText, Loader2, Plus, Trash2 } from "lucide-react";
+import { Calendar, MapPin, Pencil, ExternalLink, Copy, Check, Palette, FileText, Loader2, Plus, Trash2, X } from "lucide-react";
+import { normalizeSlug } from "@/lib/slug";
 
 interface Invitation {
   id: string;
@@ -26,6 +27,10 @@ export default function MyInvitationsPage() {
   const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editingSlugId, setEditingSlugId] = useState<string | null>(null);
+  const [slugDraft, setSlugDraft] = useState("");
+  const [slugError, setSlugError] = useState<string | null>(null);
+  const [savingSlug, setSavingSlug] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -46,6 +51,46 @@ export default function MyInvitationsPage() {
     await navigator.clipboard.writeText(publicUrl(slug));
     setCopiedId(id);
     setTimeout(() => setCopiedId((c) => (c === id ? null : c)), 1800);
+  };
+
+  const startEditSlug = (invitation: Invitation) => {
+    setEditingSlugId(invitation.id);
+    setSlugDraft(invitation.slug);
+    setSlugError(null);
+  };
+
+  const cancelEditSlug = () => {
+    setEditingSlugId(null);
+    setSlugDraft("");
+    setSlugError(null);
+  };
+
+  const saveSlug = async (id: string) => {
+    const slug = normalizeSlug(slugDraft);
+    if (!slug) {
+      setSlugError("Enter a custom link");
+      return;
+    }
+    setSavingSlug(true);
+    setSlugError(null);
+    try {
+      const res = await fetch(`/api/invitations/${id}/slug`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setSlugError(data.error || "Failed to update link");
+        return;
+      }
+      setInvitations((prev) => prev.map((i) => (i.id === id ? { ...i, slug: data.slug } : i)));
+      cancelEditSlug();
+    } catch {
+      setSlugError("Network error — please try again");
+    } finally {
+      setSavingSlug(false);
+    }
   };
 
   const createNew = async () => {
@@ -178,22 +223,83 @@ export default function MyInvitationsPage() {
                 </div>
 
                 <div className="rounded-xl bg-rose-50/50 border border-rose-100 p-4 mb-5">
-                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1.5">Your invitation link</p>
-                  <div className="flex items-center gap-2">
-                    <input
-                      value={publicUrl(invitation.slug)}
-                      readOnly
-                      onFocus={(e) => e.currentTarget.select()}
-                      className="flex-1 px-3 py-2 text-sm bg-white border border-rose-100 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => copyLink(invitation.id, invitation.slug)}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-sm font-medium transition-colors"
-                    >
-                      {copiedId === invitation.id ? <><Check className="w-3.5 h-3.5" /> Copied</> : <><Copy className="w-3.5 h-3.5" /> Copy</>}
-                    </button>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Your invitation link</p>
+                    {editingSlugId !== invitation.id && (
+                      <button
+                        type="button"
+                        onClick={() => startEditSlug(invitation)}
+                        className="inline-flex items-center gap-1 text-[11px] font-medium text-rose-600 hover:text-rose-700"
+                      >
+                        <Pencil className="w-3 h-3" /> Customize
+                      </button>
+                    )}
                   </div>
+                  {editingSlugId === invitation.id ? (
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 flex items-stretch rounded-lg border border-rose-200 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-rose-500/20">
+                          <span className="px-3 py-2 text-sm text-gray-400 bg-rose-50/60 border-r border-rose-100 select-none whitespace-nowrap">
+                            {typeof window !== "undefined" ? `${window.location.host}/i/` : "invitation.lk/i/"}
+                          </span>
+                          <input
+                            autoFocus
+                            value={slugDraft}
+                            onChange={(e) => { setSlugDraft(e.target.value); setSlugError(null); }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") saveSlug(invitation.id);
+                              if (e.key === "Escape") cancelEditSlug();
+                            }}
+                            placeholder="dinithi-and-isuru"
+                            disabled={savingSlug}
+                            className="flex-1 px-3 py-2 text-sm text-gray-700 focus:outline-none disabled:opacity-60"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => saveSlug(invitation.id)}
+                          disabled={savingSlug}
+                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 disabled:opacity-60 text-white text-sm font-medium transition-colors"
+                        >
+                          {savingSlug ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />} Save
+                        </button>
+                        <button
+                          type="button"
+                          onClick={cancelEditSlug}
+                          disabled={savingSlug}
+                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-500 text-sm font-medium transition-colors"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      {slugError ? (
+                        <p className="mt-2 text-xs text-red-600">{slugError}</p>
+                      ) : (
+                        <p className="mt-2 text-xs text-gray-500">
+                          Lowercase letters, numbers and hyphens. Preview:{" "}
+                          <span className="font-medium text-gray-700">
+                            /i/{normalizeSlug(slugDraft) || invitation.slug}
+                          </span>
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <input
+                        value={publicUrl(invitation.slug)}
+                        readOnly
+                        onFocus={(e) => e.currentTarget.select()}
+                        className="flex-1 px-3 py-2 text-sm bg-white border border-rose-100 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => copyLink(invitation.id, invitation.slug)}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-sm font-medium transition-colors"
+                      >
+                        {copiedId === invitation.id ? <><Check className="w-3.5 h-3.5" /> Copied</> : <><Copy className="w-3.5 h-3.5" /> Copy</>}
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-wrap gap-2">
