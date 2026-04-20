@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
+import Script from "next/script";
 import SessionProvider from "@/components/auth/SessionProvider";
 import JsonLd from "@/components/seo/JsonLd";
 import "./globals.css";
+
+const GA_MEASUREMENT_ID = "G-4S358FFMM7";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -148,6 +151,18 @@ export default function RootLayout({
         <JsonLd data={websiteSchema} />
       </head>
       <body className="min-h-full flex flex-col">
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script id="gtag-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GA_MEASUREMENT_ID}');
+          `}
+        </Script>
         <SessionProvider>{children}</SessionProvider>
       </body>
     </html>
