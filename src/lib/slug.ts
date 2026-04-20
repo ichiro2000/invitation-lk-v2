@@ -1,6 +1,6 @@
 const RESERVED_SLUGS = new Set([
   "admin", "api", "auth", "dashboard", "login", "logout", "register", "signup", "signin",
-  "contact", "pricing", "privacy", "terms", "features", "templates", "samples",
+  "contact", "pricing", "privacy", "terms", "return", "refund", "features", "templates", "samples",
   "i", "w", "invitation", "invitations", "about", "help", "support",
   "settings", "profile", "account", "billing", "checkout", "rsvp",
   "new", "edit", "delete", "create", "update", "draft", "preview",
