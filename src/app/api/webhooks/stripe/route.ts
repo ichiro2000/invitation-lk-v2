@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { getStripe, PLAN_NAMES, PLAN_AMOUNTS, PLAN_PRICES } from "@/lib/stripe";
-import { sendPaymentConfirmationEmail } from "@/lib/resend";
+import { sendPaymentConfirmationEmail, sendAdminPaymentNotification } from "@/lib/resend";
 import type { Plan } from "@/generated/prisma/client";
 
 export async function POST(request: Request) {
@@ -69,13 +69,22 @@ export async function POST(request: Request) {
       });
 
       if (user) {
+        const planName = PLAN_NAMES[plan];
+        const amount = PLAN_AMOUNTS[plan].toLocaleString();
         await sendPaymentConfirmationEmail(
           user.email,
           user.yourName || "Customer",
-          PLAN_NAMES[plan],
-          `Rs. ${PLAN_AMOUNTS[plan].toLocaleString()}`,
+          planName,
+          amount,
           "Stripe"
         );
+        sendAdminPaymentNotification({
+          userEmail: user.email,
+          userName: user.yourName || "—",
+          plan: planName,
+          amount,
+          method: "Stripe",
+        }).catch(() => {});
       }
     }
 

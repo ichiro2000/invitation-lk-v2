@@ -1,10 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Heart, LayoutDashboard, Pencil, Users, UserPlus, ListTodo, DollarSign, Store, LogOut, CreditCard, ShieldCheck, FileText, LayoutGrid } from "lucide-react";
+import { Heart, LayoutDashboard, Pencil, Users, UserPlus, ListTodo, DollarSign, Store, LogOut, CreditCard, ShieldCheck, FileText, LayoutGrid, Mail, Loader2, Check } from "lucide-react";
 
 const sidebarLinks = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -100,8 +101,57 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       <main className="flex-1 lg:ml-64">
-        <div className="p-6 sm:p-8 max-w-7xl mx-auto">{children}</div>
+        <div className="p-6 sm:p-8 max-w-7xl mx-auto">
+          {!session.user?.emailVerified && <VerifyEmailBanner />}
+          {children}
+        </div>
       </main>
+    </div>
+  );
+}
+
+function VerifyEmailBanner() {
+  const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [msg, setMsg] = useState<string | null>(null);
+
+  const resend = async () => {
+    setState("sending");
+    setMsg(null);
+    try {
+      const res = await fetch("/api/auth/resend-verification", { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setState("error");
+        setMsg(data.error || "Failed to send verification email");
+        return;
+      }
+      setState("sent");
+      setMsg(data.alreadyVerified ? "Your email is already verified." : "Verification email sent — check your inbox.");
+    } catch {
+      setState("error");
+      setMsg("Network error — please try again");
+    }
+  };
+
+  return (
+    <div className="mb-6 flex flex-wrap items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+      <Mail className="w-4 h-4 text-amber-600 flex-shrink-0" />
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-amber-900">Please verify your email address</p>
+        <p className="text-xs text-amber-700 mt-0.5">
+          {msg || "We sent a verification link when you signed up. Click it to confirm your email."}
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={resend}
+        disabled={state === "sending" || state === "sent"}
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-xs font-medium transition-colors"
+      >
+        {state === "sending" && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+        {state === "sent" && <Check className="w-3.5 h-3.5" />}
+        {state === "sending" ? "Sending…" : state === "sent" ? "Sent" : "Resend email"}
+      </button>
     </div>
   );
 }

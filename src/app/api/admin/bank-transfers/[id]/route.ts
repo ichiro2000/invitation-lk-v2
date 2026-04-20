@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/db";
 import { PLAN_NAMES, PLAN_AMOUNTS } from "@/lib/stripe";
-import { sendPaymentConfirmationEmail } from "@/lib/resend";
+import { sendPaymentConfirmationEmail, sendAdminPaymentNotification } from "@/lib/resend";
 
 export async function PATCH(
   request: Request,
@@ -83,13 +83,22 @@ export async function PATCH(
       });
 
       if (user) {
+        const planName = PLAN_NAMES[bankTransfer.order.plan];
+        const amount = PLAN_AMOUNTS[bankTransfer.order.plan].toLocaleString();
         await sendPaymentConfirmationEmail(
           user.email,
           user.yourName || "Customer",
-          PLAN_NAMES[bankTransfer.order.plan],
-          `Rs. ${PLAN_AMOUNTS[bankTransfer.order.plan].toLocaleString()}`,
+          planName,
+          amount,
           "Bank Transfer"
         );
+        sendAdminPaymentNotification({
+          userEmail: user.email,
+          userName: user.yourName || "—",
+          plan: planName,
+          amount,
+          method: "Bank Transfer",
+        }).catch(() => {});
       }
 
       return NextResponse.json({ transfer: updatedTransfer });
