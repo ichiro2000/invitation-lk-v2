@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -111,8 +111,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 }
 
 function VerifyEmailBanner() {
+  const { update } = useSession();
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [msg, setMsg] = useState<string | null>(null);
+
+  // If the user verified in another tab, refresh the JWT so this banner unmounts.
+  useEffect(() => {
+    update().catch(() => {});
+  }, [update]);
 
   const resend = async () => {
     setState("sending");

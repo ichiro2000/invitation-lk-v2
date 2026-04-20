@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CheckCircle2, XCircle, Clock, Mail } from "lucide-react";
+import RefreshSessionOnSuccess from "./refresh-session";
 
 export const metadata: Metadata = {
   title: "Verify Email | INVITATION.LK",
@@ -60,6 +61,7 @@ export default async function VerifyEmailPage({
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-16">
+      {key === "success" && <RefreshSessionOnSuccess />}
       <div className="max-w-md w-full bg-white rounded-2xl shadow-sm border border-gray-100 p-8 sm:p-10 text-center">
         <div className={`w-14 h-14 rounded-2xl ${color} flex items-center justify-center mx-auto mb-5`}>
           <Icon className="w-7 h-7" />
