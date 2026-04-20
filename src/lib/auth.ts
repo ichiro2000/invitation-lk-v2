@@ -30,6 +30,7 @@ export const authOptions: NextAuthOptions = {
           name: `${user.yourName} & ${user.partnerName}`,
           role: user.role,
           plan: user.plan,
+          emailVerified: user.emailVerified ? user.emailVerified.toISOString() : null,
         };
       },
     }),
@@ -40,16 +41,18 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = (user as unknown as { role: string }).role;
         token.plan = (user as unknown as { plan: string }).plan;
+        token.emailVerified = (user as unknown as { emailVerified: string | null }).emailVerified;
       }
       // Refresh plan from DB when client calls update()
       if (trigger === "update" && token.id) {
         const freshUser = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { plan: true, role: true },
+          select: { plan: true, role: true, emailVerified: true },
         });
         if (freshUser) {
           token.plan = freshUser.plan;
           token.role = freshUser.role;
+          token.emailVerified = freshUser.emailVerified ? freshUser.emailVerified.toISOString() : null;
         }
       }
       return token;
@@ -59,6 +62,7 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
         session.user.plan = token.plan as string;
+        session.user.emailVerified = (token.emailVerified as string | null) ?? null;
       }
       return session;
     },

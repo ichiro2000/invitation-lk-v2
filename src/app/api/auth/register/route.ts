@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import prisma from "@/lib/db";
-import { sendWelcomeEmail } from "@/lib/resend";
+import {
+  sendWelcomeEmail,
+  sendEmailVerificationEmail,
+  sendAdminNewUserNotification,
+} from "@/lib/resend";
 import { authLimiter } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
@@ -71,8 +76,36 @@ export async function POST(request: Request) {
       // Registration still succeeds — invitation can be created later via editor
     }
 
-    // Send welcome email (fire-and-forget)
+    // Fire-and-forget notifications
     sendWelcomeEmail(email, yourName).catch(() => {});
+
+    // Email verification token — 24h expiry
+    (async () => {
+      try {
+        const token = crypto.randomBytes(32).toString("hex");
+        await prisma.verificationToken.deleteMany({ where: { identifier: email } });
+        await prisma.verificationToken.create({
+          data: {
+            identifier: email,
+            token,
+            expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+          },
+        });
+        await sendEmailVerificationEmail(email, yourName, token);
+      } catch (err) {
+        console.error("Verification email flow failed (non-blocking):", err);
+      }
+    })();
+
+    // Admin signup alert
+    sendAdminNewUserNotification({
+      email,
+      yourName,
+      partnerName,
+      phone: phone || null,
+      weddingDate: weddingDate ? new Date(weddingDate) : null,
+      venue: venue || null,
+    }).catch(() => {});
 
     return NextResponse.json({ user: { id: user.id, email: user.email } }, { status: 201 });
   } catch (error) {
