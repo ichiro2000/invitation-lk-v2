@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -112,11 +112,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
 function VerifyEmailBanner() {
   const { update } = useSession();
+  const refreshed = useRef(false);
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [msg, setMsg] = useState<string | null>(null);
 
-  // If the user verified in another tab, refresh the JWT so this banner unmounts.
+  // If the user verified in another tab, refresh the JWT once so this banner unmounts.
   useEffect(() => {
+    if (refreshed.current) return;
+    refreshed.current = true;
     update().catch(() => {});
   }, [update]);
 
