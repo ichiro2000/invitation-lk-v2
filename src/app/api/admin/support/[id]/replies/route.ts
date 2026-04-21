@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/db";
+import { sendSupportReplyToCustomer } from "@/lib/resend";
 
 export async function POST(
   request: Request,
@@ -34,7 +35,10 @@ export async function POST(
 
     const ticket = await prisma.supportTicket.findUnique({
       where: { id },
-      select: { id: true, status: true },
+      select: {
+        id: true, status: true, subject: true,
+        user: { select: { email: true, yourName: true } },
+      },
     });
     if (!ticket) {
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
@@ -60,6 +64,18 @@ export async function POST(
         where: { id },
         data: { status: "PENDING" },
       });
+
+      // Notify the customer. Fire-and-forget so email failures never break
+      // the reply flow. Internal notes don't email.
+      if (ticket.user?.email) {
+        sendSupportReplyToCustomer({
+          ticketId: id,
+          customerEmail: ticket.user.email,
+          customerName: ticket.user.yourName || ticket.user.email,
+          subject: ticket.subject,
+          message,
+        }).catch(() => {});
+      }
     }
 
     return NextResponse.json({ reply }, { status: 201 });

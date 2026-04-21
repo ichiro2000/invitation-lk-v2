@@ -7,6 +7,8 @@ import {
   passwordResetHtml,
   adminNewUserHtml,
   adminPaymentAlertHtml,
+  supportTicketCreatedAdminHtml,
+  supportTicketReplyCustomerHtml,
 } from "./email-templates";
 
 function getResend(): Resend | null {
@@ -162,6 +164,57 @@ export async function sendAdminPaymentNotification(args: {
     return { success: true };
   } catch (error) {
     console.error("Failed to send admin payment notification:", error);
+    return { success: false, error };
+  }
+}
+
+export async function sendSupportTicketCreatedToAdmin(args: {
+  ticketId: string;
+  customerName: string;
+  customerEmail: string;
+  subject: string;
+  priority: string;
+  message: string;
+}) {
+  try {
+    const resend = getResend();
+    if (!resend) return { success: false, error: "Email not configured" };
+    const recipients = await getAdminRecipients();
+    if (recipients.length === 0) return { success: false, error: "No admin recipients" };
+    const ticketUrl = `${APP_URL}/admin/support/${args.ticketId}`;
+    await resend.emails.send({
+      from: FROM,
+      to: recipients,
+      subject: `[${args.priority}] Support ticket: ${args.subject}`,
+      html: supportTicketCreatedAdminHtml({ ...args, ticketUrl }),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send support-ticket admin notification:", error);
+    return { success: false, error };
+  }
+}
+
+export async function sendSupportReplyToCustomer(args: {
+  ticketId: string;
+  customerEmail: string;
+  customerName: string;
+  subject: string;
+  message: string;
+}) {
+  try {
+    const resend = getResend();
+    if (!resend) return { success: false, error: "Email not configured" };
+    const ticketUrl = `${APP_URL}/dashboard/support/${args.ticketId}`;
+    await resend.emails.send({
+      from: FROM,
+      to: args.customerEmail,
+      subject: `Reply to your ticket: ${args.subject}`,
+      html: supportTicketReplyCustomerHtml({ ...args, ticketUrl }),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send support-reply customer email:", error);
     return { success: false, error };
   }
 }
