@@ -96,6 +96,10 @@ async function migrate() {
     \"CREATE UNIQUE INDEX IF NOT EXISTS \\\"Order_paymentRef_key\\\" ON \\\"Order\\\"(\\\"paymentRef\\\") WHERE \\\"paymentRef\\\" IS NOT NULL\",
     \"CREATE TABLE IF NOT EXISTS \\\"BankTransfer\\\" (id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, \\\"orderId\\\" TEXT NOT NULL UNIQUE REFERENCES \\\"Order\\\"(id) ON DELETE CASCADE, \\\"receiptImage\\\" TEXT NOT NULL, \\\"bankReference\\\" TEXT, status \\\"BankTransferStatus\\\" DEFAULT 'PENDING_REVIEW', \\\"adminNotes\\\" TEXT, \\\"reviewedBy\\\" TEXT, \\\"reviewedAt\\\" TIMESTAMP, \\\"createdAt\\\" TIMESTAMP DEFAULT NOW(), \\\"updatedAt\\\" TIMESTAMP DEFAULT NOW())\",
     \"CREATE TABLE IF NOT EXISTS \\\"PasswordResetToken\\\" (id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, email TEXT NOT NULL, token TEXT NOT NULL UNIQUE, expires TIMESTAMP NOT NULL, \\\"createdAt\\\" TIMESTAMP DEFAULT NOW(), UNIQUE(email, token))\",
+    \"CREATE TABLE IF NOT EXISTS \\\"AuditLog\\\" (id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, \\\"actorUserId\\\" TEXT REFERENCES \\\"User\\\"(id) ON DELETE SET NULL, action TEXT NOT NULL, \\\"targetType\\\" TEXT, \\\"targetId\\\" TEXT, metadata JSONB, \\\"ipAddress\\\" TEXT, \\\"createdAt\\\" TIMESTAMP DEFAULT NOW())\",
+    \"CREATE INDEX IF NOT EXISTS \\\"AuditLog_actorUserId_idx\\\" ON \\\"AuditLog\\\"(\\\"actorUserId\\\")\",
+    \"CREATE INDEX IF NOT EXISTS \\\"AuditLog_createdAt_idx\\\" ON \\\"AuditLog\\\"(\\\"createdAt\\\" DESC)\",
+    \"CREATE INDEX IF NOT EXISTS \\\"AuditLog_target_idx\\\" ON \\\"AuditLog\\\"(\\\"targetType\\\", \\\"targetId\\\")\",
   ];
   for (const sql of tables) { try { await pool.query(sql); } catch(e) { console.log('Table error:', e.message.substring(0, 80)); } }
 

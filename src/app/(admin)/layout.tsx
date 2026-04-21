@@ -17,6 +17,7 @@ const adminLinks = [
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/templates", label: "Templates", icon: Palette },
   { href: "/admin/reports", label: "Reports", icon: BarChart3 },
+  { href: "/admin/audit-log", label: "Security logs", icon: ShieldCheck },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
