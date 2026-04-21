@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Heart, LayoutDashboard, Users, FileText,
-  Palette, LogOut, ShieldCheck, UserPlus, BarChart3, LifeBuoy,
+  Palette, LogOut, ShieldCheck, UserPlus, BarChart3, LifeBuoy, AlertTriangle,
 } from "lucide-react";
 
 const adminLinks = [
@@ -18,6 +18,7 @@ const adminLinks = [
   { href: "/admin/support", label: "Support", icon: LifeBuoy },
   { href: "/admin/templates", label: "Templates", icon: Palette },
   { href: "/admin/reports", label: "Reports", icon: BarChart3 },
+  { href: "/admin/orphan-report", label: "Orphan report", icon: AlertTriangle },
   { href: "/admin/audit-log", label: "Security logs", icon: ShieldCheck },
 ];
 
