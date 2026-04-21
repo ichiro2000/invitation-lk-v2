@@ -23,7 +23,7 @@ interface Guest {
     email: string;
     yourName: string | null;
     partnerName: string | null;
-  };
+  } | null;
 }
 
 type RsvpFilter = "" | "PENDING" | "ACCEPTED" | "DECLINED" | "MAYBE";
@@ -189,8 +189,8 @@ export default function AdminGuestsPage() {
                       <p className="text-xs text-gray-400">{g.inviteType.replace(/_/g, " ").toLowerCase()}</p>
                     </td>
                     <td className="px-5 py-3">
-                      <p className="text-gray-700 truncate max-w-[180px]">{g.user.yourName || "—"}</p>
-                      <p className="text-xs text-gray-400 truncate max-w-[180px]">{g.user.email}</p>
+                      <p className="text-gray-700 truncate max-w-[180px]">{g.user?.yourName || "—"}</p>
+                      <p className="text-xs text-gray-400 truncate max-w-[180px]">{g.user?.email || <span className="text-amber-600">(orphaned)</span>}</p>
                     </td>
                     <td className="px-5 py-3">
                       {g.email && <p className="text-gray-600 truncate max-w-[180px]">{g.email}</p>}

@@ -40,6 +40,12 @@ export async function GET(
     if (!invitation) {
       return NextResponse.json({ error: "Wedding not found" }, { status: 404 });
     }
+    if (!invitation.user) {
+      return NextResponse.json(
+        { error: "Wedding has no linked account (orphaned)" },
+        { status: 404 }
+      );
+    }
 
     const [guests, rsvpGroups, orders, recentViews] = await Promise.all([
       prisma.guest.findMany({

@@ -21,7 +21,7 @@ interface Wedding {
     email: string;
     yourName: string | null;
     plan: string;
-  };
+  } | null;
   _count: {
     events: number;
     pageViews: number;
@@ -167,11 +167,13 @@ export default function AdminWeddingsPage() {
                         <p className="text-xs text-gray-400 font-mono">/w/{w.slug}</p>
                       </td>
                       <td className="px-5 py-4">
-                        <p className="text-gray-700 truncate max-w-[180px]">{w.user.yourName || "—"}</p>
-                        <p className="text-xs text-gray-400 truncate max-w-[180px]">{w.user.email}</p>
-                        <span className={`inline-flex mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${planBadge[w.user.plan] || "bg-gray-100 text-gray-600"}`}>
-                          {w.user.plan}
-                        </span>
+                        <p className="text-gray-700 truncate max-w-[180px]">{w.user?.yourName || "—"}</p>
+                        <p className="text-xs text-gray-400 truncate max-w-[180px]">{w.user?.email || <span className="text-amber-600">(orphaned)</span>}</p>
+                        {w.user && (
+                          <span className={`inline-flex mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${planBadge[w.user.plan] || "bg-gray-100 text-gray-600"}`}>
+                            {w.user.plan}
+                          </span>
+                        )}
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-1.5 text-gray-600">

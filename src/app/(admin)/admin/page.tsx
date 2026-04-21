@@ -25,7 +25,7 @@ type UpcomingWedding = {
 type RecentOrder = {
   id: string; plan: string; amount: string; currency: string;
   paymentMethod: string; paymentStatus: string; createdAt: string;
-  user: { email: string; yourName: string };
+  user: { email: string; yourName: string | null } | null;
 };
 type RecentSignup = {
   id: string; email: string; yourName: string; partnerName: string;
@@ -293,7 +293,7 @@ export default function AdminOverviewPage() {
               {recentOrders.map((o) => (
                 <div key={o.id} className="flex items-center justify-between gap-3 text-sm">
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium text-gray-900 truncate">{o.user.yourName || o.user.email}</p>
+                    <p className="font-medium text-gray-900 truncate">{o.user?.yourName || o.user?.email || "(orphaned)"}</p>
                     <p className="text-xs text-gray-400">{formatDate(o.createdAt, true)} · {o.paymentMethod}</p>
                   </div>
                   <div className="text-right flex-shrink-0">
