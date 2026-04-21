@@ -33,6 +33,7 @@ export async function GET(
         id: true, email: true, yourName: true, partnerName: true,
         weddingDate: true, venue: true, phone: true, image: true,
         role: true, plan: true, emailVerified: true,
+        suspendedAt: true, suspendedReason: true,
         createdAt: true, updatedAt: true,
         invitations: {
           select: {

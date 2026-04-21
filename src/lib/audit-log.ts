@@ -4,6 +4,8 @@ export type AuditAction =
   | "user.delete"
   | "user.plan.update"
   | "user.role.update"
+  | "user.suspend"
+  | "user.unsuspend"
   | "bank_transfer.approve"
   | "bank_transfer.reject";
 

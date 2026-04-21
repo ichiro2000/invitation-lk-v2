@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { Loader2, Users, Search, Trash2, X, AlertTriangle, Download } from "lucide-react";
+import { Loader2, Users, Search, Trash2, X, AlertTriangle, Download, Ban, UserCheck } from "lucide-react";
 
 interface User {
   id: string;
@@ -13,6 +13,8 @@ interface User {
   phone: string | null;
   plan: string;
   role: string;
+  suspendedAt: string | null;
+  suspendedReason: string | null;
   createdAt: string;
 }
 
@@ -39,6 +41,11 @@ export default function AdminUsersPage() {
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [suspendTarget, setSuspendTarget] = useState<User | null>(null);
+  const [suspendReason, setSuspendReason] = useState("");
+  const [suspendLoading, setSuspendLoading] = useState(false);
+  const [suspendError, setSuspendError] = useState<string | null>(null);
+  const [unsuspendLoading, setUnsuspendLoading] = useState<string | null>(null);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -116,6 +123,52 @@ export default function AdminUsersPage() {
     window.location.href = `/api/admin/users?${params.toString()}`;
   };
 
+  const handleSuspend = async () => {
+    if (!suspendTarget) return;
+    const reason = suspendReason.trim();
+    if (!reason) {
+      setSuspendError("Reason is required");
+      return;
+    }
+    setSuspendLoading(true);
+    setSuspendError(null);
+    try {
+      const res = await fetch(`/api/admin/users/${suspendTarget.id}/suspend`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setSuspendError(body.error || "Failed to suspend");
+        return;
+      }
+      const now = new Date().toISOString();
+      setUsers((prev) =>
+        prev.map((u) => (u.id === suspendTarget.id ? { ...u, suspendedAt: now, suspendedReason: reason } : u))
+      );
+      setSuspendTarget(null);
+      setSuspendReason("");
+    } catch {
+      setSuspendError("Failed to suspend");
+    } finally {
+      setSuspendLoading(false);
+    }
+  };
+
+  const handleUnsuspend = async (user: User) => {
+    setUnsuspendLoading(user.id);
+    try {
+      const res = await fetch(`/api/admin/users/${user.id}/unsuspend`, { method: "POST" });
+      if (!res.ok) return;
+      setUsers((prev) =>
+        prev.map((u) => (u.id === user.id ? { ...u, suspendedAt: null, suspendedReason: null } : u))
+      );
+    } finally {
+      setUnsuspendLoading(null);
+    }
+  };
+
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-8">
@@ -164,8 +217,9 @@ export default function AdminUsersPage() {
                   <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Plan</th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                  <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
-                  <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="text-right px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -205,29 +259,69 @@ export default function AdminUsersPage() {
                         {user.role}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-gray-500">{formatDate(user.createdAt)}</td>
                     <td className="px-5 py-4">
-                      {user.id === session?.user?.id ? (
-                        <span className="text-xs text-gray-300">You</span>
-                      ) : user.role === "ADMIN" ? (
+                      {user.suspendedAt ? (
                         <span
-                          className="text-xs text-gray-300"
-                          title="Demote this admin to CUSTOMER before deleting"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700"
+                          title={user.suspendedReason || ""}
                         >
-                          Admin
+                          <Ban className="w-3 h-3" /> Suspended
                         </span>
                       ) : (
-                        <button
-                          onClick={() => {
-                            setDeleteError(null);
-                            setDeleteTarget(user);
-                          }}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 transition-colors"
-                          aria-label={`Delete ${user.email}`}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" /> Delete
-                        </button>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">
+                          Active
+                        </span>
                       )}
+                    </td>
+                    <td className="px-5 py-4 text-gray-500">{formatDate(user.createdAt)}</td>
+                    <td className="px-5 py-4 text-right whitespace-nowrap">
+                      <div className="inline-flex items-center gap-1">
+                        {user.id === session?.user?.id ? (
+                          <span className="text-xs text-gray-300">You</span>
+                        ) : user.role === "ADMIN" ? (
+                          <span className="text-xs text-gray-300" title="Demote this admin before suspending or deleting">Admin</span>
+                        ) : (
+                          <>
+                            {user.suspendedAt ? (
+                              <button
+                                onClick={() => handleUnsuspend(user)}
+                                disabled={unsuspendLoading === user.id}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-emerald-700 hover:bg-emerald-50 transition-colors disabled:opacity-50"
+                                aria-label={`Unsuspend ${user.email}`}
+                              >
+                                {unsuspendLoading === user.id ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <UserCheck className="w-3.5 h-3.5" />
+                                )}
+                                Unsuspend
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setSuspendError(null);
+                                  setSuspendReason("");
+                                  setSuspendTarget(user);
+                                }}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-amber-700 hover:bg-amber-50 transition-colors"
+                                aria-label={`Suspend ${user.email}`}
+                              >
+                                <Ban className="w-3.5 h-3.5" /> Suspend
+                              </button>
+                            )}
+                            <button
+                              onClick={() => {
+                                setDeleteError(null);
+                                setDeleteTarget(user);
+                              }}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 transition-colors"
+                              aria-label={`Delete ${user.email}`}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" /> Delete
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -296,6 +390,81 @@ export default function AdminUsersPage() {
               >
                 {deleteLoading && <Loader2 className="w-3 h-3 animate-spin" />}
                 Delete user
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Suspend Confirm Modal */}
+      {suspendTarget && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => !suspendLoading && setSuspendTarget(null)}
+        >
+          <div
+            className="bg-white rounded-2xl p-6 max-w-md w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center flex-shrink-0">
+                <Ban className="w-5 h-5 text-amber-700" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-gray-900">Suspend user?</h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  <span className="font-medium text-gray-900">{suspendTarget.yourName || suspendTarget.email}</span>
+                  {" — "}
+                  <span className="text-gray-500">{suspendTarget.email}</span>
+                </p>
+                <p className="text-xs text-gray-400 mt-2">
+                  Suspended users can&apos;t log in or access any customer routes. Data stays intact; unsuspend any time. The reason below is shown on their /suspended page.
+                </p>
+              </div>
+              <button
+                onClick={() => !suspendLoading && setSuspendTarget(null)}
+                className="text-gray-400 hover:text-gray-600"
+                disabled={suspendLoading}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <label className="block mt-2">
+              <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Reason (visible to the user)</span>
+              <textarea
+                value={suspendReason}
+                onChange={(e) => setSuspendReason(e.target.value)}
+                disabled={suspendLoading}
+                maxLength={500}
+                rows={3}
+                placeholder="e.g., Repeated policy violations"
+                className="mt-2 w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+              />
+              <span className="text-xs text-gray-400">{suspendReason.length} / 500</span>
+            </label>
+
+            {suspendError && (
+              <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2 mt-3">
+                {suspendError}
+              </p>
+            )}
+
+            <div className="flex gap-3 justify-end mt-4">
+              <button
+                onClick={() => setSuspendTarget(null)}
+                disabled={suspendLoading}
+                className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSuspend}
+                disabled={suspendLoading || !suspendReason.trim()}
+                className="px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-xl hover:bg-amber-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {suspendLoading && <Loader2 className="w-3 h-3 animate-spin" />}
+                Suspend user
               </button>
             </div>
           </div>
