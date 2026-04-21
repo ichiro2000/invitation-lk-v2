@@ -182,9 +182,11 @@ export default function AdminAuditLogPage() {
                         <td className="px-5 py-3 text-gray-600 text-xs whitespace-nowrap">{formatDate(e.createdAt)}</td>
                         <td className="px-5 py-3">
                           {e.actor ? (
-                            <Link href={`/admin/users/${e.actor.id}`} className="text-gray-900 hover:text-rose-600">
-                              <p className="font-medium">{e.actor.yourName || "—"}</p>
-                              <p className="text-xs text-gray-400">{e.actor.email}</p>
+                            <Link href={`/admin/users/${e.actor.id}`} className="block min-w-0 text-gray-900 hover:text-rose-600">
+                              <p className="font-medium truncate max-w-[200px]">{e.actor.email}</p>
+                              {e.actor.yourName && (
+                                <p className="text-xs text-gray-400 truncate max-w-[200px]">{e.actor.yourName}</p>
+                              )}
                             </Link>
                           ) : (
                             <span className="text-xs text-gray-400">(deleted or system)</span>
@@ -208,11 +210,17 @@ export default function AdminAuditLogPage() {
                             <span className="text-xs text-gray-300">—</span>
                           )}
                         </td>
-                        <td className="px-5 py-3 text-xs text-gray-600 max-w-xs truncate">
-                          {describeMetadata(e.action, e.metadata)}
-                        </td>
-                        <td className="px-5 py-3 text-xs text-gray-400 font-mono">{e.ipAddress || "—"}</td>
                         <td className="px-5 py-3">
+                          <div className="text-xs text-gray-600 max-w-[260px] truncate" title={describeMetadata(e.action, e.metadata)}>
+                            {describeMetadata(e.action, e.metadata)}
+                          </div>
+                        </td>
+                        <td className="px-5 py-3">
+                          <div className="text-xs text-gray-400 font-mono max-w-[140px] truncate" title={e.ipAddress || ""}>
+                            {e.ipAddress || "—"}
+                          </div>
+                        </td>
+                        <td className="px-5 py-3 text-right whitespace-nowrap">
                           <button
                             onClick={() => setSelected(e)}
                             className="text-xs text-rose-600 hover:underline font-medium"
