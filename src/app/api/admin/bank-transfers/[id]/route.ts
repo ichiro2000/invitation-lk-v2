@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/db";
 import { PLAN_NAMES, PLAN_AMOUNTS, PLAN_RANK } from "@/lib/plans";
 import { sendPaymentConfirmationEmail, sendAdminPaymentNotification } from "@/lib/resend";
+import { logAdminAction } from "@/lib/audit-log";
 
 export async function PATCH(
   request: Request,
@@ -126,6 +127,21 @@ export async function PATCH(
         }).catch(() => {});
       }
 
+      await logAdminAction({
+        actorUserId: session.user.id,
+        action: "bank_transfer.approve",
+        targetType: "BankTransfer",
+        targetId: id,
+        metadata: {
+          orderId: bankTransfer.orderId,
+          customerUserId: bankTransfer.order.userId,
+          plan: bankTransfer.order.plan,
+          amount: bankTransfer.order.amount.toString(),
+          adminNotes: adminNotes || null,
+        },
+        request,
+      });
+
       return NextResponse.json({ transfer: updatedTransfer });
     } else {
       // Reject
@@ -142,6 +158,21 @@ export async function PATCH(
       await prisma.order.update({
         where: { id: bankTransfer.orderId },
         data: { paymentStatus: "FAILED" },
+      });
+
+      await logAdminAction({
+        actorUserId: session.user.id,
+        action: "bank_transfer.reject",
+        targetType: "BankTransfer",
+        targetId: id,
+        metadata: {
+          orderId: bankTransfer.orderId,
+          customerUserId: bankTransfer.order.userId,
+          plan: bankTransfer.order.plan,
+          amount: bankTransfer.order.amount.toString(),
+          adminNotes: adminNotes || null,
+        },
+        request,
       });
 
       return NextResponse.json({ transfer: updatedTransfer });

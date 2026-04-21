@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/db";
 import { Plan, Role } from "@/generated/prisma/client";
+import { logAdminAction } from "@/lib/audit-log";
 
 const validPlans = Object.values(Plan);
 const validRoles = Object.values(Role);
@@ -150,11 +151,37 @@ export async function PATCH(
       );
     }
 
+    const before = await prisma.user.findUnique({
+      where: { id },
+      select: { plan: true, role: true, email: true },
+    });
+
     const updatedUser = await prisma.user.update({
       where: { id },
       data,
       select: { id: true, email: true, yourName: true, partnerName: true, phone: true, role: true, plan: true, createdAt: true },
     });
+
+    if (before && data.plan !== undefined && before.plan !== data.plan) {
+      await logAdminAction({
+        actorUserId: session.user.id,
+        action: "user.plan.update",
+        targetType: "User",
+        targetId: id,
+        metadata: { email: before.email, from: before.plan, to: data.plan },
+        request,
+      });
+    }
+    if (before && data.role !== undefined && before.role !== data.role) {
+      await logAdminAction({
+        actorUserId: session.user.id,
+        action: "user.role.update",
+        targetType: "User",
+        targetId: id,
+        metadata: { email: before.email, from: before.role, to: data.role },
+        request,
+      });
+    }
 
     return NextResponse.json({ user: updatedUser });
   } catch (error) {
@@ -167,7 +194,7 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -196,7 +223,7 @@ export async function DELETE(
 
     const target = await prisma.user.findUnique({
       where: { id },
-      select: { role: true },
+      select: { role: true, email: true, yourName: true, plan: true },
     });
 
     if (!target) {
@@ -216,6 +243,19 @@ export async function DELETE(
     // tasks, vendors, budgetItems, and orders (which cascades into
     // bankTransfers), so a single delete cleans everything up.
     await prisma.user.delete({ where: { id } });
+
+    await logAdminAction({
+      actorUserId: session.user.id,
+      action: "user.delete",
+      targetType: "User",
+      targetId: id,
+      metadata: {
+        email: target.email,
+        yourName: target.yourName,
+        plan: target.plan,
+      },
+      request,
+    });
 
     return NextResponse.json({ ok: true });
   } catch (error) {

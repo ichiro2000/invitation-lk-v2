@@ -42,6 +42,7 @@ model User {
   vendors    Vendor[]
   budgetItems BudgetItem[]
   orders     Order[]
+  auditLogs  AuditLog[]   @relation("AuditLogActor")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -272,4 +273,22 @@ model PasswordResetToken {
 
   createdAt DateTime @default(now())
   @@unique([email, token])
+}
+
+// ═══ ADMIN AUDIT LOG ═══
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorUserId String?
+  action      String
+  targetType  String?
+  targetId    String?
+  metadata    Json?
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+
+  actor User? @relation("AuditLogActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([actorUserId])
+  @@index([createdAt])
+  @@index([targetType, targetId])
 }
