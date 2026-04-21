@@ -7,7 +7,9 @@ export type AuditAction =
   | "user.suspend"
   | "user.unsuspend"
   | "bank_transfer.approve"
-  | "bank_transfer.reject";
+  | "bank_transfer.reject"
+  | "support.ticket.status.update"
+  | "support.ticket.priority.update";
 
 export type AuditTargetType = "User" | "Order" | "BankTransfer" | "Invitation";
 

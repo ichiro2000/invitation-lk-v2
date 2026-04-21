@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
   Loader2, ShieldCheck, Search, X, User as UserIcon, CreditCard,
-  Trash2, Edit3, CheckCircle2, XCircle, Globe,
+  Trash2, Edit3, CheckCircle2, XCircle, Globe, Ban, UserCheck, LifeBuoy,
 } from "lucide-react";
 
 interface AuditEntry {
@@ -28,24 +28,36 @@ type ActionFilter =
   | "user.delete"
   | "user.plan.update"
   | "user.role.update"
+  | "user.suspend"
+  | "user.unsuspend"
   | "bank_transfer.approve"
-  | "bank_transfer.reject";
+  | "bank_transfer.reject"
+  | "support.ticket.status.update"
+  | "support.ticket.priority.update";
 
 const actionFilters: { value: ActionFilter; label: string }[] = [
   { value: "", label: "All" },
   { value: "user.plan.update", label: "Plan changed" },
   { value: "user.role.update", label: "Role changed" },
+  { value: "user.suspend", label: "Suspended" },
+  { value: "user.unsuspend", label: "Unsuspended" },
   { value: "user.delete", label: "User deleted" },
   { value: "bank_transfer.approve", label: "Transfer approved" },
   { value: "bank_transfer.reject", label: "Transfer rejected" },
+  { value: "support.ticket.status.update", label: "Ticket status" },
+  { value: "support.ticket.priority.update", label: "Ticket priority" },
 ];
 
 const actionMeta: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
   "user.delete": { label: "User deleted", color: "bg-red-100 text-red-700", icon: Trash2 },
   "user.plan.update": { label: "Plan changed", color: "bg-blue-100 text-blue-700", icon: Edit3 },
   "user.role.update": { label: "Role changed", color: "bg-violet-100 text-violet-700", icon: Edit3 },
+  "user.suspend": { label: "User suspended", color: "bg-red-100 text-red-700", icon: Ban },
+  "user.unsuspend": { label: "User unsuspended", color: "bg-emerald-100 text-emerald-700", icon: UserCheck },
   "bank_transfer.approve": { label: "Transfer approved", color: "bg-emerald-100 text-emerald-700", icon: CheckCircle2 },
   "bank_transfer.reject": { label: "Transfer rejected", color: "bg-amber-100 text-amber-700", icon: XCircle },
+  "support.ticket.status.update": { label: "Ticket status", color: "bg-blue-100 text-blue-700", icon: LifeBuoy },
+  "support.ticket.priority.update": { label: "Ticket priority", color: "bg-amber-100 text-amber-700", icon: LifeBuoy },
 };
 
 function formatDate(d: string) {
@@ -64,9 +76,16 @@ function describeMetadata(action: string, metadata: Record<string, unknown> | nu
       return `${metadata.email ?? ""}: ${metadata.from} → ${metadata.to}`;
     case "user.delete":
       return `${metadata.email ?? ""} (${metadata.plan ?? "?"})`;
+    case "user.suspend":
+      return `${metadata.email ?? ""} — ${metadata.reason ?? ""}`;
+    case "user.unsuspend":
+      return `${metadata.email ?? ""}`;
     case "bank_transfer.approve":
     case "bank_transfer.reject":
       return `${metadata.plan} · ${metadata.amount} LKR`;
+    case "support.ticket.status.update":
+    case "support.ticket.priority.update":
+      return `${metadata.subject ?? ""}: ${metadata.from} → ${metadata.to}`;
     default:
       return "";
   }

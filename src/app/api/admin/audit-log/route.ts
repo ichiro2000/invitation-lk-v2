@@ -7,8 +7,12 @@ const VALID_ACTIONS = new Set([
   "user.delete",
   "user.plan.update",
   "user.role.update",
+  "user.suspend",
+  "user.unsuspend",
   "bank_transfer.approve",
   "bank_transfer.reject",
+  "support.ticket.status.update",
+  "support.ticket.priority.update",
 ]);
 
 export async function GET(request: Request) {
