@@ -102,6 +102,14 @@ async function migrate() {
     \"CREATE INDEX IF NOT EXISTS \\\"AuditLog_actorUserId_idx\\\" ON \\\"AuditLog\\\"(\\\"actorUserId\\\")\",
     \"CREATE INDEX IF NOT EXISTS \\\"AuditLog_createdAt_idx\\\" ON \\\"AuditLog\\\"(\\\"createdAt\\\" DESC)\",
     \"CREATE INDEX IF NOT EXISTS \\\"AuditLog_target_idx\\\" ON \\\"AuditLog\\\"(\\\"targetType\\\", \\\"targetId\\\")\",
+    \"DO \\$\\$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'TicketStatus') THEN CREATE TYPE \\\"TicketStatus\\\" AS ENUM ('OPEN', 'PENDING', 'RESOLVED', 'CLOSED'); END IF; END \\$\\$\",
+    \"DO \\$\\$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'TicketPriority') THEN CREATE TYPE \\\"TicketPriority\\\" AS ENUM ('LOW', 'NORMAL', 'HIGH', 'URGENT'); END IF; END \\$\\$\",
+    \"CREATE TABLE IF NOT EXISTS \\\"SupportTicket\\\" (id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, \\\"userId\\\" TEXT NOT NULL REFERENCES \\\"User\\\"(id) ON DELETE CASCADE, subject TEXT NOT NULL, status \\\"TicketStatus\\\" DEFAULT 'OPEN', priority \\\"TicketPriority\\\" DEFAULT 'NORMAL', \\\"createdAt\\\" TIMESTAMP DEFAULT NOW(), \\\"updatedAt\\\" TIMESTAMP DEFAULT NOW())\",
+    \"CREATE INDEX IF NOT EXISTS \\\"SupportTicket_userId_idx\\\" ON \\\"SupportTicket\\\"(\\\"userId\\\")\",
+    \"CREATE INDEX IF NOT EXISTS \\\"SupportTicket_status_idx\\\" ON \\\"SupportTicket\\\"(status)\",
+    \"CREATE INDEX IF NOT EXISTS \\\"SupportTicket_updatedAt_idx\\\" ON \\\"SupportTicket\\\"(\\\"updatedAt\\\" DESC)\",
+    \"CREATE TABLE IF NOT EXISTS \\\"SupportTicketReply\\\" (id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, \\\"ticketId\\\" TEXT NOT NULL REFERENCES \\\"SupportTicket\\\"(id) ON DELETE CASCADE, \\\"authorId\\\" TEXT NOT NULL REFERENCES \\\"User\\\"(id) ON DELETE CASCADE, message TEXT NOT NULL, \\\"isInternal\\\" BOOLEAN DEFAULT false, \\\"createdAt\\\" TIMESTAMP DEFAULT NOW())\",
+    \"CREATE INDEX IF NOT EXISTS \\\"SupportTicketReply_ticketId_idx\\\" ON \\\"SupportTicketReply\\\"(\\\"ticketId\\\")\",
   ];
   for (const sql of tables) { try { await pool.query(sql); } catch(e) { console.log('Table error:', e.message.substring(0, 80)); } }
 

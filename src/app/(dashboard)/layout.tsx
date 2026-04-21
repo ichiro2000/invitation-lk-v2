@@ -5,7 +5,7 @@ import { useSession, signOut } from "next-auth/react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Heart, LayoutDashboard, Pencil, Users, UserPlus, ListTodo, DollarSign, Store, LogOut, CreditCard, ShieldCheck, FileText, LayoutGrid, Mail, Loader2, Check } from "lucide-react";
+import { Heart, LayoutDashboard, Pencil, Users, UserPlus, ListTodo, DollarSign, Store, LogOut, CreditCard, ShieldCheck, FileText, LayoutGrid, Mail, Loader2, Check, LifeBuoy } from "lucide-react";
 
 // Module-level guard — survives re-mount cycles triggered by update().
 let bannerHasRefreshed = false;
@@ -65,6 +65,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <link.icon className="w-4 h-4" /> {link.label}
             </Link>
           ))}
+
+          {/* Help */}
+          <p className="text-[10px] text-gray-400 uppercase tracking-wider px-4 pt-4 pb-1">Help</p>
+          <Link href="/dashboard/support" className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${pathname.startsWith("/dashboard/support") ? "bg-rose-50 text-rose-600" : "text-gray-600 hover:bg-gray-50 hover:text-rose-600"}`}>
+            <LifeBuoy className="w-4 h-4" /> Support
+          </Link>
 
           {/* Billing */}
           {session.user?.plan === "FREE" && (
