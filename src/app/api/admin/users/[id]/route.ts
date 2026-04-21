@@ -7,6 +7,93 @@ import { Plan, Role } from "@/generated/prisma/client";
 const validPlans = Object.values(Plan);
 const validRoles = Object.values(Role);
 
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const me = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { role: true },
+    });
+    if (me?.role !== "ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const { id } = await params;
+
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true, email: true, yourName: true, partnerName: true,
+        weddingDate: true, venue: true, phone: true, image: true,
+        role: true, plan: true, emailVerified: true,
+        createdAt: true, updatedAt: true,
+        invitations: {
+          select: {
+            id: true, slug: true, templateSlug: true,
+            groomName: true, brideName: true, weddingDate: true,
+            venue: true, isPublished: true, isPaid: true, createdAt: true,
+            _count: { select: { events: true, pageViews: true } },
+          },
+          orderBy: { createdAt: "desc" },
+        },
+        orders: {
+          select: {
+            id: true, plan: true, amount: true, currency: true,
+            paymentMethod: true, paymentStatus: true, createdAt: true,
+          },
+          orderBy: { createdAt: "desc" },
+        },
+        _count: {
+          select: { guests: true, tasks: true, vendors: true, budgetItems: true },
+        },
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const [guestRsvp, accounts, lastSession] = await Promise.all([
+      prisma.guest.groupBy({
+        by: ["rsvpStatus"],
+        where: { userId: id },
+        _count: { _all: true },
+      }),
+      prisma.account.findMany({
+        where: { userId: id },
+        select: { provider: true },
+      }),
+      prisma.session.findFirst({
+        where: { userId: id },
+        orderBy: { expires: "desc" },
+        select: { expires: true },
+      }),
+    ]);
+
+    const rsvp = { PENDING: 0, ACCEPTED: 0, DECLINED: 0, MAYBE: 0 };
+    for (const g of guestRsvp) rsvp[g.rsvpStatus] = g._count._all;
+
+    return NextResponse.json({
+      user,
+      guestRsvp: rsvp,
+      providers: accounts.map((a) => a.provider),
+      lastSessionExpires: lastSession?.expires ?? null,
+    });
+  } catch (error) {
+    console.error("Admin get user error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch user" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
