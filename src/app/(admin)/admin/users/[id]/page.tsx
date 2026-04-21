@@ -4,7 +4,7 @@ import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import {
   Loader2, ArrowLeft, Mail, Phone, CheckCircle2, XCircle,
-  Calendar, Shield, Heart, CreditCard, ExternalLink, Ban, UserCheck, X,
+  Calendar, Shield, Heart, CreditCard, ExternalLink, Ban, UserCheck, X, Eye,
 } from "lucide-react";
 
 interface UserDetail {
@@ -81,6 +81,27 @@ export default function AdminUserDetailPage(
   const [suspendLoading, setSuspendLoading] = useState(false);
   const [suspendError, setSuspendError] = useState<string | null>(null);
   const [unsuspendLoading, setUnsuspendLoading] = useState(false);
+  const [impersonateLoading, setImpersonateLoading] = useState(false);
+  const [impersonateError, setImpersonateError] = useState<string | null>(null);
+
+  const startImpersonation = async () => {
+    setImpersonateLoading(true);
+    setImpersonateError(null);
+    try {
+      const res = await fetch(`/api/admin/users/${id}/impersonate`, { method: "POST" });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setImpersonateError(body.error || "Failed to start impersonation");
+        return;
+      }
+      // Full reload — the session cookie just changed. Land on customer dashboard.
+      window.location.href = "/dashboard";
+    } catch {
+      setImpersonateError("Failed to start impersonation");
+    } finally {
+      setImpersonateLoading(false);
+    }
+  };
 
   const reload = async () => {
     const res = await fetch(`/api/admin/users/${id}`);
@@ -217,7 +238,18 @@ export default function AdminUserDetailPage(
             </div>
           </div>
           {user.role !== "ADMIN" && (
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 flex flex-col sm:flex-row gap-2">
+              {!user.suspendedAt && (
+                <button
+                  onClick={startImpersonation}
+                  disabled={impersonateLoading}
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 text-sm font-medium hover:bg-blue-100 transition-colors disabled:opacity-50"
+                  title="Log into the app as this customer for support purposes"
+                >
+                  {impersonateLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Eye className="w-4 h-4" />}
+                  Impersonate
+                </button>
+              )}
               {user.suspendedAt ? (
                 <button
                   onClick={handleUnsuspend}
@@ -242,6 +274,9 @@ export default function AdminUserDetailPage(
             </div>
           )}
         </div>
+        {impersonateError && (
+          <p className="mt-3 text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">{impersonateError}</p>
+        )}
         {user.suspendedAt && user.suspendedReason && (
           <div className="mt-4 bg-red-50 border border-red-100 rounded-xl p-3">
             <p className="text-xs font-semibold uppercase tracking-wider text-red-700">Suspension reason</p>

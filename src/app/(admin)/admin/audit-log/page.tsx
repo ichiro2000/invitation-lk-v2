@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
   Loader2, ShieldCheck, Search, X, User as UserIcon, CreditCard,
-  Trash2, Edit3, CheckCircle2, XCircle, Globe, Ban, UserCheck, LifeBuoy,
+  Trash2, Edit3, CheckCircle2, XCircle, Globe, Ban, UserCheck, LifeBuoy, Eye,
 } from "lucide-react";
 
 interface AuditEntry {
@@ -30,6 +30,8 @@ type ActionFilter =
   | "user.role.update"
   | "user.suspend"
   | "user.unsuspend"
+  | "user.impersonate.start"
+  | "user.impersonate.end"
   | "bank_transfer.approve"
   | "bank_transfer.reject"
   | "support.ticket.status.update"
@@ -41,6 +43,8 @@ const actionFilters: { value: ActionFilter; label: string }[] = [
   { value: "user.role.update", label: "Role changed" },
   { value: "user.suspend", label: "Suspended" },
   { value: "user.unsuspend", label: "Unsuspended" },
+  { value: "user.impersonate.start", label: "Impersonate start" },
+  { value: "user.impersonate.end", label: "Impersonate end" },
   { value: "user.delete", label: "User deleted" },
   { value: "bank_transfer.approve", label: "Transfer approved" },
   { value: "bank_transfer.reject", label: "Transfer rejected" },
@@ -54,6 +58,8 @@ const actionMeta: Record<string, { label: string; color: string; icon: React.Com
   "user.role.update": { label: "Role changed", color: "bg-violet-100 text-violet-700", icon: Edit3 },
   "user.suspend": { label: "User suspended", color: "bg-red-100 text-red-700", icon: Ban },
   "user.unsuspend": { label: "User unsuspended", color: "bg-emerald-100 text-emerald-700", icon: UserCheck },
+  "user.impersonate.start": { label: "Impersonation started", color: "bg-amber-100 text-amber-700", icon: Eye },
+  "user.impersonate.end": { label: "Impersonation ended", color: "bg-gray-100 text-gray-700", icon: Eye },
   "bank_transfer.approve": { label: "Transfer approved", color: "bg-emerald-100 text-emerald-700", icon: CheckCircle2 },
   "bank_transfer.reject": { label: "Transfer rejected", color: "bg-amber-100 text-amber-700", icon: XCircle },
   "support.ticket.status.update": { label: "Ticket status", color: "bg-blue-100 text-blue-700", icon: LifeBuoy },
@@ -80,6 +86,10 @@ function describeMetadata(action: string, metadata: Record<string, unknown> | nu
       return `${metadata.email ?? ""} — ${metadata.reason ?? ""}`;
     case "user.unsuspend":
       return `${metadata.email ?? ""}`;
+    case "user.impersonate.start":
+      return `${metadata.adminEmail ?? ""} → ${metadata.targetEmail ?? ""}`;
+    case "user.impersonate.end":
+      return `${metadata.adminEmail ?? ""} ← ${metadata.targetEmail ?? ""}`;
     case "bank_transfer.approve":
     case "bank_transfer.reject":
       return `${metadata.plan} · ${metadata.amount} LKR`;

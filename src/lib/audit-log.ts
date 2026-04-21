@@ -6,6 +6,8 @@ export type AuditAction =
   | "user.role.update"
   | "user.suspend"
   | "user.unsuspend"
+  | "user.impersonate.start"
+  | "user.impersonate.end"
   | "bank_transfer.approve"
   | "bank_transfer.reject"
   | "support.ticket.status.update"

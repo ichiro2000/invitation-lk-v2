@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Heart, LayoutDashboard, Pencil, Users, UserPlus, ListTodo, DollarSign, Store, LogOut, CreditCard, ShieldCheck, FileText, LayoutGrid, Mail, Loader2, Check, LifeBuoy } from "lucide-react";
+import ImpersonationBanner from "@/components/ImpersonationBanner";
 
 // Module-level guard — survives re-mount cycles triggered by update().
 let bannerHasRefreshed = false;
@@ -110,6 +111,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       <main className="flex-1 lg:ml-64">
+        <ImpersonationBanner />
         <div className="p-6 sm:p-8 max-w-7xl mx-auto">
           {!session.user?.emailVerified && <VerifyEmailBanner />}
           {children}
