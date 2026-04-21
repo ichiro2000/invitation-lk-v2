@@ -6,14 +6,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Heart, LayoutDashboard, Users, FileText,
-  Palette, LogOut, ShieldCheck,
+  Palette, LogOut, ShieldCheck, UserPlus, BarChart3,
 } from "lucide-react";
 
 const adminLinks = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
+  { href: "/admin/weddings", label: "Weddings", icon: Heart },
+  { href: "/admin/guests", label: "Guests & RSVPs", icon: UserPlus },
   { href: "/admin/orders", label: "Orders", icon: FileText },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/templates", label: "Templates", icon: Palette },
+  { href: "/admin/reports", label: "Reports", icon: BarChart3 },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -78,10 +81,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="p-4 border-t border-gray-100">
           <div className="flex items-center gap-3 px-4 py-2">
             <div className="w-8 h-8 bg-rose-100 rounded-full flex items-center justify-center text-rose-600 text-sm font-bold">
-              {session.user?.name?.charAt(0) || "A"}
+              {session?.user?.name?.charAt(0) || "A"}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">{session.user?.name || "Admin"}</p>
+              <p className="text-sm font-medium text-gray-900 truncate">{session?.user?.name || "Admin"}</p>
               <p className="text-xs text-gray-400 truncate">Administrator</p>
             </div>
           </div>
