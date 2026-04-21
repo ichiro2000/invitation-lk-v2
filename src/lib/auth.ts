@@ -24,6 +24,10 @@ export const authOptions: NextAuthOptions = {
         const valid = await bcrypt.compare(credentials.password, user.passwordHash);
         if (!valid) throw new Error("Invalid credentials");
 
+        if (user.suspendedAt) {
+          throw new Error("Account suspended");
+        }
+
         return {
           id: user.id,
           email: user.email,
@@ -42,17 +46,19 @@ export const authOptions: NextAuthOptions = {
         token.role = (user as unknown as { role: string }).role;
         token.plan = (user as unknown as { plan: string }).plan;
         token.emailVerified = (user as unknown as { emailVerified: string | null }).emailVerified;
+        token.suspended = false;
       }
       // Refresh plan from DB when client calls update()
       if (trigger === "update" && token.id) {
         const freshUser = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { plan: true, role: true, emailVerified: true },
+          select: { plan: true, role: true, emailVerified: true, suspendedAt: true },
         });
         if (freshUser) {
           token.plan = freshUser.plan;
           token.role = freshUser.role;
           token.emailVerified = freshUser.emailVerified ? freshUser.emailVerified.toISOString() : null;
+          token.suspended = !!freshUser.suspendedAt;
         }
       }
       return token;
@@ -63,6 +69,7 @@ export const authOptions: NextAuthOptions = {
         session.user.role = token.role as string;
         session.user.plan = token.plan as string;
         session.user.emailVerified = (token.emailVerified as string | null) ?? null;
+        session.user.suspended = (token.suspended as boolean) ?? false;
       }
       return session;
     },

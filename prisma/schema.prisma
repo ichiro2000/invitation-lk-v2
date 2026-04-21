@@ -33,6 +33,8 @@ model User {
   plan          Plan      @default(FREE)
   image         String?
   emailVerified DateTime?
+  suspendedAt     DateTime?
+  suspendedReason String?
 
   accounts    Account[]
   sessions    Session[]

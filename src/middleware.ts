@@ -10,6 +10,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  // Suspended users: admins can still reach /admin (nonsense case — admins
+  // can't suspend themselves), everyone else is forced to /suspended.
+  if (token.suspended && token.role !== "ADMIN") {
+    if (request.nextUrl.pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Account suspended" }, { status: 403 });
+    }
+    if (request.nextUrl.pathname !== "/suspended") {
+      return NextResponse.redirect(new URL("/suspended", request.url));
+    }
+  }
+
   if (request.nextUrl.pathname.startsWith("/api/admin") && token.role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -22,5 +33,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*", "/api/admin/:path*"],
+  matcher: ["/dashboard/:path*", "/admin/:path*", "/api/admin/:path*", "/suspended"],
 };

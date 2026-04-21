@@ -45,6 +45,8 @@ export async function GET(request: Request) {
         role: true,
         plan: true,
         emailVerified: true,
+        suspendedAt: true,
+        suspendedReason: true,
         createdAt: true,
       },
       orderBy: { createdAt: "desc" },
@@ -54,7 +56,7 @@ export async function GET(request: Request) {
     if (format === "csv") {
       const header = [
         "User ID", "Name", "Partner", "Email", "Email verified",
-        "Phone", "Role", "Plan", "Joined",
+        "Phone", "Role", "Plan", "Suspended", "Suspended reason", "Joined",
       ];
       const rows = users.map((u) => [
         u.id,
@@ -65,6 +67,8 @@ export async function GET(request: Request) {
         u.phone ?? "",
         u.role,
         u.plan,
+        u.suspendedAt ? u.suspendedAt.toISOString() : "",
+        u.suspendedReason ?? "",
         u.createdAt.toISOString(),
       ]);
       return new NextResponse(toCsv(header, rows), {

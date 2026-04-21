@@ -2,7 +2,7 @@ import { DefaultSession } from "next-auth";
 
 declare module "next-auth" {
   interface Session {
-    user: { id: string; role: string; plan: string; emailVerified: string | null } & DefaultSession["user"];
+    user: { id: string; role: string; plan: string; emailVerified: string | null; suspended: boolean } & DefaultSession["user"];
   }
 }
 
@@ -12,5 +12,6 @@ declare module "next-auth/jwt" {
     role: string;
     plan: string;
     emailVerified: string | null;
+    suspended: boolean;
   }
 }

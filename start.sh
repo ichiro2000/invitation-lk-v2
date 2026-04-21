@@ -52,6 +52,8 @@ async function migrate() {
     \"ALTER TABLE \\\"User\\\" ADD COLUMN IF NOT EXISTS \\\"partnerName\\\" TEXT DEFAULT ''\",
     \"ALTER TABLE \\\"User\\\" ADD COLUMN IF NOT EXISTS plan \\\"Plan\\\" DEFAULT 'FREE'\",
     \"ALTER TABLE \\\"User\\\" ADD COLUMN IF NOT EXISTS venue TEXT\",
+    \"ALTER TABLE \\\"User\\\" ADD COLUMN IF NOT EXISTS \\\"suspendedAt\\\" TIMESTAMP\",
+    \"ALTER TABLE \\\"User\\\" ADD COLUMN IF NOT EXISTS \\\"suspendedReason\\\" TEXT\",
     \"CREATE TABLE IF NOT EXISTS \\\"Account\\\" (id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, \\\"userId\\\" TEXT NOT NULL REFERENCES \\\"User\\\"(id) ON DELETE CASCADE, type TEXT NOT NULL, provider TEXT NOT NULL, \\\"providerAccountId\\\" TEXT NOT NULL, refresh_token TEXT, access_token TEXT, expires_at INT, token_type TEXT, scope TEXT, id_token TEXT, session_state TEXT, UNIQUE(provider, \\\"providerAccountId\\\"))\",
     \"CREATE TABLE IF NOT EXISTS \\\"Session\\\" (id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, \\\"sessionToken\\\" TEXT NOT NULL UNIQUE, \\\"userId\\\" TEXT NOT NULL REFERENCES \\\"User\\\"(id) ON DELETE CASCADE, expires TIMESTAMP NOT NULL)\",
     \"CREATE TABLE IF NOT EXISTS \\\"VerificationToken\\\" (identifier TEXT NOT NULL, token TEXT NOT NULL UNIQUE, expires TIMESTAMP NOT NULL, UNIQUE(identifier, token))\",

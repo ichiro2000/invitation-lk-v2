@@ -4,7 +4,7 @@ import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import {
   Loader2, ArrowLeft, Mail, Phone, CheckCircle2, XCircle,
-  Calendar, Shield, Heart, CreditCard, ExternalLink,
+  Calendar, Shield, Heart, CreditCard, ExternalLink, Ban, UserCheck, X,
 } from "lucide-react";
 
 interface UserDetail {
@@ -15,6 +15,7 @@ interface UserDetail {
     phone: string | null; image: string | null;
     role: string; plan: string;
     emailVerified: string | null;
+    suspendedAt: string | null; suspendedReason: string | null;
     createdAt: string; updatedAt: string;
     invitations: {
       id: string; slug: string; templateSlug: string;
@@ -75,6 +76,16 @@ export default function AdminUserDetailPage(
   const [data, setData] = useState<UserDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [suspendOpen, setSuspendOpen] = useState(false);
+  const [suspendReason, setSuspendReason] = useState("");
+  const [suspendLoading, setSuspendLoading] = useState(false);
+  const [suspendError, setSuspendError] = useState<string | null>(null);
+  const [unsuspendLoading, setUnsuspendLoading] = useState(false);
+
+  const reload = async () => {
+    const res = await fetch(`/api/admin/users/${id}`);
+    if (res.ok) setData(await res.json());
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -95,6 +106,45 @@ export default function AdminUserDetailPage(
     };
     load();
   }, [id]);
+
+  const handleSuspend = async () => {
+    const reason = suspendReason.trim();
+    if (!reason) {
+      setSuspendError("Reason is required");
+      return;
+    }
+    setSuspendLoading(true);
+    setSuspendError(null);
+    try {
+      const res = await fetch(`/api/admin/users/${id}/suspend`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setSuspendError(body.error || "Failed to suspend");
+        return;
+      }
+      setSuspendOpen(false);
+      setSuspendReason("");
+      await reload();
+    } catch {
+      setSuspendError("Failed to suspend");
+    } finally {
+      setSuspendLoading(false);
+    }
+  };
+
+  const handleUnsuspend = async () => {
+    setUnsuspendLoading(true);
+    try {
+      const res = await fetch(`/api/admin/users/${id}/unsuspend`, { method: "POST" });
+      if (res.ok) await reload();
+    } finally {
+      setUnsuspendLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -128,7 +178,7 @@ export default function AdminUserDetailPage(
       </Link>
 
       <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-start gap-4">
           <div className="w-16 h-16 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 text-xl font-bold flex-shrink-0">
             {user.yourName?.charAt(0)?.toUpperCase() || user.email.charAt(0).toUpperCase()}
           </div>
@@ -145,6 +195,11 @@ export default function AdminUserDetailPage(
               <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${roleBadge[user.role]}`}>
                 {user.role}
               </span>
+              {user.suspendedAt && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+                  <Ban className="w-3 h-3" /> Suspended
+                </span>
+              )}
               {user.emailVerified ? (
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
                   <CheckCircle2 className="w-3 h-3" /> Email verified
@@ -161,7 +216,41 @@ export default function AdminUserDetailPage(
               ))}
             </div>
           </div>
+          {user.role !== "ADMIN" && (
+            <div className="flex-shrink-0">
+              {user.suspendedAt ? (
+                <button
+                  onClick={handleUnsuspend}
+                  disabled={unsuspendLoading}
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-medium hover:bg-emerald-100 transition-colors disabled:opacity-50"
+                >
+                  {unsuspendLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCheck className="w-4 h-4" />}
+                  Unsuspend
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    setSuspendError(null);
+                    setSuspendReason("");
+                    setSuspendOpen(true);
+                  }}
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-sm font-medium hover:bg-amber-100 transition-colors"
+                >
+                  <Ban className="w-4 h-4" /> Suspend
+                </button>
+              )}
+            </div>
+          )}
         </div>
+        {user.suspendedAt && user.suspendedReason && (
+          <div className="mt-4 bg-red-50 border border-red-100 rounded-xl p-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-red-700">Suspension reason</p>
+            <p className="text-sm text-gray-900 mt-1 whitespace-pre-wrap">{user.suspendedReason}</p>
+            <p className="text-xs text-gray-500 mt-2">
+              Suspended since {new Date(user.suspendedAt).toLocaleString()}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Contact + meta */}
@@ -334,6 +423,79 @@ export default function AdminUserDetailPage(
           </div>
         )}
       </div>
+
+      {/* Suspend modal */}
+      {suspendOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => !suspendLoading && setSuspendOpen(false)}
+        >
+          <div
+            className="bg-white rounded-2xl p-6 max-w-md w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center flex-shrink-0">
+                <Ban className="w-5 h-5 text-amber-700" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-gray-900">Suspend user?</h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  <span className="font-medium text-gray-900">{user.yourName || user.email}</span>
+                  {" — "}
+                  <span className="text-gray-500">{user.email}</span>
+                </p>
+                <p className="text-xs text-gray-400 mt-2">
+                  Suspended users can&apos;t log in or access any customer routes. Data stays intact. The reason below is shown on their /suspended page.
+                </p>
+              </div>
+              <button
+                onClick={() => !suspendLoading && setSuspendOpen(false)}
+                className="text-gray-400 hover:text-gray-600"
+                disabled={suspendLoading}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <label className="block mt-2">
+              <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Reason (visible to the user)</span>
+              <textarea
+                value={suspendReason}
+                onChange={(e) => setSuspendReason(e.target.value)}
+                disabled={suspendLoading}
+                maxLength={500}
+                rows={3}
+                placeholder="e.g., Repeated policy violations"
+                className="mt-2 w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+              />
+              <span className="text-xs text-gray-400">{suspendReason.length} / 500</span>
+            </label>
+
+            {suspendError && (
+              <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2 mt-3">{suspendError}</p>
+            )}
+
+            <div className="flex gap-3 justify-end mt-4">
+              <button
+                onClick={() => setSuspendOpen(false)}
+                disabled={suspendLoading}
+                className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSuspend}
+                disabled={suspendLoading || !suspendReason.trim()}
+                className="px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-xl hover:bg-amber-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {suspendLoading && <Loader2 className="w-3 h-3 animate-spin" />}
+                Suspend user
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
