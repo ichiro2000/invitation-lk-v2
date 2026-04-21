@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   Loader2, FileText, CreditCard, Building2, Eye, X,
-  Image as ImageIcon, Clock, CheckCircle, XCircle,
+  Image as ImageIcon, Clock, CheckCircle, XCircle, Download,
 } from "lucide-react";
 
 interface OrderBankTransfer {
@@ -128,11 +128,26 @@ export default function AdminOrdersPage() {
       minute: "2-digit",
     });
 
+  const handleExport = () => {
+    const params = new URLSearchParams();
+    if (activeTab !== "ALL") params.set("status", activeTab);
+    params.set("format", "csv");
+    window.location.href = `/api/admin/orders?${params.toString()}`;
+  };
+
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
-        <p className="text-gray-400 mt-1">View and manage all payment orders.</p>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-8">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
+          <p className="text-gray-400 mt-1">View and manage all payment orders.</p>
+        </div>
+        <button
+          onClick={handleExport}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white hover:border-rose-200 hover:text-rose-600 text-sm font-medium text-gray-700 transition-colors"
+        >
+          <Download className="w-4 h-4" /> Export CSV
+        </button>
       </div>
 
       {/* Tabs */}
