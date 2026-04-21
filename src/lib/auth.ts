@@ -47,8 +47,11 @@ export const authOptions: NextAuthOptions = {
         token.plan = (user as unknown as { plan: string }).plan;
         token.emailVerified = (user as unknown as { emailVerified: string | null }).emailVerified;
         token.suspended = false;
+        token.impersonatedBy = null;
       }
-      // Refresh plan from DB when client calls update()
+      // Refresh plan from DB when client calls update(). Important: preserve
+      // the impersonatedBy claim across refreshes so the banner stays up and
+      // /api/impersonate/exit keeps working until the admin explicitly exits.
       if (trigger === "update" && token.id) {
         const freshUser = await prisma.user.findUnique({
           where: { id: token.id as string },
@@ -70,6 +73,7 @@ export const authOptions: NextAuthOptions = {
         session.user.plan = token.plan as string;
         session.user.emailVerified = (token.emailVerified as string | null) ?? null;
         session.user.suspended = (token.suspended as boolean) ?? false;
+        session.user.impersonatedBy = (token.impersonatedBy as string | null) ?? null;
       }
       return session;
     },
