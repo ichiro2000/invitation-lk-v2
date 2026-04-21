@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/db";
-import { toCsv, csvResponseHeaders } from "@/lib/csv";
 
 export async function GET(request: Request) {
   try {
@@ -22,7 +21,6 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search");
-    const format = searchParams.get("format");
 
     const where = search
       ? {
@@ -44,34 +42,10 @@ export async function GET(request: Request) {
         phone: true,
         role: true,
         plan: true,
-        emailVerified: true,
         createdAt: true,
       },
       orderBy: { createdAt: "desc" },
-      take: format === "csv" ? 10000 : undefined,
     });
-
-    if (format === "csv") {
-      const header = [
-        "User ID", "Name", "Partner", "Email", "Email verified",
-        "Phone", "Role", "Plan", "Joined",
-      ];
-      const rows = users.map((u) => [
-        u.id,
-        u.yourName ?? "",
-        u.partnerName ?? "",
-        u.email,
-        u.emailVerified ? "yes" : "no",
-        u.phone ?? "",
-        u.role,
-        u.plan,
-        u.createdAt.toISOString(),
-      ]);
-      return new NextResponse(toCsv(header, rows), {
-        status: 200,
-        headers: csvResponseHeaders("users"),
-      });
-    }
 
     return NextResponse.json({ users });
   } catch (error) {

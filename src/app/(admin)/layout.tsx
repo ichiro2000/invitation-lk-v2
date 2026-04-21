@@ -6,17 +6,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Heart, LayoutDashboard, Users, FileText,
-  Palette, LogOut, ShieldCheck, UserPlus, BarChart3,
+  Palette, LogOut, ShieldCheck,
 } from "lucide-react";
 
 const adminLinks = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
-  { href: "/admin/weddings", label: "Weddings", icon: Heart },
-  { href: "/admin/guests", label: "Guests & RSVPs", icon: UserPlus },
   { href: "/admin/orders", label: "Orders", icon: FileText },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/templates", label: "Templates", icon: Palette },
-  { href: "/admin/reports", label: "Reports", icon: BarChart3 },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
