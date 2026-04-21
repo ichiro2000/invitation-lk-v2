@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/db";
 import { TicketPriority } from "@/generated/prisma/client";
+import { sendSupportTicketCreatedToAdmin } from "@/lib/resend";
 
 const VALID_PRIORITIES = Object.values(TicketPriority);
 
@@ -73,10 +74,33 @@ export async function POST(request: Request) {
           },
         },
       },
-      select: { id: true, subject: true, status: true, priority: true, createdAt: true, updatedAt: true },
+      select: {
+        id: true, subject: true, status: true, priority: true,
+        createdAt: true, updatedAt: true,
+        user: { select: { email: true, yourName: true } },
+      },
     });
 
-    return NextResponse.json({ ticket }, { status: 201 });
+    // Fire-and-forget — email failures never break ticket creation.
+    sendSupportTicketCreatedToAdmin({
+      ticketId: ticket.id,
+      customerName: ticket.user?.yourName || ticket.user?.email || "Customer",
+      customerEmail: ticket.user?.email || "",
+      subject: ticket.subject,
+      priority: ticket.priority,
+      message,
+    }).catch(() => {});
+
+    return NextResponse.json({
+      ticket: {
+        id: ticket.id,
+        subject: ticket.subject,
+        status: ticket.status,
+        priority: ticket.priority,
+        createdAt: ticket.createdAt,
+        updatedAt: ticket.updatedAt,
+      },
+    }, { status: 201 });
   } catch (error) {
     console.error("Support ticket create error:", error);
     return NextResponse.json(
