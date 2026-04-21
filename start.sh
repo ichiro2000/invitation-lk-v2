@@ -110,6 +110,16 @@ async function migrate() {
     \"CREATE INDEX IF NOT EXISTS \\\"SupportTicket_updatedAt_idx\\\" ON \\\"SupportTicket\\\"(\\\"updatedAt\\\" DESC)\",
     \"CREATE TABLE IF NOT EXISTS \\\"SupportTicketReply\\\" (id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, \\\"ticketId\\\" TEXT NOT NULL REFERENCES \\\"SupportTicket\\\"(id) ON DELETE CASCADE, \\\"authorId\\\" TEXT NOT NULL REFERENCES \\\"User\\\"(id) ON DELETE CASCADE, message TEXT NOT NULL, \\\"isInternal\\\" BOOLEAN DEFAULT false, \\\"createdAt\\\" TIMESTAMP DEFAULT NOW())\",
     \"CREATE INDEX IF NOT EXISTS \\\"SupportTicketReply_ticketId_idx\\\" ON \\\"SupportTicketReply\\\"(\\\"ticketId\\\")\",
+    // Orphan cleanup + NOT NULL + FK tightening (originally from #57 orphan report).
+    // Both DELETEs are safe to rerun — if there are no orphans left they're no-ops.
+    // The ALTERs are guarded by information_schema checks so they run once on the
+    // first deploy that includes this block and become no-ops after.
+    \"DELETE FROM \\\"Guest\\\" WHERE \\\"userId\\\" IS NULL OR \\\"userId\\\" NOT IN (SELECT id FROM \\\"User\\\")\",
+    \"DELETE FROM \\\"Invitation\\\" WHERE \\\"userId\\\" IS NULL OR \\\"userId\\\" NOT IN (SELECT id FROM \\\"User\\\")\",
+    \"DO \\$\\$ BEGIN IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Guest' AND column_name='userId' AND is_nullable='YES') THEN ALTER TABLE \\\"Guest\\\" ALTER COLUMN \\\"userId\\\" SET NOT NULL; END IF; END \\$\\$\",
+    \"DO \\$\\$ BEGIN IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_name='Guest' AND constraint_name='Guest_userId_fkey' AND constraint_type='FOREIGN KEY') THEN ALTER TABLE \\\"Guest\\\" ADD CONSTRAINT \\\"Guest_userId_fkey\\\" FOREIGN KEY (\\\"userId\\\") REFERENCES \\\"User\\\"(id) ON DELETE CASCADE; END IF; END \\$\\$\",
+    \"DO \\$\\$ BEGIN IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Invitation' AND column_name='userId' AND is_nullable='YES') THEN ALTER TABLE \\\"Invitation\\\" ALTER COLUMN \\\"userId\\\" SET NOT NULL; END IF; END \\$\\$\",
+    \"DO \\$\\$ BEGIN IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_name='Invitation' AND constraint_name='Invitation_userId_fkey' AND constraint_type='FOREIGN KEY') THEN ALTER TABLE \\\"Invitation\\\" ADD CONSTRAINT \\\"Invitation_userId_fkey\\\" FOREIGN KEY (\\\"userId\\\") REFERENCES \\\"User\\\"(id) ON DELETE CASCADE; END IF; END \\$\\$\",
   ];
   for (const sql of tables) { try { await pool.query(sql); } catch(e) { console.log('Table error:', e.message.substring(0, 80)); } }
 
