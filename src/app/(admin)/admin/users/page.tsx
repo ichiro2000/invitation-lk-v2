@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import Link from "next/link";
-import { Loader2, Users, Search, Trash2, X, AlertTriangle, Download } from "lucide-react";
+import { Loader2, Users, Search, Trash2, X, AlertTriangle } from "lucide-react";
 
 interface User {
   id: string;
@@ -109,26 +108,11 @@ export default function AdminUsersPage() {
     });
   };
 
-  const handleExport = () => {
-    const params = new URLSearchParams();
-    if (search) params.set("search", search);
-    params.set("format", "csv");
-    window.location.href = `/api/admin/users?${params.toString()}`;
-  };
-
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Users</h1>
-          <p className="text-gray-400 mt-1">Manage registered users and their subscription plans.</p>
-        </div>
-        <button
-          onClick={handleExport}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white hover:border-rose-200 hover:text-rose-600 text-sm font-medium text-gray-700 transition-colors"
-        >
-          <Download className="w-4 h-4" /> Export CSV
-        </button>
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900">Users</h1>
+        <p className="text-gray-400 mt-1">Manage registered users and their subscription plans.</p>
       </div>
 
       {/* Search */}
@@ -172,9 +156,7 @@ export default function AdminUsersPage() {
                 {users.map((user) => (
                   <tr key={user.id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="px-5 py-4">
-                      <Link href={`/admin/users/${user.id}`} className="font-medium text-gray-900 hover:text-rose-600">
-                        {user.yourName || "—"}
-                      </Link>
+                      <p className="font-medium text-gray-900">{user.yourName || "—"}</p>
                       {user.partnerName && (
                         <p className="text-xs text-gray-400">& {user.partnerName}</p>
                       )}

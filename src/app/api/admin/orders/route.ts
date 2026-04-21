@@ -3,7 +3,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/db";
 import type { PaymentStatus } from "@/generated/prisma/client";
-import { toCsv, csvResponseHeaders } from "@/lib/csv";
 
 export async function GET(request: Request) {
   try {
@@ -23,7 +22,6 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
-    const format = searchParams.get("format");
 
     const validStatuses = ["PENDING", "COMPLETED", "FAILED", "REFUNDED"];
     if (status && !validStatuses.includes(status)) {
@@ -50,33 +48,7 @@ export async function GET(request: Request) {
         },
       },
       orderBy: { createdAt: "desc" },
-      take: format === "csv" ? 10000 : undefined,
     });
-
-    if (format === "csv") {
-      const header = [
-        "Order ID", "Customer name", "Partner", "Email", "Plan",
-        "Amount", "Currency", "Payment method", "Status",
-        "Bank transfer status", "Created at",
-      ];
-      const rows = rawOrders.map((o) => [
-        o.id,
-        o.user.yourName ?? "",
-        o.user.partnerName ?? "",
-        o.user.email,
-        o.plan,
-        Number(o.amount).toFixed(2),
-        o.currency,
-        o.paymentMethod,
-        o.paymentStatus,
-        o.bankTransfer?.status ?? "",
-        o.createdAt.toISOString(),
-      ]);
-      return new NextResponse(toCsv(header, rows), {
-        status: 200,
-        headers: csvResponseHeaders("orders"),
-      });
-    }
 
     const orders = rawOrders.map((o) => ({
       id: o.id,
