@@ -45,7 +45,7 @@ export async function GET(request: Request) {
 
     const where = filters.length > 0 ? { AND: filters } : {};
 
-    const tickets = await prisma.supportTicket.findMany({
+    const rawTickets = await prisma.supportTicket.findMany({
       where,
       orderBy: { updatedAt: "desc" },
       take: 500,
@@ -56,8 +56,28 @@ export async function GET(request: Request) {
           select: { id: true, email: true, yourName: true, plan: true },
         },
         _count: { select: { replies: true } },
+        // Earliest public admin reply → used to compute TTFR (time to first
+        // admin response) on the client.
+        replies: {
+          where: { isInternal: false, author: { role: "ADMIN" } },
+          orderBy: { createdAt: "asc" },
+          take: 1,
+          select: { createdAt: true },
+        },
       },
     });
+
+    const tickets = rawTickets.map((t) => ({
+      id: t.id,
+      subject: t.subject,
+      status: t.status,
+      priority: t.priority,
+      createdAt: t.createdAt,
+      updatedAt: t.updatedAt,
+      user: t.user,
+      _count: t._count,
+      firstAdminReplyAt: t.replies[0]?.createdAt ?? null,
+    }));
 
     return NextResponse.json({ tickets });
   } catch (error) {
