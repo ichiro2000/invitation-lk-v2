@@ -35,6 +35,8 @@ model User {
   emailVerified DateTime?
   suspendedAt     DateTime?
   suspendedReason String?
+  twoFactorSecret    String?
+  twoFactorEnabledAt DateTime?
 
   accounts    Account[]
   sessions    Session[]
@@ -47,6 +49,7 @@ model User {
   auditLogs  AuditLog[]   @relation("AuditLogActor")
   supportTickets SupportTicket[] @relation("SupportTicketCustomer")
   supportReplies SupportTicketReply[] @relation("SupportTicketReplyAuthor")
+  twoFactorBackupCodes TwoFactorBackupCode[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -341,4 +344,17 @@ model SupportTicketReply {
   author User          @relation("SupportTicketReplyAuthor", fields: [authorId], references: [id], onDelete: Cascade)
 
   @@index([ticketId])
+}
+
+// ═══ TWO-FACTOR (ADMIN) ═══
+model TwoFactorBackupCode {
+  id        String    @id @default(cuid())
+  userId    String
+  codeHash  String
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

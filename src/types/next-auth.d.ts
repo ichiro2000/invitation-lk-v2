@@ -9,6 +9,7 @@ declare module "next-auth" {
       emailVerified: string | null;
       suspended: boolean;
       impersonatedBy: string | null;
+      twoFactorEnabled: boolean;
     } & DefaultSession["user"];
   }
 }
@@ -21,5 +22,6 @@ declare module "next-auth/jwt" {
     emailVerified: string | null;
     suspended: boolean;
     impersonatedBy: string | null;
+    twoFactorEnabled: boolean;
   }
 }

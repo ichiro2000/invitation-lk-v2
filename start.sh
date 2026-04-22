@@ -54,6 +54,8 @@ async function migrate() {
     \"ALTER TABLE \\\"User\\\" ADD COLUMN IF NOT EXISTS venue TEXT\",
     \"ALTER TABLE \\\"User\\\" ADD COLUMN IF NOT EXISTS \\\"suspendedAt\\\" TIMESTAMP\",
     \"ALTER TABLE \\\"User\\\" ADD COLUMN IF NOT EXISTS \\\"suspendedReason\\\" TEXT\",
+    \"ALTER TABLE \\\"User\\\" ADD COLUMN IF NOT EXISTS \\\"twoFactorSecret\\\" TEXT\",
+    \"ALTER TABLE \\\"User\\\" ADD COLUMN IF NOT EXISTS \\\"twoFactorEnabledAt\\\" TIMESTAMP\",
     \"CREATE TABLE IF NOT EXISTS \\\"Account\\\" (id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, \\\"userId\\\" TEXT NOT NULL REFERENCES \\\"User\\\"(id) ON DELETE CASCADE, type TEXT NOT NULL, provider TEXT NOT NULL, \\\"providerAccountId\\\" TEXT NOT NULL, refresh_token TEXT, access_token TEXT, expires_at INT, token_type TEXT, scope TEXT, id_token TEXT, session_state TEXT, UNIQUE(provider, \\\"providerAccountId\\\"))\",
     \"CREATE TABLE IF NOT EXISTS \\\"Session\\\" (id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, \\\"sessionToken\\\" TEXT NOT NULL UNIQUE, \\\"userId\\\" TEXT NOT NULL REFERENCES \\\"User\\\"(id) ON DELETE CASCADE, expires TIMESTAMP NOT NULL)\",
     \"CREATE TABLE IF NOT EXISTS \\\"VerificationToken\\\" (identifier TEXT NOT NULL, token TEXT NOT NULL UNIQUE, expires TIMESTAMP NOT NULL, UNIQUE(identifier, token))\",
@@ -120,6 +122,8 @@ async function migrate() {
     \"DO \\$\\$ BEGIN IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_name='Guest' AND constraint_name='Guest_userId_fkey' AND constraint_type='FOREIGN KEY') THEN ALTER TABLE \\\"Guest\\\" ADD CONSTRAINT \\\"Guest_userId_fkey\\\" FOREIGN KEY (\\\"userId\\\") REFERENCES \\\"User\\\"(id) ON DELETE CASCADE; END IF; END \\$\\$\",
     \"DO \\$\\$ BEGIN IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Invitation' AND column_name='userId' AND is_nullable='YES') THEN ALTER TABLE \\\"Invitation\\\" ALTER COLUMN \\\"userId\\\" SET NOT NULL; END IF; END \\$\\$\",
     \"DO \\$\\$ BEGIN IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_name='Invitation' AND constraint_name='Invitation_userId_fkey' AND constraint_type='FOREIGN KEY') THEN ALTER TABLE \\\"Invitation\\\" ADD CONSTRAINT \\\"Invitation_userId_fkey\\\" FOREIGN KEY (\\\"userId\\\") REFERENCES \\\"User\\\"(id) ON DELETE CASCADE; END IF; END \\$\\$\",
+    \"CREATE TABLE IF NOT EXISTS \\\"TwoFactorBackupCode\\\" (id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, \\\"userId\\\" TEXT NOT NULL REFERENCES \\\"User\\\"(id) ON DELETE CASCADE, \\\"codeHash\\\" TEXT NOT NULL, \\\"usedAt\\\" TIMESTAMP, \\\"createdAt\\\" TIMESTAMP DEFAULT NOW())\",
+    \"CREATE INDEX IF NOT EXISTS \\\"TwoFactorBackupCode_userId_idx\\\" ON \\\"TwoFactorBackupCode\\\"(\\\"userId\\\")\",
   ];
   for (const sql of tables) { try { await pool.query(sql); } catch(e) { console.log('Table error:', e.message.substring(0, 80)); } }
 
