@@ -70,6 +70,7 @@ export async function GET(request: Request) {
       planGroups,
       totalUsers,
       paidUsers,
+      venueGroups,
     ] = await Promise.all([
       prisma.user.findMany({
         where: { createdAt: { gte: from } },
@@ -114,7 +115,33 @@ export async function GET(request: Request) {
       }),
       prisma.user.count(),
       prisma.user.count({ where: { plan: { in: ["BASIC", "STANDARD", "PREMIUM"] } } }),
+      prisma.invitation.groupBy({
+        by: ["venue"],
+        _count: { _all: true },
+        orderBy: { _count: { venue: "desc" } },
+        take: 10,
+      }),
     ]);
+
+    // Signup → invitation → published → paid funnel for the window.
+    const signupIds = await prisma.user.findMany({
+      where: { createdAt: { gte: from } },
+      select: { id: true },
+    });
+    const ids = signupIds.map((u) => u.id);
+    const [usersWithInvitation, usersPublished, usersPaid] = ids.length === 0
+      ? [0, 0, 0]
+      : await Promise.all([
+          prisma.user.count({
+            where: { id: { in: ids }, invitations: { some: {} } },
+          }),
+          prisma.user.count({
+            where: { id: { in: ids }, invitations: { some: { isPublished: true } } },
+          }),
+          prisma.user.count({
+            where: { id: { in: ids }, invitations: { some: { isPaid: true } } },
+          }),
+        ]);
 
     const signupsByDay = emptyDailySeries(days);
     for (const u of signups) {
@@ -198,6 +225,17 @@ export async function GET(request: Request) {
           count: g._count._all,
           amount: g._sum.amount?.toString() ?? "0",
         })),
+        venues: venueGroups.map((v) => ({
+          venue: v.venue,
+          count: v._count._all,
+        })),
+      },
+      funnel: {
+        signups: signups.length,
+        hasInvitation: usersWithInvitation,
+        published: usersPublished,
+        paid: usersPaid,
+        neverActivated: Math.max(0, signups.length - usersWithInvitation),
       },
     });
   } catch (error) {

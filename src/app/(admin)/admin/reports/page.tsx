@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import {
   Loader2, TrendingUp, Users, Heart, CreditCard, BarChart3,
-  CalendarDays, Layers,
+  CalendarDays, Layers, MapPin, Filter,
 } from "lucide-react";
 
 type DaySeries = Record<string, number>;
@@ -37,6 +37,14 @@ type ReportData = {
     templates: { slug: string; count: number }[];
     paymentMethods: { method: string; count: number; revenue: string }[];
     paymentStatuses: { status: string; count: number; amount: string }[];
+    venues: { venue: string; count: number }[];
+  };
+  funnel: {
+    signups: number;
+    hasInvitation: number;
+    published: number;
+    paid: number;
+    neverActivated: number;
   };
 };
 
@@ -150,10 +158,20 @@ export default function AdminReportsPage() {
     );
   }
 
-  const { summary, series, distributions } = data;
+  const { summary, series, distributions, funnel } = data;
   const firstDate = Object.keys(series.signupsByDay)[0];
   const lastDate = Object.keys(series.signupsByDay).slice(-1)[0];
   const planTotal = Object.values(distributions.planBreakdown).reduce((a, b) => a + b, 0);
+  const venueMax = distributions.venues.reduce((m, v) => Math.max(m, v.count), 1);
+
+  const funnelSteps = [
+    { key: "signups", label: "Signups", count: funnel.signups, color: "bg-blue-500" },
+    { key: "hasInvitation", label: "Created invitation", count: funnel.hasInvitation, color: "bg-violet-500" },
+    { key: "published", label: "Published site", count: funnel.published, color: "bg-amber-500" },
+    { key: "paid", label: "Paid", count: funnel.paid, color: "bg-emerald-500" },
+  ];
+  const funnelPct = (count: number) =>
+    funnel.signups > 0 ? Math.round((count / funnel.signups) * 100) : 0;
 
   return (
     <div>
@@ -217,6 +235,53 @@ export default function AdminReportsPage() {
             {summary.paidUsers} of {summary.totalUsers} users
           </p>
         </div>
+      </div>
+
+      {/* Activation funnel */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-8">
+        <div className="flex items-center gap-2 mb-4">
+          <Filter className="w-4 h-4 text-gray-500" />
+          <h2 className="text-sm font-semibold text-gray-900">Activation funnel — cohort from the last {days} days</h2>
+        </div>
+        {funnel.signups === 0 ? (
+          <p className="text-sm text-gray-400 py-6 text-center">No signups in this window.</p>
+        ) : (
+          <div className="space-y-3">
+            {funnelSteps.map((step, i) => {
+              const pct = funnelPct(step.count);
+              const prevCount = i > 0 ? funnelSteps[i - 1].count : step.count;
+              const dropFromPrev = prevCount > 0 ? Math.round(((prevCount - step.count) / prevCount) * 100) : 0;
+              return (
+                <div key={step.key}>
+                  <div className="flex items-center justify-between text-xs mb-1">
+                    <span className="font-medium text-gray-700">{step.label}</span>
+                    <span className="text-gray-500">
+                      <span className="font-semibold text-gray-900">{step.count}</span>
+                      <span className="ml-1">({pct}% of signups)</span>
+                      {i > 0 && dropFromPrev > 0 && (
+                        <span className="ml-2 text-red-600">−{dropFromPrev}% drop</span>
+                      )}
+                    </span>
+                  </div>
+                  <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+                    <div className={`h-full ${step.color} rounded-full`} style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+            {funnel.neverActivated > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-xs">
+                <span className="text-gray-500">Never activated (signed up, no invitation)</span>
+                <span className="font-semibold text-amber-700">
+                  {funnel.neverActivated}{" "}
+                  <span className="font-normal text-gray-500">
+                    ({funnelPct(funnel.neverActivated)}% leak)
+                  </span>
+                </span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Time series charts */}
@@ -353,6 +418,34 @@ export default function AdminReportsPage() {
                   <p className="font-semibold text-gray-900">{formatMoney(parseFloat(s.amount))}</p>
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+
+        {/* Top venues */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 lg:col-span-2">
+          <div className="flex items-center gap-2 mb-4">
+            <MapPin className="w-4 h-4 text-gray-500" />
+            <h2 className="text-sm font-semibold text-gray-900">Top venues (all-time)</h2>
+          </div>
+          {distributions.venues.length === 0 ? (
+            <p className="text-sm text-gray-400 py-6 text-center">No invitations have a venue yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {distributions.venues.map((v) => {
+                const pct = Math.round((v.count / venueMax) * 100);
+                return (
+                  <div key={v.venue}>
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="text-gray-700 truncate max-w-[70%]" title={v.venue}>{v.venue || "(unnamed)"}</span>
+                      <span className="text-gray-500 font-semibold">{v.count}</span>
+                    </div>
+                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-rose-500 rounded-full" style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
