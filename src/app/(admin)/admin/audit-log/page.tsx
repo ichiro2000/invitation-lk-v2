@@ -32,6 +32,9 @@ type ActionFilter =
   | "user.unsuspend"
   | "user.impersonate.start"
   | "user.impersonate.end"
+  | "user.2fa.enable"
+  | "user.2fa.disable"
+  | "user.2fa.backup_codes_regenerated"
   | "bank_transfer.approve"
   | "bank_transfer.reject"
   | "support.ticket.status.update"
@@ -50,6 +53,9 @@ const actionFilters: { value: ActionFilter; label: string }[] = [
   { value: "bank_transfer.reject", label: "Transfer rejected" },
   { value: "support.ticket.status.update", label: "Ticket status" },
   { value: "support.ticket.priority.update", label: "Ticket priority" },
+  { value: "user.2fa.enable", label: "2FA enabled" },
+  { value: "user.2fa.disable", label: "2FA disabled" },
+  { value: "user.2fa.backup_codes_regenerated", label: "2FA backup codes" },
 ];
 
 const actionMeta: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
@@ -64,6 +70,9 @@ const actionMeta: Record<string, { label: string; color: string; icon: React.Com
   "bank_transfer.reject": { label: "Transfer rejected", color: "bg-amber-100 text-amber-700", icon: XCircle },
   "support.ticket.status.update": { label: "Ticket status", color: "bg-blue-100 text-blue-700", icon: LifeBuoy },
   "support.ticket.priority.update": { label: "Ticket priority", color: "bg-amber-100 text-amber-700", icon: LifeBuoy },
+  "user.2fa.enable": { label: "2FA enabled", color: "bg-emerald-100 text-emerald-700", icon: ShieldCheck },
+  "user.2fa.disable": { label: "2FA disabled", color: "bg-red-100 text-red-700", icon: ShieldCheck },
+  "user.2fa.backup_codes_regenerated": { label: "Backup codes regenerated", color: "bg-amber-100 text-amber-700", icon: ShieldCheck },
 };
 
 function formatDate(d: string) {

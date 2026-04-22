@@ -114,6 +114,7 @@ export async function POST(
           : null,
         suspended: false,
         impersonatedBy: session.user.id,
+        twoFactorEnabled: false,
         iat: now,
         exp: now + IMPERSONATION_MAX_AGE,
         jti: `impersonation-${session.user.id}-${target.id}-${now}`,

@@ -48,6 +48,12 @@ export const authOptions: NextAuthOptions = {
         token.emailVerified = (user as unknown as { emailVerified: string | null }).emailVerified;
         token.suspended = false;
         token.impersonatedBy = null;
+        // Fetch 2FA state once at login. Refreshed via `update()` below.
+        const full = await prisma.user.findUnique({
+          where: { id: user.id as string },
+          select: { twoFactorEnabledAt: true },
+        });
+        token.twoFactorEnabled = !!full?.twoFactorEnabledAt;
       }
       // Refresh plan from DB when client calls update(). Important: preserve
       // the impersonatedBy claim across refreshes so the banner stays up and
@@ -55,13 +61,14 @@ export const authOptions: NextAuthOptions = {
       if (trigger === "update" && token.id) {
         const freshUser = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { plan: true, role: true, emailVerified: true, suspendedAt: true },
+          select: { plan: true, role: true, emailVerified: true, suspendedAt: true, twoFactorEnabledAt: true },
         });
         if (freshUser) {
           token.plan = freshUser.plan;
           token.role = freshUser.role;
           token.emailVerified = freshUser.emailVerified ? freshUser.emailVerified.toISOString() : null;
           token.suspended = !!freshUser.suspendedAt;
+          token.twoFactorEnabled = !!freshUser.twoFactorEnabledAt;
         }
       }
       return token;
@@ -74,6 +81,7 @@ export const authOptions: NextAuthOptions = {
         session.user.emailVerified = (token.emailVerified as string | null) ?? null;
         session.user.suspended = (token.suspended as boolean) ?? false;
         session.user.impersonatedBy = (token.impersonatedBy as string | null) ?? null;
+        session.user.twoFactorEnabled = (token.twoFactorEnabled as boolean) ?? false;
       }
       return session;
     },
