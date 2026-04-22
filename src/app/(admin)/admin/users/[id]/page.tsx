@@ -5,7 +5,53 @@ import Link from "next/link";
 import {
   Loader2, ArrowLeft, Mail, Phone, CheckCircle2, XCircle,
   Calendar, Shield, Heart, CreditCard, ExternalLink, Ban, UserCheck, X, Eye,
+  Activity, UserPlus, Edit3, LifeBuoy, MessageCircle, Globe, RefreshCw,
 } from "lucide-react";
+
+type TimelineEventType =
+  | "account.signup"
+  | "account.email_verified"
+  | "account.suspended"
+  | "account.unsuspended"
+  | "account.plan_changed"
+  | "account.role_changed"
+  | "account.impersonated"
+  | "invitation.created"
+  | "invitation.published"
+  | "invitation.paid"
+  | "order.created"
+  | "order.completed"
+  | "order.failed"
+  | "order.refunded"
+  | "support.ticket_opened"
+  | "support.ticket_replied";
+
+interface TimelineEvent {
+  type: TimelineEventType;
+  at: string;
+  summary: string;
+  detail?: string;
+  actorEmail?: string | null;
+}
+
+const timelineMeta: Record<TimelineEventType, { icon: React.ComponentType<{ className?: string }>; color: string }> = {
+  "account.signup":         { icon: UserPlus,     color: "bg-blue-100 text-blue-700" },
+  "account.email_verified": { icon: CheckCircle2, color: "bg-emerald-100 text-emerald-700" },
+  "account.suspended":      { icon: Ban,          color: "bg-red-100 text-red-700" },
+  "account.unsuspended":    { icon: UserCheck,    color: "bg-emerald-100 text-emerald-700" },
+  "account.plan_changed":   { icon: Edit3,        color: "bg-blue-100 text-blue-700" },
+  "account.role_changed":   { icon: Shield,       color: "bg-violet-100 text-violet-700" },
+  "account.impersonated":   { icon: Eye,          color: "bg-amber-100 text-amber-700" },
+  "invitation.created":     { icon: Heart,        color: "bg-rose-100 text-rose-700" },
+  "invitation.published":   { icon: Globe,        color: "bg-emerald-100 text-emerald-700" },
+  "invitation.paid":        { icon: CheckCircle2, color: "bg-blue-100 text-blue-700" },
+  "order.created":          { icon: CreditCard,   color: "bg-gray-100 text-gray-700" },
+  "order.completed":        { icon: CheckCircle2, color: "bg-emerald-100 text-emerald-700" },
+  "order.failed":           { icon: XCircle,      color: "bg-red-100 text-red-700" },
+  "order.refunded":         { icon: RefreshCw,    color: "bg-gray-100 text-gray-700" },
+  "support.ticket_opened":  { icon: LifeBuoy,     color: "bg-amber-100 text-amber-700" },
+  "support.ticket_replied": { icon: MessageCircle,color: "bg-blue-100 text-blue-700" },
+};
 
 interface UserDetail {
   user: {
@@ -83,6 +129,8 @@ export default function AdminUserDetailPage(
   const [unsuspendLoading, setUnsuspendLoading] = useState(false);
   const [impersonateLoading, setImpersonateLoading] = useState(false);
   const [impersonateError, setImpersonateError] = useState<string | null>(null);
+  const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
+  const [timelineLoading, setTimelineLoading] = useState(true);
 
   const startImpersonation = async () => {
     setImpersonateLoading(true);
@@ -123,6 +171,21 @@ export default function AdminUserDetailPage(
         setError("Failed to load user.");
       } finally {
         setLoading(false);
+      }
+    };
+    load();
+  }, [id]);
+
+  useEffect(() => {
+    const load = async () => {
+      setTimelineLoading(true);
+      try {
+        const res = await fetch(`/api/admin/users/${id}/timeline`);
+        if (!res.ok) return;
+        const json = await res.json();
+        setTimeline(json.events || []);
+      } finally {
+        setTimelineLoading(false);
       }
     };
     load();
@@ -456,6 +519,49 @@ export default function AdminUserDetailPage(
               </tbody>
             </table>
           </div>
+        )}
+      </div>
+
+      {/* Activity timeline */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 mt-6">
+        <h2 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <Activity className="w-4 h-4 text-gray-500" /> Activity timeline
+          <span className="text-xs font-normal text-gray-400 ml-1">({timeline.length})</span>
+        </h2>
+        {timelineLoading ? (
+          <div className="flex items-center justify-center py-6">
+            <Loader2 className="w-5 h-5 text-rose-600 animate-spin" />
+          </div>
+        ) : timeline.length === 0 ? (
+          <p className="text-sm text-gray-400 py-6 text-center">No activity recorded.</p>
+        ) : (
+          <ol className="relative border-l border-gray-200 ml-2 space-y-4">
+            {timeline.map((e, i) => {
+              const meta = timelineMeta[e.type] ?? { icon: Activity, color: "bg-gray-100 text-gray-700" };
+              const Icon = meta.icon;
+              return (
+                <li key={`${e.type}-${e.at}-${i}`} className="ml-6">
+                  <span className={`absolute -left-3 flex items-center justify-center w-6 h-6 rounded-full ${meta.color} ring-2 ring-white`}>
+                    <Icon className="w-3 h-3" />
+                  </span>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-900">{e.summary}</p>
+                      {e.detail && (
+                        <p className="text-xs text-gray-500 mt-0.5 break-words">{e.detail}</p>
+                      )}
+                      {e.actorEmail && (
+                        <p className="text-xs text-gray-400 mt-0.5 font-mono">by {e.actorEmail}</p>
+                      )}
+                    </div>
+                    <time className="text-xs text-gray-400 flex-shrink-0 whitespace-nowrap" title={new Date(e.at).toLocaleString()}>
+                      {formatDate(e.at, true)}
+                    </time>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
         )}
       </div>
 
