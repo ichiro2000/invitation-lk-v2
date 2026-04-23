@@ -38,6 +38,15 @@ model User {
   twoFactorSecret    String?
   twoFactorEnabledAt DateTime?
 
+  // Notification preferences. Transactional emails (password reset, email
+  // verification, payment confirmation, support replies) ignore these flags
+  // because they're required for account function. Only "optional" sends
+  // — RSVP alerts, marketing — should consult the relevant flag at send
+  // time. See src/lib/resend.ts.
+  notifyEmailUpdates    Boolean @default(true)
+  notifyRsvpAlerts      Boolean @default(true)
+  notifyMarketingEmails Boolean @default(false)
+
   accounts    Account[]
   sessions    Session[]
   invitations Invitation[]

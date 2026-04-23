@@ -105,7 +105,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </nav>
 
         <div className="p-4 border-t border-gray-100">
-          <div className="flex items-center gap-3 px-4 py-2">
+          <Link
+            href="/dashboard/profile"
+            className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-colors ${pathname === "/dashboard/profile" ? "bg-rose-50" : "hover:bg-gray-50"}`}
+          >
             <div className="w-8 h-8 bg-rose-100 rounded-full flex items-center justify-center text-rose-600 text-sm font-bold">
               {(session.user?.name ?? "").trim().charAt(0).toUpperCase() || "U"}
             </div>
@@ -113,7 +116,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <p className="text-sm font-medium text-gray-900 truncate">{session.user?.name}</p>
               <p className="text-xs text-gray-400 truncate">{session.user?.plan === "FREE" ? "Free Plan" : `${session.user?.plan} Plan`}</p>
             </div>
-          </div>
+          </Link>
           <button onClick={() => signOut({ callbackUrl: "/" })} className="flex items-center gap-2 w-full px-4 py-2 mt-2 text-sm text-gray-400 hover:text-red-600 rounded-xl hover:bg-red-50 transition-colors">
             <LogOut className="w-4 h-4" /> Sign Out
           </button>
