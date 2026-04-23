@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
   Loader2, ShieldCheck, Search, X, User as UserIcon, CreditCard,
-  Trash2, Edit3, CheckCircle2, XCircle, Globe, Ban, UserCheck, LifeBuoy, Eye,
+  Trash2, Edit3, CheckCircle2, XCircle, Globe, Ban, UserCheck, LifeBuoy, Eye, Settings,
 } from "lucide-react";
 
 interface AuditEntry {
@@ -38,7 +38,8 @@ type ActionFilter =
   | "bank_transfer.approve"
   | "bank_transfer.reject"
   | "support.ticket.status.update"
-  | "support.ticket.priority.update";
+  | "support.ticket.priority.update"
+  | "settings.update";
 
 const actionFilters: { value: ActionFilter; label: string }[] = [
   { value: "", label: "All" },
@@ -56,6 +57,7 @@ const actionFilters: { value: ActionFilter; label: string }[] = [
   { value: "user.2fa.enable", label: "2FA enabled" },
   { value: "user.2fa.disable", label: "2FA disabled" },
   { value: "user.2fa.backup_codes_regenerated", label: "2FA backup codes" },
+  { value: "settings.update", label: "Settings updated" },
 ];
 
 const actionMeta: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
@@ -73,6 +75,7 @@ const actionMeta: Record<string, { label: string; color: string; icon: React.Com
   "user.2fa.enable": { label: "2FA enabled", color: "bg-emerald-100 text-emerald-700", icon: ShieldCheck },
   "user.2fa.disable": { label: "2FA disabled", color: "bg-red-100 text-red-700", icon: ShieldCheck },
   "user.2fa.backup_codes_regenerated": { label: "Backup codes regenerated", color: "bg-amber-100 text-amber-700", icon: ShieldCheck },
+  "settings.update": { label: "Settings updated", color: "bg-slate-100 text-slate-700", icon: Settings },
 };
 
 function formatDate(d: string) {

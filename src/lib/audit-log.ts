@@ -14,9 +14,10 @@ export type AuditAction =
   | "bank_transfer.approve"
   | "bank_transfer.reject"
   | "support.ticket.status.update"
-  | "support.ticket.priority.update";
+  | "support.ticket.priority.update"
+  | "settings.update";
 
-export type AuditTargetType = "User" | "Order" | "BankTransfer" | "Invitation";
+export type AuditTargetType = "User" | "Order" | "BankTransfer" | "Invitation" | "Settings";
 
 type LogParams = {
   actorUserId: string | null;
