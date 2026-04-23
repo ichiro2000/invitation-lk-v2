@@ -9,10 +9,19 @@ import Stripe from "stripe";
 // turns that into a 503 with a user-friendly message.
 let cachedClient: Stripe | null | undefined;
 
+// Stripe secret keys always start with "sk_" (sk_test_... or sk_live_...).
+// We reject anything else — most importantly a publishable key (pk_...)
+// pasted into STRIPE_SECRET_KEY by mistake — so the feature tab hides and
+// the admin env-status indicator flags it red, instead of users seeing a
+// 500 when they hit Continue to Stripe.
+function isSecretKeyShape(key: string | undefined): key is string {
+  return !!key && (key.startsWith("sk_test_") || key.startsWith("sk_live_"));
+}
+
 export function getStripe(): Stripe | null {
   if (cachedClient !== undefined) return cachedClient;
   const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) {
+  if (!isSecretKeyShape(key)) {
     cachedClient = null;
     return null;
   }
@@ -21,7 +30,7 @@ export function getStripe(): Stripe | null {
 }
 
 export function isStripeConfigured(): boolean {
-  return !!process.env.STRIPE_SECRET_KEY;
+  return isSecretKeyShape(process.env.STRIPE_SECRET_KEY);
 }
 
 export function isStripeWebhookConfigured(): boolean {

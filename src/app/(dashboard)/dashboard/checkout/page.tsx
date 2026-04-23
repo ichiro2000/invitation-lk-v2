@@ -55,11 +55,17 @@ function CheckoutContent() {
         setPayhereEnabled(ph);
         setBankEnabled(bk);
         setStripeEnabled(st);
-        // Pick whichever tab is actually available on load. Prefer Stripe
-        // when it's the only option, then card, then bank.
-        if (!ph && bk && !st) setPaymentMethod("bank");
-        if (ph && !bk && !st) setPaymentMethod("card");
-        if (!ph && !bk && st) setPaymentMethod("stripe");
+        // Ensure the selected tab is actually enabled. Default is "card"
+        // (PayHere) — if PayHere is off, fall through to the first enabled
+        // method so we don't render an orphan pane whose tab is hidden.
+        const enabled = { card: ph, stripe: st, bank: bk } as const;
+        setPaymentMethod((current) => {
+          if (enabled[current]) return current;
+          if (ph) return "card";
+          if (st) return "stripe";
+          if (bk) return "bank";
+          return current;
+        });
       })
       .catch(() => {});
   }, []);
@@ -79,7 +85,10 @@ function CheckoutContent() {
       });
       const data = await res.json();
       if (!res.ok || !data.checkoutUrl) {
-        setError(data.error || "Failed to start payment");
+        const msg = data.detail
+          ? `${data.error || "Failed to start payment"} — ${data.detail}`
+          : data.error || "Failed to start payment";
+        setError(msg);
         setLoading(false);
         return;
       }
