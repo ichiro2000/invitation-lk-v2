@@ -12,6 +12,7 @@ import {
   type SettingKey,
 } from "@/lib/settings";
 import { resetSettingsCache } from "@/lib/settings-read";
+import { isStripeConfigured, isStripeWebhookConfigured, getStripeMode } from "@/lib/stripe";
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
@@ -57,7 +58,19 @@ export async function GET() {
       };
     }
 
-    return NextResponse.json({ defs: SETTING_DEFS, values });
+    return NextResponse.json({
+      defs: SETTING_DEFS,
+      values,
+      // Env-sourced configuration status for secrets we intentionally don't
+      // store in the DB. Admin UI renders a green/amber pill next to the
+      // relevant feature flag so admins can tell at a glance whether turning
+      // the flag on will actually work.
+      env: {
+        stripeSecretConfigured: isStripeConfigured(),
+        stripeWebhookConfigured: isStripeWebhookConfigured(),
+        stripeMode: getStripeMode(),
+      },
+    });
   } catch (error) {
     console.error("Admin settings GET error:", error);
     return NextResponse.json(

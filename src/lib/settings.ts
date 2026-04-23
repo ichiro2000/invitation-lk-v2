@@ -85,8 +85,14 @@ export const SETTING_DEFS: SettingDef[] = [
     type: "bool", default: "true", group: "features", public: true,
   },
 
-  // Reserved flags — schema ready, no integration yet
-  { key: "feature_stripe", label: "Stripe card payments", help: NOT_WIRED, type: "bool", default: "true", group: "features", public: true },
+  {
+    key: "feature_stripe",
+    label: "Stripe card payments",
+    help: "Adds a Stripe 'International Card' tab on checkout. Requires STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET env vars on the deploy — a status pill on this card shows whether the env is configured.",
+    type: "bool", default: "false", group: "features", public: true,
+  },
+
+  // Reserved flag — no integration yet
   { key: "feature_whatsapp", label: "WhatsApp invites", help: NOT_WIRED, type: "bool", default: "false", group: "features", public: true },
 
   // Email provider metadata — credentials stay in env vars (RESEND_API_KEY).
