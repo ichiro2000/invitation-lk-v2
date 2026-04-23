@@ -346,6 +346,18 @@ model SupportTicketReply {
   @@index([ticketId])
 }
 
+// ═══ SYSTEM SETTINGS ═══
+// Admin-editable global config. Key/value — keys defined in src/lib/settings.ts.
+// Additive only: missing keys fall back to the hardcoded default, so an empty
+// table behaves identically to the old no-settings state.
+model SystemSetting {
+  key       String   @id
+  value     String   @db.Text
+  updatedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 // ═══ TWO-FACTOR (ADMIN) ═══
 model TwoFactorBackupCode {
   id        String    @id @default(cuid())

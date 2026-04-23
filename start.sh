@@ -124,6 +124,7 @@ async function migrate() {
     \"DO \\$\\$ BEGIN IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_name='Invitation' AND constraint_name='Invitation_userId_fkey' AND constraint_type='FOREIGN KEY') THEN ALTER TABLE \\\"Invitation\\\" ADD CONSTRAINT \\\"Invitation_userId_fkey\\\" FOREIGN KEY (\\\"userId\\\") REFERENCES \\\"User\\\"(id) ON DELETE CASCADE; END IF; END \\$\\$\",
     \"CREATE TABLE IF NOT EXISTS \\\"TwoFactorBackupCode\\\" (id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, \\\"userId\\\" TEXT NOT NULL REFERENCES \\\"User\\\"(id) ON DELETE CASCADE, \\\"codeHash\\\" TEXT NOT NULL, \\\"usedAt\\\" TIMESTAMP, \\\"createdAt\\\" TIMESTAMP DEFAULT NOW())\",
     \"CREATE INDEX IF NOT EXISTS \\\"TwoFactorBackupCode_userId_idx\\\" ON \\\"TwoFactorBackupCode\\\"(\\\"userId\\\")\",
+    \"CREATE TABLE IF NOT EXISTS \\\"SystemSetting\\\" (\\\"key\\\" TEXT PRIMARY KEY, \\\"value\\\" TEXT NOT NULL, \\\"updatedBy\\\" TEXT, \\\"createdAt\\\" TIMESTAMP DEFAULT NOW(), \\\"updatedAt\\\" TIMESTAMP DEFAULT NOW())\",
   ];
   for (const sql of tables) { try { await pool.query(sql); } catch(e) { console.log('Table error:', e.message.substring(0, 80)); } }
 

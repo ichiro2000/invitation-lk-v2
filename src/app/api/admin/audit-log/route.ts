@@ -18,6 +18,7 @@ const VALID_ACTIONS = new Set([
   "bank_transfer.reject",
   "support.ticket.status.update",
   "support.ticket.priority.update",
+  "settings.update",
 ]);
 
 export async function GET(request: Request) {
