@@ -77,7 +77,7 @@ export async function POST(request: Request) {
     }
 
     // Fire-and-forget notifications
-    sendWelcomeEmail(email, yourName).catch(() => {});
+    sendWelcomeEmail(email, yourName, user.id).catch(() => {});
 
     // Email verification token — 24h expiry
     (async () => {
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
             expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
           },
         });
-        await sendEmailVerificationEmail(email, yourName, token);
+        await sendEmailVerificationEmail(email, yourName, token, user.id);
       } catch (err) {
         console.error("Verification email flow failed (non-blocking):", err);
       }

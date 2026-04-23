@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import prisma from "./db";
+import { recordDelivery, type EmailTemplate } from "./delivery-log";
 import {
   welcomeEmailHtml,
   emailVerificationHtml,
@@ -37,17 +38,67 @@ async function getAdminRecipients(): Promise<string[]> {
   return fallback ? [fallback] : [];
 }
 
-export async function sendWelcomeEmail(email: string, name: string) {
+type ResendSendArgs = {
+  from: string;
+  to: string | string[];
+  subject: string;
+  html: string;
+};
+
+// Central send wrapper. Calls Resend, writes a DeliveryLog row for both
+// success and failure, and mirrors the original sender's { success, error }
+// contract so no call site behaviour changes.
+async function sendEmailAndLog(
+  resend: Resend,
+  args: ResendSendArgs,
+  meta: { template: EmailTemplate; userId?: string | null }
+): Promise<{ success: true } | { success: false; error: unknown }> {
+  try {
+    const result = await resend.emails.send(args);
+    const providerId =
+      (result && typeof result === "object" && "data" in result
+        ? (result.data as { id?: string } | null)?.id
+        : undefined) ?? null;
+    await recordDelivery({
+      channel: "EMAIL",
+      status: "SENT",
+      provider: "resend",
+      providerId,
+      recipient: args.to,
+      subject: args.subject,
+      template: meta.template,
+      userId: meta.userId ?? null,
+    });
+    return { success: true };
+  } catch (error) {
+    await recordDelivery({
+      channel: "EMAIL",
+      status: "FAILED",
+      provider: "resend",
+      recipient: args.to,
+      subject: args.subject,
+      template: meta.template,
+      userId: meta.userId ?? null,
+      error,
+    });
+    throw error;
+  }
+}
+
+export async function sendWelcomeEmail(email: string, name: string, userId?: string) {
   try {
     const resend = getResend();
     if (!resend) return { success: false, error: "Email not configured" };
-    await resend.emails.send({
-      from: FROM,
-      to: email,
-      subject: "Welcome to INVITATION.LK!",
-      html: welcomeEmailHtml(name),
-    });
-    return { success: true };
+    return await sendEmailAndLog(
+      resend,
+      {
+        from: FROM,
+        to: email,
+        subject: "Welcome to INVITATION.LK!",
+        html: welcomeEmailHtml(name),
+      },
+      { template: "welcome", userId }
+    );
   } catch (error) {
     console.error("Failed to send welcome email:", error);
     return { success: false, error };
@@ -57,19 +108,23 @@ export async function sendWelcomeEmail(email: string, name: string) {
 export async function sendEmailVerificationEmail(
   email: string,
   name: string,
-  token: string
+  token: string,
+  userId?: string
 ) {
   const verifyUrl = `${APP_URL}/api/auth/verify-email?token=${token}`;
   try {
     const resend = getResend();
     if (!resend) return { success: false, error: "Email not configured" };
-    await resend.emails.send({
-      from: FROM,
-      to: email,
-      subject: "Verify your email — INVITATION.LK",
-      html: emailVerificationHtml(name, verifyUrl),
-    });
-    return { success: true };
+    return await sendEmailAndLog(
+      resend,
+      {
+        from: FROM,
+        to: email,
+        subject: "Verify your email — INVITATION.LK",
+        html: emailVerificationHtml(name, verifyUrl),
+      },
+      { template: "email_verification", userId }
+    );
   } catch (error) {
     console.error("Failed to send verification email:", error);
     return { success: false, error };
@@ -81,36 +136,48 @@ export async function sendPaymentConfirmationEmail(
   name: string,
   plan: string,
   amount: string,
-  method: string
+  method: string,
+  userId?: string
 ) {
   try {
     const resend = getResend();
     if (!resend) return { success: false, error: "Email not configured" };
-    await resend.emails.send({
-      from: FROM,
-      to: email,
-      subject: `Payment Confirmed — ${plan}`,
-      html: paymentConfirmationHtml(name, plan, amount, method),
-    });
-    return { success: true };
+    return await sendEmailAndLog(
+      resend,
+      {
+        from: FROM,
+        to: email,
+        subject: `Payment Confirmed — ${plan}`,
+        html: paymentConfirmationHtml(name, plan, amount, method),
+      },
+      { template: "payment_confirmation", userId }
+    );
   } catch (error) {
     console.error("Failed to send payment confirmation email:", error);
     return { success: false, error };
   }
 }
 
-export async function sendPasswordResetEmail(email: string, name: string, token: string) {
+export async function sendPasswordResetEmail(
+  email: string,
+  name: string,
+  token: string,
+  userId?: string
+) {
   const resetUrl = `${APP_URL}/reset-password?token=${token}`;
   try {
     const resend = getResend();
     if (!resend) return { success: false, error: "Email not configured" };
-    await resend.emails.send({
-      from: FROM,
-      to: email,
-      subject: "Reset Your Password — INVITATION.LK",
-      html: passwordResetHtml(name, resetUrl),
-    });
-    return { success: true };
+    return await sendEmailAndLog(
+      resend,
+      {
+        from: FROM,
+        to: email,
+        subject: "Reset Your Password — INVITATION.LK",
+        html: passwordResetHtml(name, resetUrl),
+      },
+      { template: "password_reset", userId }
+    );
   } catch (error) {
     console.error("Failed to send password reset email:", error);
     return { success: false, error };
@@ -130,13 +197,16 @@ export async function sendAdminNewUserNotification(args: {
     if (!resend) return { success: false, error: "Email not configured" };
     const recipients = await getAdminRecipients();
     if (recipients.length === 0) return { success: false, error: "No admin recipients" };
-    await resend.emails.send({
-      from: FROM,
-      to: recipients,
-      subject: `New signup: ${args.yourName} & ${args.partnerName}`,
-      html: adminNewUserHtml(args),
-    });
-    return { success: true };
+    return await sendEmailAndLog(
+      resend,
+      {
+        from: FROM,
+        to: recipients,
+        subject: `New signup: ${args.yourName} & ${args.partnerName}`,
+        html: adminNewUserHtml(args),
+      },
+      { template: "admin_new_user" }
+    );
   } catch (error) {
     console.error("Failed to send admin new-user notification:", error);
     return { success: false, error };
@@ -155,13 +225,16 @@ export async function sendAdminPaymentNotification(args: {
     if (!resend) return { success: false, error: "Email not configured" };
     const recipients = await getAdminRecipients();
     if (recipients.length === 0) return { success: false, error: "No admin recipients" };
-    await resend.emails.send({
-      from: FROM,
-      to: recipients,
-      subject: `Payment received — ${args.plan} (Rs. ${args.amount})`,
-      html: adminPaymentAlertHtml(args),
-    });
-    return { success: true };
+    return await sendEmailAndLog(
+      resend,
+      {
+        from: FROM,
+        to: recipients,
+        subject: `Payment received — ${args.plan} (Rs. ${args.amount})`,
+        html: adminPaymentAlertHtml(args),
+      },
+      { template: "admin_payment_alert" }
+    );
   } catch (error) {
     console.error("Failed to send admin payment notification:", error);
     return { success: false, error };
@@ -182,13 +255,16 @@ export async function sendSupportTicketCreatedToAdmin(args: {
     const recipients = await getAdminRecipients();
     if (recipients.length === 0) return { success: false, error: "No admin recipients" };
     const ticketUrl = `${APP_URL}/admin/support/${args.ticketId}`;
-    await resend.emails.send({
-      from: FROM,
-      to: recipients,
-      subject: `[${args.priority}] Support ticket: ${args.subject}`,
-      html: supportTicketCreatedAdminHtml({ ...args, ticketUrl }),
-    });
-    return { success: true };
+    return await sendEmailAndLog(
+      resend,
+      {
+        from: FROM,
+        to: recipients,
+        subject: `[${args.priority}] Support ticket: ${args.subject}`,
+        html: supportTicketCreatedAdminHtml({ ...args, ticketUrl }),
+      },
+      { template: "support_ticket_created_admin" }
+    );
   } catch (error) {
     console.error("Failed to send support-ticket admin notification:", error);
     return { success: false, error };
@@ -201,18 +277,22 @@ export async function sendSupportReplyToCustomer(args: {
   customerName: string;
   subject: string;
   message: string;
+  userId?: string;
 }) {
   try {
     const resend = getResend();
     if (!resend) return { success: false, error: "Email not configured" };
     const ticketUrl = `${APP_URL}/dashboard/support/${args.ticketId}`;
-    await resend.emails.send({
-      from: FROM,
-      to: args.customerEmail,
-      subject: `Reply to your ticket: ${args.subject}`,
-      html: supportTicketReplyCustomerHtml({ ...args, ticketUrl }),
-    });
-    return { success: true };
+    return await sendEmailAndLog(
+      resend,
+      {
+        from: FROM,
+        to: args.customerEmail,
+        subject: `Reply to your ticket: ${args.subject}`,
+        html: supportTicketReplyCustomerHtml({ ...args, ticketUrl }),
+      },
+      { template: "support_ticket_reply_customer", userId: args.userId }
+    );
   } catch (error) {
     console.error("Failed to send support-reply customer email:", error);
     return { success: false, error };

@@ -45,7 +45,7 @@ export async function POST() {
       },
     });
 
-    await sendEmailVerificationEmail(user.email, user.yourName || "there", token);
+    await sendEmailVerificationEmail(user.email, user.yourName || "there", token, session.user.id);
 
     return NextResponse.json({ success: true });
   } catch (error) {

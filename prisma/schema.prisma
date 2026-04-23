@@ -346,6 +346,48 @@ model SupportTicketReply {
   @@index([ticketId])
 }
 
+// ═══ DELIVERY LOG ═══
+// Every outbound transactional message (email today, SMS/WhatsApp later) gets
+// a row here so admins can see failures and bounces instead of relying on
+// console logs. Write path is `src/lib/delivery-log.ts`; read path is
+// /admin/communications. Status starts as SENT or FAILED — DELIVERED/BOUNCED/
+// OPENED/CLICKED are reserved for when Resend webhooks land.
+enum DeliveryChannel {
+  EMAIL
+  SMS
+  WHATSAPP
+}
+
+enum DeliveryStatus {
+  SENT
+  FAILED
+  DELIVERED
+  BOUNCED
+  OPENED
+  CLICKED
+}
+
+model DeliveryLog {
+  id         String          @id @default(cuid())
+  channel    DeliveryChannel
+  status     DeliveryStatus
+  provider   String?
+  providerId String?
+  recipient  String
+  subject    String?
+  template   String?
+  userId     String?
+  error      String?         @db.Text
+  metadata   Json?
+  createdAt  DateTime        @default(now())
+
+  @@index([createdAt])
+  @@index([channel, status])
+  @@index([recipient])
+  @@index([userId])
+  @@index([template])
+}
+
 // ═══ SYSTEM SETTINGS ═══
 // Admin-editable global config. Key/value — keys defined in src/lib/settings.ts.
 // Additive only: missing keys fall back to the hardcoded default, so an empty
