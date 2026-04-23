@@ -7,9 +7,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Heart, LayoutDashboard, Pencil, Users, UserPlus, ListTodo, DollarSign, Store, LogOut, CreditCard, ShieldCheck, FileText, LayoutGrid, Mail, Loader2, Check, LifeBuoy } from "lucide-react";
 import ImpersonationBanner from "@/components/ImpersonationBanner";
+import NotificationsBell from "@/components/dashboard/NotificationsBell";
 
 // Module-level guard — survives re-mount cycles triggered by update().
 let bannerHasRefreshed = false;
+
+interface NotificationItem {
+  id: string;
+  kind: "support.pending";
+  subject: string;
+  priority: "LOW" | "NORMAL" | "HIGH" | "URGENT";
+  updatedAt: string;
+  href: string;
+}
 
 const sidebarLinks = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -112,12 +122,47 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       <main className="flex-1 lg:ml-64">
         <ImpersonationBanner />
-        <div className="p-6 sm:p-8 max-w-7xl mx-auto">
+        <DashboardHeader />
+        <div className="px-6 sm:px-8 pb-8 max-w-7xl mx-auto">
           {!session.user?.emailVerified && <VerifyEmailBanner />}
           {children}
         </div>
       </main>
     </div>
+  );
+}
+
+function DashboardHeader() {
+  const [count, setCount] = useState(0);
+  const [items, setItems] = useState<NotificationItem[]>([]);
+
+  useEffect(() => {
+    let alive = true;
+    const load = async () => {
+      try {
+        const res = await fetch("/api/dashboard/notifications");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!alive) return;
+        setCount(data.count ?? 0);
+        setItems(data.items ?? []);
+      } catch { /* keep last good value */ }
+    };
+    load();
+    // Refresh every 60s so a customer sees a fresh admin reply without a hard
+    // reload. No cleanup on visibility change — Next's router unmounts the
+    // layout on hard nav, and a browser tab backgrounded for hours will just
+    // catch up on focus.
+    const id = setInterval(load, 60_000);
+    return () => { alive = false; clearInterval(id); };
+  }, []);
+
+  return (
+    <header className="sticky top-0 z-20 bg-gray-50/80 backdrop-blur border-b border-gray-100">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 h-16 flex items-center justify-end gap-3">
+        <NotificationsBell count={count} items={items} />
+      </div>
+    </header>
   );
 }
 
