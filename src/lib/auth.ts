@@ -3,6 +3,7 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import prisma from "./db";
+import { displayName } from "./user-display";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -31,7 +32,7 @@ export const authOptions: NextAuthOptions = {
         return {
           id: user.id,
           email: user.email,
-          name: `${user.yourName} & ${user.partnerName}`,
+          name: displayName(user.yourName, user.partnerName, user.email),
           role: user.role,
           plan: user.plan,
           emailVerified: user.emailVerified ? user.emailVerified.toISOString() : null,
