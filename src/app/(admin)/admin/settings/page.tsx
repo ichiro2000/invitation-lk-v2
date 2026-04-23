@@ -4,9 +4,16 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Loader2, Settings as SettingsIcon, Save, RotateCcw, CheckCircle2, AlertTriangle, Info,
 } from "lucide-react";
+// Import the canonical group catalog so this page can't drift from settings.ts
+// again. A new group in settings.ts now flows through automatically.
+import {
+  GROUP_LABELS,
+  GROUP_ORDER,
+  type SettingGroup,
+  type SettingType as SettingTypeBase,
+} from "@/lib/settings";
 
-type SettingType = "text" | "email" | "tel" | "url" | "bool" | "longtext";
-type SettingGroup = "branding" | "regional" | "seo" | "legal" | "features";
+type SettingType = SettingTypeBase;
 
 interface SettingDef {
   key: string;
@@ -30,22 +37,13 @@ interface LoadResponse {
   values: Record<string, SettingValue>;
 }
 
-const GROUP_LABELS: Record<SettingGroup, string> = {
-  branding: "Branding & contact",
-  regional: "Regional",
-  seo: "SEO defaults",
-  legal: "Legal",
-  features: "Feature flags",
-};
-
-const GROUP_ORDER: SettingGroup[] = ["branding", "regional", "seo", "legal", "features"];
-
 const GROUP_BLURB: Record<SettingGroup, string> = {
   branding: "Shown in site chrome and transactional emails.",
   regional: "Defaults for timezone, currency, and locale.",
   seo: "Fallback metadata for pages without their own.",
   legal: "Links surfaced in footer and signup.",
-  features: "Stored only — consumers still use hardcoded values. Toggling here has no runtime effect until each consumer is wired up.",
+  features: "Live — toggling a flag takes effect within a few seconds. Flags labelled 'reserved' have no consumer yet.",
+  email: "Envelope used for every transactional email. Leave blank to fall back to INVITATION.LK <noreply@invitation.lk>.",
 };
 
 function formatRelative(iso: string | null): string | null {
@@ -176,10 +174,15 @@ export default function AdminSettingsPage() {
     );
   }
 
-  const byGroup: Record<SettingGroup, SettingDef[]> = {
-    branding: [], regional: [], seo: [], legal: [], features: [],
-  };
-  for (const def of defs) byGroup[def.group].push(def);
+  // Bucket defs by group. Using a Map with lazy init so an unknown group
+  // coming from the server never crashes the page — it just gets hidden
+  // (GROUP_ORDER controls what renders).
+  const byGroup = new Map<SettingGroup, SettingDef[]>();
+  for (const def of defs) {
+    const list = byGroup.get(def.group) ?? [];
+    list.push(def);
+    byGroup.set(def.group, list);
+  }
 
   return (
     <div>
@@ -194,7 +197,7 @@ export default function AdminSettingsPage() {
       <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 flex items-start gap-3 max-w-4xl">
         <Info className="w-4 h-4 text-amber-700 flex-shrink-0 mt-0.5" />
         <p className="text-xs text-amber-900">
-          <strong>Safe to edit.</strong> Settings are stored in a new <code className="font-mono">SystemSetting</code> table — nothing currently reads from it, so changes here do not alter existing invitations, payments, or signup behaviour. Each save is written to the audit log.
+          <strong>Changes take effect within seconds.</strong> Feature flags gate live signup and checkout paths; email envelope edits apply to the next send. Flags labelled <em>reserved</em> in Feature flags have no consumer yet. Every save is written to the audit log.
         </p>
       </div>
 
@@ -218,7 +221,7 @@ export default function AdminSettingsPage() {
             <h2 className="text-base font-semibold text-gray-900">{GROUP_LABELS[group]}</h2>
             <p className="text-xs text-gray-500 mt-1 mb-5">{GROUP_BLURB[group]}</p>
             <div className="space-y-5">
-              {byGroup[group].map((def) => {
+              {(byGroup.get(group) ?? []).map((def) => {
                 const meta = values[def.key];
                 const err = fieldErrors[def.key];
                 const cur = form[def.key] ?? "";
