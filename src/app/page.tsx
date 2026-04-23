@@ -33,7 +33,7 @@ const faqSchema = {
       name: "How does the invitation link work?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Each guest gets a unique link (e.g., invitation.lk/w/kasun-dilini). With Standard and Premium plans, each guest sees their own name on the invitation for a personalized touch.",
+        text: "Each guest gets a unique link (e.g., invitation.lk/i/kasun-dilini). With Standard and Premium plans, each guest sees their own name on the invitation for a personalized touch.",
       },
     },
     {

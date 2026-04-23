@@ -109,7 +109,7 @@ export async function GET(
         type: "invitation.created",
         at: inv.createdAt.toISOString(),
         summary: "Invitation created",
-        detail: `${inv.groomName} & ${inv.brideName} · /w/${inv.slug}`,
+        detail: `${inv.groomName} & ${inv.brideName} · /i/${inv.slug}`,
       });
       // isPublished / isPaid don't carry their own timestamp, but we know
       // the current state and the updatedAt — if the flag is true we
@@ -119,7 +119,7 @@ export async function GET(
           type: "invitation.published",
           at: inv.updatedAt.toISOString(),
           summary: "Invitation site went live",
-          detail: `/w/${inv.slug}`,
+          detail: `/i/${inv.slug}`,
         });
       }
       if (inv.isPaid) {
@@ -127,7 +127,7 @@ export async function GET(
           type: "invitation.paid",
           at: inv.updatedAt.toISOString(),
           summary: "Invitation marked paid",
-          detail: `/w/${inv.slug}`,
+          detail: `/i/${inv.slug}`,
         });
       }
     }

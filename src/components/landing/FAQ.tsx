@@ -6,7 +6,7 @@ import { Plus, Minus } from "lucide-react";
 
 const faqs = [
   { q: "Is it really free to start?", a: "Yes! You can create your wedding invitation, choose a template, and preview it completely free. You only pay when you're ready to publish and share it with your guests." },
-  { q: "How does the invitation link work?", a: "Each guest gets a unique link (e.g., invitation.lk/w/kasun-dilini). With Standard and Premium plans, each guest sees their own name on the invitation for a personalized touch." },
+  { q: "How does the invitation link work?", a: "Each guest gets a unique link (e.g., invitation.lk/i/kasun-dilini). With Standard and Premium plans, each guest sees their own name on the invitation for a personalized touch." },
   { q: "Can I add all my wedding events?", a: "Yes! You can add multiple events like Poruwa Ceremony, Church Wedding, Reception, Homecoming, and more. Guests see the full schedule on your invitation page." },
   { q: "Do you support Sinhala and Tamil?", a: "Absolutely! Your invitation can be in Sinhala, Tamil, English, or any combination. We fully support all three languages." },
   { q: "How long does my invitation stay active?", a: "Your wedding invitation stays active for 6 months from the wedding date. Extensions are available if needed." },

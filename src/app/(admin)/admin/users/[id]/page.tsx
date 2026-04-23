@@ -458,7 +458,7 @@ export default function AdminUserDetailPage(
                     {inv.groomName} & {inv.brideName}
                   </Link>
                   <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 mt-1">
-                    <span className="font-mono">/w/{inv.slug}</span>
+                    <span className="font-mono">/i/{inv.slug}</span>
                     <span>·</span>
                     <span>{formatDate(inv.weddingDate)}</span>
                     <span>·</span>
@@ -474,7 +474,7 @@ export default function AdminUserDetailPage(
                   <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold ${inv.isPaid ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700"}`}>
                     {inv.isPaid ? "Paid" : "Unpaid"}
                   </span>
-                  <Link href={`/w/${inv.slug}`} target="_blank"
+                  <Link href={`/i/${inv.slug}`} target="_blank"
                     className="inline-flex items-center gap-1 text-xs text-rose-600 hover:underline ml-2">
                     Open <ExternalLink className="w-3 h-3" />
                   </Link>

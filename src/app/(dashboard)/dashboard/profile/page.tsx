@@ -153,7 +153,7 @@ export default function ProfilePage() {
 
   const copyInvitationUrl = async () => {
     if (!data?.invitation) return;
-    const url = `${window.location.origin}/w/${data.invitation.slug}`;
+    const url = `${window.location.origin}/i/${data.invitation.slug}`;
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
@@ -172,7 +172,7 @@ export default function ProfilePage() {
   const fullName = [data.profile.yourName, data.profile.partnerName].filter(Boolean).join(" & ") || "Your profile";
   const isPaid = data.profile.plan !== "FREE";
   const invitationUrl = data.invitation
-    ? `${typeof window !== "undefined" ? window.location.origin : ""}/w/${data.invitation.slug}`
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}/i/${data.invitation.slug}`
     : "";
 
   return (

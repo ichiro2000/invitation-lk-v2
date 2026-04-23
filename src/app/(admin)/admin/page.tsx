@@ -267,7 +267,7 @@ export default function AdminOverviewPage() {
                       )}
                     </td>
                     <td className="py-3">
-                      <Link href={`/w/${w.slug}`} target="_blank" className="text-xs text-rose-600 hover:underline inline-flex items-center gap-1">
+                      <Link href={`/i/${w.slug}`} target="_blank" className="text-xs text-rose-600 hover:underline inline-flex items-center gap-1">
                         Preview <ExternalLink className="w-3 h-3" />
                       </Link>
                     </td>
