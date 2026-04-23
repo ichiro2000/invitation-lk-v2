@@ -116,7 +116,8 @@ export async function PATCH(
           user.yourName || "Customer",
           planName,
           amount,
-          "Bank Transfer"
+          "Bank Transfer",
+          bankTransfer.order.userId
         );
         sendAdminPaymentNotification({
           userEmail: user.email,

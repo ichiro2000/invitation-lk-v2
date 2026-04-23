@@ -125,6 +125,14 @@ async function migrate() {
     \"CREATE TABLE IF NOT EXISTS \\\"TwoFactorBackupCode\\\" (id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, \\\"userId\\\" TEXT NOT NULL REFERENCES \\\"User\\\"(id) ON DELETE CASCADE, \\\"codeHash\\\" TEXT NOT NULL, \\\"usedAt\\\" TIMESTAMP, \\\"createdAt\\\" TIMESTAMP DEFAULT NOW())\",
     \"CREATE INDEX IF NOT EXISTS \\\"TwoFactorBackupCode_userId_idx\\\" ON \\\"TwoFactorBackupCode\\\"(\\\"userId\\\")\",
     \"CREATE TABLE IF NOT EXISTS \\\"SystemSetting\\\" (\\\"key\\\" TEXT PRIMARY KEY, \\\"value\\\" TEXT NOT NULL, \\\"updatedBy\\\" TEXT, \\\"createdAt\\\" TIMESTAMP DEFAULT NOW(), \\\"updatedAt\\\" TIMESTAMP DEFAULT NOW())\",
+    \"DO \\$\\$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'DeliveryChannel') THEN CREATE TYPE \\\"DeliveryChannel\\\" AS ENUM ('EMAIL', 'SMS', 'WHATSAPP'); END IF; END \\$\\$\",
+    \"DO \\$\\$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'DeliveryStatus') THEN CREATE TYPE \\\"DeliveryStatus\\\" AS ENUM ('SENT', 'FAILED', 'DELIVERED', 'BOUNCED', 'OPENED', 'CLICKED'); END IF; END \\$\\$\",
+    \"CREATE TABLE IF NOT EXISTS \\\"DeliveryLog\\\" (id TEXT PRIMARY KEY, channel \\\"DeliveryChannel\\\" NOT NULL, status \\\"DeliveryStatus\\\" NOT NULL, provider TEXT, \\\"providerId\\\" TEXT, recipient TEXT NOT NULL, subject TEXT, template TEXT, \\\"userId\\\" TEXT, error TEXT, metadata JSONB, \\\"createdAt\\\" TIMESTAMP DEFAULT NOW())\",
+    \"CREATE INDEX IF NOT EXISTS \\\"DeliveryLog_createdAt_idx\\\" ON \\\"DeliveryLog\\\"(\\\"createdAt\\\" DESC)\",
+    \"CREATE INDEX IF NOT EXISTS \\\"DeliveryLog_channel_status_idx\\\" ON \\\"DeliveryLog\\\"(channel, status)\",
+    \"CREATE INDEX IF NOT EXISTS \\\"DeliveryLog_recipient_idx\\\" ON \\\"DeliveryLog\\\"(recipient)\",
+    \"CREATE INDEX IF NOT EXISTS \\\"DeliveryLog_userId_idx\\\" ON \\\"DeliveryLog\\\"(\\\"userId\\\")\",
+    \"CREATE INDEX IF NOT EXISTS \\\"DeliveryLog_template_idx\\\" ON \\\"DeliveryLog\\\"(template)\",
   ];
   for (const sql of tables) { try { await pool.query(sql); } catch(e) { console.log('Table error:', e.message.substring(0, 80)); } }
 

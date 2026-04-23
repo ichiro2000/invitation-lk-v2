@@ -44,7 +44,7 @@ export async function POST(request: Request) {
       },
     });
 
-    await sendPasswordResetEmail(email, user.yourName || "User", token);
+    await sendPasswordResetEmail(email, user.yourName || "User", token, user.id);
 
     return NextResponse.json({ success: true });
   } catch (error) {

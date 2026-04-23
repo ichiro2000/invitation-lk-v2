@@ -36,7 +36,7 @@ export async function POST(
     const ticket = await prisma.supportTicket.findUnique({
       where: { id },
       select: {
-        id: true, status: true, subject: true,
+        id: true, status: true, subject: true, userId: true,
         user: { select: { email: true, yourName: true } },
       },
     });
@@ -74,6 +74,7 @@ export async function POST(
           customerName: ticket.user.yourName || ticket.user.email,
           subject: ticket.subject,
           message,
+          userId: ticket.userId,
         }).catch(() => {});
       }
     }
