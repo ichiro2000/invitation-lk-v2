@@ -2,6 +2,7 @@ import { Resend } from "resend";
 import prisma from "./db";
 import { recordDelivery, type EmailTemplate } from "./delivery-log";
 import { getSettings } from "./settings-read";
+import { displayName } from "./user-display";
 import {
   welcomeEmailHtml,
   emailVerificationHtml,
@@ -240,7 +241,7 @@ export async function sendAdminNewUserNotification(args: {
       resend,
       {
         to: recipients,
-        subject: `New signup: ${args.yourName} & ${args.partnerName}`,
+        subject: `New signup: ${displayName(args.yourName, args.partnerName, args.email)}`,
         html: adminNewUserHtml(args),
       },
       { template: "admin_new_user" }
