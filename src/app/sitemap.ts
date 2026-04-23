@@ -21,7 +21,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       select: { slug: true, updatedAt: true },
     });
     weddingPages = invitations.map((inv) => ({
-      url: `${baseUrl}/w/${inv.slug}`,
+      url: `${baseUrl}/i/${inv.slug}`,
       lastModified: inv.updatedAt,
       changeFrequency: "weekly" as const,
       priority: 0.7,

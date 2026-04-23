@@ -148,10 +148,10 @@ export default function AdminWeddingDetailPage(
           <h1 className="text-2xl font-bold text-gray-900">
             {invitation.groomName} & {invitation.brideName}
           </h1>
-          <p className="text-gray-400 mt-1 font-mono text-sm">/w/{invitation.slug}</p>
+          <p className="text-gray-400 mt-1 font-mono text-sm">/i/{invitation.slug}</p>
         </div>
         <div className="flex gap-2">
-          <Link href={`/w/${invitation.slug}`} target="_blank"
+          <Link href={`/i/${invitation.slug}`} target="_blank"
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-medium transition-colors">
             <Eye className="w-4 h-4" /> Preview site <ExternalLink className="w-3.5 h-3.5" />
           </Link>

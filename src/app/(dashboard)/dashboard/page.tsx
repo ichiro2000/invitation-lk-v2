@@ -256,10 +256,10 @@ export default function DashboardPage() {
           <div className="mt-5 pt-5 border-t border-gray-100 flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Your invitation is live at</p>
-              <p className="text-sm font-mono text-gray-700 truncate">/w/{invitation.slug}</p>
+              <p className="text-sm font-mono text-gray-700 truncate">/i/{invitation.slug}</p>
             </div>
             <Link
-              href={`/w/${invitation.slug}`}
+              href={`/i/${invitation.slug}`}
               target="_blank"
               rel="noopener"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-sm font-medium text-gray-700 flex-shrink-0"

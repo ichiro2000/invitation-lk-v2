@@ -164,7 +164,7 @@ export default function AdminWeddingsPage() {
                         <Link href={`/admin/weddings/${w.id}`} className="font-medium text-gray-900 hover:text-rose-600">
                           {w.groomName} & {w.brideName}
                         </Link>
-                        <p className="text-xs text-gray-400 font-mono">/w/{w.slug}</p>
+                        <p className="text-xs text-gray-400 font-mono">/i/{w.slug}</p>
                       </td>
                       <td className="px-5 py-4">
                         <p className="text-gray-700 truncate max-w-[180px]">{w.user?.yourName || "—"}</p>
@@ -207,7 +207,7 @@ export default function AdminWeddingsPage() {
                             className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                             Details
                           </Link>
-                          <Link href={`/w/${w.slug}`} target="_blank"
+                          <Link href={`/i/${w.slug}`} target="_blank"
                             className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors">
                             <Eye className="w-3.5 h-3.5" /> Preview <ExternalLink className="w-3 h-3" />
                           </Link>
