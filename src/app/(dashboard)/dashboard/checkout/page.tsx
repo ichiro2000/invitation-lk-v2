@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
-import { CreditCard, Building2, Upload, CheckCircle, Loader2, Crown } from "lucide-react";
+import { CreditCard, Building2, Upload, CheckCircle, Loader2, Crown, AlertTriangle } from "lucide-react";
 
 const plans = [
   { id: "BASIC", name: "Basic", price: 2500, features: ["1 Template", "Up to 100 Guests", "Digital Invitation"] },
@@ -26,6 +26,28 @@ function CheckoutContent() {
   const [bankRef, setBankRef] = useState("");
   const [bankSubmitted, setBankSubmitted] = useState(false);
   const [error, setError] = useState("");
+  // Feature flags read from /api/settings/public. Default to true — fail open
+  // so a temporarily unreachable settings endpoint never blocks all payments.
+  // The server-side guards in the checkout routes still reject disabled
+  // methods so nothing gets through that shouldn't.
+  const [payhereEnabled, setPayhereEnabled] = useState(true);
+  const [bankEnabled, setBankEnabled] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/settings/public")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!data) return;
+        const ph = data.feature_payhere !== "false";
+        const bk = data.feature_bank_transfer !== "false";
+        setPayhereEnabled(ph);
+        setBankEnabled(bk);
+        // Pick whichever tab is actually available on load.
+        if (!ph && bk) setPaymentMethod("bank");
+        if (ph && !bk) setPaymentMethod("card");
+      })
+      .catch(() => {});
+  }, []);
 
   const userPlan = session?.user?.plan || "FREE";
   const currentPlanRank = planRank[userPlan] || 0;
@@ -175,28 +197,44 @@ function CheckoutContent() {
 
       {/* Payment Methods */}
       <div className="bg-white rounded-3xl shadow-xl shadow-gray-100/50 border border-gray-100 overflow-hidden">
-        {/* Tabs */}
-        <div className="flex border-b border-gray-100">
-          <button
-            onClick={() => setPaymentMethod("card")}
-            className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-medium transition-colors ${
-              paymentMethod === "card" ? "text-rose-600 border-b-2 border-rose-600 bg-rose-50/30" : "text-gray-400 hover:text-gray-600"
-            }`}
-          >
-            <CreditCard className="w-4 h-4" /> Pay with Card
-          </button>
-          <button
-            onClick={() => setPaymentMethod("bank")}
-            className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-medium transition-colors ${
-              paymentMethod === "bank" ? "text-rose-600 border-b-2 border-rose-600 bg-rose-50/30" : "text-gray-400 hover:text-gray-600"
-            }`}
-          >
-            <Building2 className="w-4 h-4" /> Bank Transfer
-          </button>
-        </div>
+        {!payhereEnabled && !bankEnabled ? (
+          <div className="p-10 text-center">
+            <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+              <AlertTriangle className="w-6 h-6 text-amber-600" />
+            </div>
+            <h3 className="text-base font-semibold text-gray-900 mb-1">Payments are temporarily paused</h3>
+            <p className="text-sm text-gray-500">
+              We&apos;re not taking new payments right now. Please try again shortly or contact support.
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Tabs */}
+            <div className="flex border-b border-gray-100">
+              {payhereEnabled && (
+                <button
+                  onClick={() => setPaymentMethod("card")}
+                  className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-medium transition-colors ${
+                    paymentMethod === "card" ? "text-rose-600 border-b-2 border-rose-600 bg-rose-50/30" : "text-gray-400 hover:text-gray-600"
+                  }`}
+                >
+                  <CreditCard className="w-4 h-4" /> Pay with Card
+                </button>
+              )}
+              {bankEnabled && (
+                <button
+                  onClick={() => setPaymentMethod("bank")}
+                  className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-medium transition-colors ${
+                    paymentMethod === "bank" ? "text-rose-600 border-b-2 border-rose-600 bg-rose-50/30" : "text-gray-400 hover:text-gray-600"
+                  }`}
+                >
+                  <Building2 className="w-4 h-4" /> Bank Transfer
+                </button>
+              )}
+            </div>
 
-        <div className="p-8">
-          {error && <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-xl mb-6">{error}</div>}
+            <div className="p-8">
+              {error && <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-xl mb-6">{error}</div>}
 
           {paymentMethod === "card" ? (
             <div className="space-y-6">
@@ -301,7 +339,9 @@ function CheckoutContent() {
               </button>
             </div>
           )}
-        </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

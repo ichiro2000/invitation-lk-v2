@@ -11,6 +11,7 @@ import {
   validateValue,
   type SettingKey,
 } from "@/lib/settings";
+import { resetSettingsCache } from "@/lib/settings-read";
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
@@ -136,6 +137,7 @@ export async function PUT(request: Request) {
     }
 
     if (changed.length > 0) {
+      resetSettingsCache();
       await logAdminAction({
         actorUserId: auth.session.user.id,
         action: "settings.update",

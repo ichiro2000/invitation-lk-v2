@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/db";
 import { PLAN_AMOUNTS } from "@/lib/plans";
 import { checkoutLimiter } from "@/lib/rate-limit";
+import { getFlag } from "@/lib/settings-read";
 import type { Plan } from "@/generated/prisma/client";
 
 const VALID_PLANS = ["BASIC", "STANDARD", "PREMIUM"];
@@ -17,6 +18,13 @@ export async function POST(request: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (!(await getFlag("feature_bank_transfer"))) {
+      return NextResponse.json(
+        { error: "Bank transfer is temporarily unavailable. Please try another method." },
+        { status: 503 }
+      );
     }
 
     const ip = request.headers.get("x-forwarded-for") || "unknown";

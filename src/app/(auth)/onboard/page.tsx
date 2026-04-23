@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Heart, ArrowRight, ArrowLeft, User, Calendar as CalendarIcon, MapPin, Mail, Phone, Lock, Eye, EyeOff, Loader2, Check, Sparkles } from "lucide-react";
+import { Heart, ArrowRight, ArrowLeft, User, Calendar as CalendarIcon, MapPin, Mail, Phone, Lock, Eye, EyeOff, Loader2, Check, Sparkles, Lock as LockIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
@@ -20,6 +20,25 @@ export default function OnboardPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [signupsOpen, setSignupsOpen] = useState<boolean | null>(null);
+  const [supportEmail, setSupportEmail] = useState("");
+
+  useEffect(() => {
+    fetch("/api/settings/public")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!data) {
+          // Fail open: if we can't read the flag, fall back to allowing signups —
+          // the server-side guard in /api/auth/register still blocks writes if
+          // the flag is off.
+          setSignupsOpen(true);
+          return;
+        }
+        setSignupsOpen(data.feature_signup_open !== "false");
+        if (typeof data.support_email === "string") setSupportEmail(data.support_email);
+      })
+      .catch(() => setSignupsOpen(true));
+  }, []);
 
   const canGoNext = () => {
     if (step === 1) return yourName.trim() && partnerName.trim();
@@ -62,6 +81,31 @@ export default function OnboardPage() {
       setLoading(false);
     }
   };
+
+  if (signupsOpen === false) {
+    return (
+      <div className="w-full max-w-md">
+        <div className="text-center mb-6">
+          <Link href="/" className="inline-flex items-center gap-2">
+            <Heart className="w-8 h-8 text-rose-600 fill-rose-600" />
+            <span className="text-2xl font-bold text-gray-900">INVITATION<span className="text-rose-600">.LK</span></span>
+          </Link>
+        </div>
+        <div className="bg-white rounded-3xl shadow-xl shadow-gray-100/50 border border-gray-100 p-8 text-center">
+          <div className="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <LockIcon className="w-7 h-7 text-amber-600" />
+          </div>
+          <h1 className="text-xl font-bold text-gray-900 mb-2">Signups are temporarily closed</h1>
+          <p className="text-sm text-gray-500">
+            We&apos;re not accepting new accounts at the moment. Please check back soon{supportEmail ? <> or email <a href={`mailto:${supportEmail}`} className="text-rose-600 hover:underline">{supportEmail}</a></> : ""}.
+          </p>
+          <Link href="/login" className="inline-flex items-center gap-2 mt-6 px-4 py-2 rounded-xl border border-gray-200 hover:bg-gray-50 text-sm font-medium text-gray-700 transition-colors">
+            Existing customers sign in
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-md">

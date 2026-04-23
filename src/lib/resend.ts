@@ -1,6 +1,7 @@
 import { Resend } from "resend";
 import prisma from "./db";
 import { recordDelivery, type EmailTemplate } from "./delivery-log";
+import { getSettings } from "./settings-read";
 import {
   welcomeEmailHtml,
   emailVerificationHtml,
@@ -20,10 +21,41 @@ function getResend(): Resend | null {
   return new Resend(process.env.RESEND_API_KEY);
 }
 
-const FROM = "INVITATION.LK <noreply@invitation.lk>";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://invitation.lk";
 
+const EMAIL_KEYS = [
+  "email_from_name",
+  "email_from_address",
+  "email_reply_to",
+  "email_admin_recipients",
+] as const;
+
+// Build the "From: Name <addr>" header from admin settings. If the admin
+// saved an unverified address, Resend will reject the send — the failure is
+// logged to DeliveryLog with the provider error so it's easy to diagnose.
+async function getEmailEnvelope(): Promise<{ from: string; replyTo?: string }> {
+  const s = await getSettings(EMAIL_KEYS);
+  const name = s.email_from_name.trim() || "INVITATION.LK";
+  const addr = s.email_from_address.trim() || "noreply@invitation.lk";
+  const from = `${name} <${addr}>`;
+  const replyTo = s.email_reply_to.trim();
+  return replyTo ? { from, replyTo } : { from };
+}
+
 async function getAdminRecipients(): Promise<string[]> {
+  // 1. Admin-configured override (comma-separated list in Settings).
+  try {
+    const { email_admin_recipients } = await getSettings(["email_admin_recipients"]);
+    const override = email_admin_recipients
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => /^\S+@\S+\.\S+$/.test(s));
+    if (override.length > 0) return override;
+  } catch (error) {
+    console.error("Failed to read admin-recipient override:", error);
+  }
+
+  // 2. Users with ADMIN role.
   try {
     const admins = await prisma.user.findMany({
       where: { role: "ADMIN" },
@@ -34,18 +66,21 @@ async function getAdminRecipients(): Promise<string[]> {
   } catch (error) {
     console.error("Failed to look up admin users:", error);
   }
+
+  // 3. ADMIN_EMAIL env fallback — kept so a fresh prod without any admin users
+  // still pages someone.
   const fallback = process.env.ADMIN_EMAIL;
   return fallback ? [fallback] : [];
 }
 
 type ResendSendArgs = {
-  from: string;
   to: string | string[];
   subject: string;
   html: string;
 };
 
-// Central send wrapper. Calls Resend, writes a DeliveryLog row for both
+// Central send wrapper. Reads the from/reply-to envelope from admin Settings
+// on every call (cached), calls Resend, writes a DeliveryLog row for both
 // success and failure, and mirrors the original sender's { success, error }
 // contract so no call site behaviour changes.
 async function sendEmailAndLog(
@@ -53,8 +88,16 @@ async function sendEmailAndLog(
   args: ResendSendArgs,
   meta: { template: EmailTemplate; userId?: string | null }
 ): Promise<{ success: true } | { success: false; error: unknown }> {
+  const envelope = await getEmailEnvelope();
+  const payload = {
+    from: envelope.from,
+    to: args.to,
+    subject: args.subject,
+    html: args.html,
+    ...(envelope.replyTo ? { replyTo: envelope.replyTo } : {}),
+  };
   try {
-    const result = await resend.emails.send(args);
+    const result = await resend.emails.send(payload);
     const providerId =
       (result && typeof result === "object" && "data" in result
         ? (result.data as { id?: string } | null)?.id
@@ -92,7 +135,6 @@ export async function sendWelcomeEmail(email: string, name: string, userId?: str
     return await sendEmailAndLog(
       resend,
       {
-        from: FROM,
         to: email,
         subject: "Welcome to INVITATION.LK!",
         html: welcomeEmailHtml(name),
@@ -118,7 +160,6 @@ export async function sendEmailVerificationEmail(
     return await sendEmailAndLog(
       resend,
       {
-        from: FROM,
         to: email,
         subject: "Verify your email — INVITATION.LK",
         html: emailVerificationHtml(name, verifyUrl),
@@ -145,7 +186,6 @@ export async function sendPaymentConfirmationEmail(
     return await sendEmailAndLog(
       resend,
       {
-        from: FROM,
         to: email,
         subject: `Payment Confirmed — ${plan}`,
         html: paymentConfirmationHtml(name, plan, amount, method),
@@ -171,7 +211,6 @@ export async function sendPasswordResetEmail(
     return await sendEmailAndLog(
       resend,
       {
-        from: FROM,
         to: email,
         subject: "Reset Your Password — INVITATION.LK",
         html: passwordResetHtml(name, resetUrl),
@@ -200,7 +239,6 @@ export async function sendAdminNewUserNotification(args: {
     return await sendEmailAndLog(
       resend,
       {
-        from: FROM,
         to: recipients,
         subject: `New signup: ${args.yourName} & ${args.partnerName}`,
         html: adminNewUserHtml(args),
@@ -228,7 +266,6 @@ export async function sendAdminPaymentNotification(args: {
     return await sendEmailAndLog(
       resend,
       {
-        from: FROM,
         to: recipients,
         subject: `Payment received — ${args.plan} (Rs. ${args.amount})`,
         html: adminPaymentAlertHtml(args),
@@ -258,7 +295,6 @@ export async function sendSupportTicketCreatedToAdmin(args: {
     return await sendEmailAndLog(
       resend,
       {
-        from: FROM,
         to: recipients,
         subject: `[${args.priority}] Support ticket: ${args.subject}`,
         html: supportTicketCreatedAdminHtml({ ...args, ticketUrl }),
@@ -286,7 +322,6 @@ export async function sendSupportReplyToCustomer(args: {
     return await sendEmailAndLog(
       resend,
       {
-        from: FROM,
         to: args.customerEmail,
         subject: `Reply to your ticket: ${args.subject}`,
         html: supportTicketReplyCustomerHtml({ ...args, ticketUrl }),

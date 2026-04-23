@@ -8,9 +8,17 @@ import {
   sendAdminNewUserNotification,
 } from "@/lib/resend";
 import { authLimiter } from "@/lib/rate-limit";
+import { getFlag } from "@/lib/settings-read";
 
 export async function POST(request: Request) {
   try {
+    if (!(await getFlag("feature_signup_open"))) {
+      return NextResponse.json(
+        { error: "Signups are currently closed. Please check back soon." },
+        { status: 503 }
+      );
+    }
+
     const ip = request.headers.get("x-forwarded-for") || "unknown";
     const { success } = authLimiter.check(5, ip);
     if (!success) {
