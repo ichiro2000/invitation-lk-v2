@@ -35,6 +35,11 @@ interface SettingValue {
 interface LoadResponse {
   defs: SettingDef[];
   values: Record<string, SettingValue>;
+  env?: {
+    stripeSecretConfigured: boolean;
+    stripeWebhookConfigured: boolean;
+    stripeMode: "test" | "live" | null;
+  };
 }
 
 const GROUP_BLURB: Record<SettingGroup, string> = {
@@ -64,6 +69,7 @@ export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [defs, setDefs] = useState<SettingDef[]>([]);
   const [values, setValues] = useState<Record<string, SettingValue>>({});
+  const [env, setEnv] = useState<LoadResponse["env"] | null>(null);
   const [form, setForm] = useState<Record<string, string>>({});
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
@@ -82,6 +88,7 @@ export default function AdminSettingsPage() {
       const data: LoadResponse = await res.json();
       setDefs(data.defs);
       setValues(data.values);
+      setEnv(data.env ?? null);
       const initial: Record<string, string> = {};
       for (const def of data.defs) {
         initial[def.key] = data.values[def.key]?.value ?? def.default;
@@ -233,6 +240,18 @@ export default function AdminSettingsPage() {
                         {def.label}
                       </label>
                       <p className="text-[11px] text-gray-400 font-mono mt-0.5 truncate" title={def.key}>{def.key}</p>
+                      {def.key === "feature_stripe" && env && (
+                        <EnvBadge
+                          configured={env.stripeSecretConfigured && env.stripeWebhookConfigured}
+                          missing={
+                            [
+                              !env.stripeSecretConfigured && "STRIPE_SECRET_KEY",
+                              !env.stripeWebhookConfigured && "STRIPE_WEBHOOK_SECRET",
+                            ].filter(Boolean).join(" & ")
+                          }
+                          mode={env.stripeMode}
+                        />
+                      )}
                       {meta && !meta.isDefault && meta.updatedAt && (
                         <p className="text-[11px] text-gray-500 mt-1">
                           Saved {formatRelative(meta.updatedAt)}
@@ -351,6 +370,38 @@ export default function AdminSettingsPage() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function EnvBadge({
+  configured,
+  missing,
+  mode,
+}: {
+  configured: boolean;
+  missing: string;
+  mode: "test" | "live" | null;
+}) {
+  if (configured) {
+    return (
+      <div className="mt-1.5 flex flex-col gap-1">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700 w-fit">
+          ✓ Env configured
+        </span>
+        {mode && (
+          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold w-fit ${mode === "live" ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"}`}>
+            {mode === "live" ? "LIVE mode" : "TEST mode"}
+          </span>
+        )}
+      </div>
+    );
+  }
+  return (
+    <div className="mt-1.5">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-100 text-red-700 w-fit">
+        ✗ Missing: {missing}
+      </span>
     </div>
   );
 }

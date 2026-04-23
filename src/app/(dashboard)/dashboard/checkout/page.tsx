@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
-import { CreditCard, Building2, Upload, CheckCircle, Loader2, Crown, AlertTriangle } from "lucide-react";
+import { CreditCard, Building2, Upload, CheckCircle, Loader2, Crown, AlertTriangle, Globe } from "lucide-react";
 
 const plans = [
   { id: "BASIC", name: "Basic", price: 2500, features: ["1 Template", "Up to 100 Guests", "Digital Invitation"] },
@@ -19,19 +19,30 @@ function CheckoutContent() {
   const initialPlan = searchParams.get("plan")?.toUpperCase() || "BASIC";
 
   const [selectedPlan, setSelectedPlan] = useState(initialPlan);
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "bank">("card");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "bank" | "stripe">("card");
   const [loading, setLoading] = useState(false);
   const [receiptFile, setReceiptFile] = useState<string | null>(null);
   const [receiptName, setReceiptName] = useState("");
   const [bankRef, setBankRef] = useState("");
   const [bankSubmitted, setBankSubmitted] = useState(false);
   const [error, setError] = useState("");
+  const [flashStatus, setFlashStatus] = useState<"success" | "canceled" | null>(null);
   // Feature flags read from /api/settings/public. Default to true — fail open
   // so a temporarily unreachable settings endpoint never blocks all payments.
   // The server-side guards in the checkout routes still reject disabled
   // methods so nothing gets through that shouldn't.
   const [payhereEnabled, setPayhereEnabled] = useState(true);
   const [bankEnabled, setBankEnabled] = useState(true);
+  // Stripe defaults off — we don't want to show a broken tab if the keys
+  // aren't configured. Only flips on when both the flag is live AND the
+  // public endpoint confirms it.
+  const [stripeEnabled, setStripeEnabled] = useState(false);
+
+  useEffect(() => {
+    const status = searchParams.get("status");
+    if (status === "success") setFlashStatus("success");
+    if (status === "canceled") setFlashStatus("canceled");
+  }, [searchParams]);
 
   useEffect(() => {
     fetch("/api/settings/public")
@@ -40,11 +51,15 @@ function CheckoutContent() {
         if (!data) return;
         const ph = data.feature_payhere !== "false";
         const bk = data.feature_bank_transfer !== "false";
+        const st = data.feature_stripe === "true";
         setPayhereEnabled(ph);
         setBankEnabled(bk);
-        // Pick whichever tab is actually available on load.
-        if (!ph && bk) setPaymentMethod("bank");
-        if (ph && !bk) setPaymentMethod("card");
+        setStripeEnabled(st);
+        // Pick whichever tab is actually available on load. Prefer Stripe
+        // when it's the only option, then card, then bank.
+        if (!ph && bk && !st) setPaymentMethod("bank");
+        if (ph && !bk && !st) setPaymentMethod("card");
+        if (!ph && !bk && st) setPaymentMethod("stripe");
       })
       .catch(() => {});
   }, []);
@@ -52,6 +67,30 @@ function CheckoutContent() {
   const userPlan = session?.user?.plan || "FREE";
   const currentPlanRank = planRank[userPlan] || 0;
   const selected = plans.find((p) => p.id === selectedPlan) || plans[0];
+
+  const handleStripePayment = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/checkout/stripe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: selectedPlan }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.checkoutUrl) {
+        setError(data.error || "Failed to start payment");
+        setLoading(false);
+        return;
+      }
+      // Stripe hosts the payment form on its own domain — no host allow-list
+      // to validate here the way PayHere needs.
+      window.location.href = data.checkoutUrl;
+    } catch {
+      setError("Something went wrong. Please try again.");
+      setLoading(false);
+    }
+  };
 
   const handleCardPayment = async () => {
     setLoading(true);
@@ -195,9 +234,29 @@ function CheckoutContent() {
         })}
       </div>
 
+      {/* Post-redirect flash from Stripe return */}
+      {flashStatus === "success" && (
+        <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 flex items-start gap-3">
+          <CheckCircle className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-emerald-900">Payment received</p>
+            <p className="text-xs text-emerald-800 mt-0.5">Your plan will upgrade within a few seconds once the payment confirms. Refresh your dashboard if you don&apos;t see it yet.</p>
+          </div>
+        </div>
+      )}
+      {flashStatus === "canceled" && (
+        <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
+          <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-amber-900">Payment canceled</p>
+            <p className="text-xs text-amber-800 mt-0.5">No charge was made. You can try again or pick a different payment method.</p>
+          </div>
+        </div>
+      )}
+
       {/* Payment Methods */}
       <div className="bg-white rounded-3xl shadow-xl shadow-gray-100/50 border border-gray-100 overflow-hidden">
-        {!payhereEnabled && !bankEnabled ? (
+        {!payhereEnabled && !bankEnabled && !stripeEnabled ? (
           <div className="p-10 text-center">
             <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
               <AlertTriangle className="w-6 h-6 text-amber-600" />
@@ -219,6 +278,16 @@ function CheckoutContent() {
                   }`}
                 >
                   <CreditCard className="w-4 h-4" /> Pay with Card
+                </button>
+              )}
+              {stripeEnabled && (
+                <button
+                  onClick={() => setPaymentMethod("stripe")}
+                  className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-medium transition-colors ${
+                    paymentMethod === "stripe" ? "text-rose-600 border-b-2 border-rose-600 bg-rose-50/30" : "text-gray-400 hover:text-gray-600"
+                  }`}
+                >
+                  <Globe className="w-4 h-4" /> International Card
                 </button>
               )}
               {bankEnabled && (
@@ -257,6 +326,33 @@ function CheckoutContent() {
                   <><Loader2 className="w-4 h-4 animate-spin" /> Redirecting to payment...</>
                 ) : (
                   <><CreditCard className="w-4 h-4" /> Pay Now</>
+                )}
+              </button>
+            </div>
+          ) : paymentMethod === "stripe" ? (
+            <div className="space-y-6">
+              <div className="bg-gray-50 rounded-2xl p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm text-gray-500">Selected Plan</p>
+                  <p className="text-sm font-semibold text-gray-900">{selected.name}</p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-gray-500">Amount</p>
+                  <p className="text-lg font-bold text-gray-900">Rs. {selected.price.toLocaleString()}</p>
+                </div>
+                <p className="text-xs text-gray-400 mt-3">
+                  Pays via Stripe&apos;s secure checkout — accepts Visa, Mastercard, Amex from international cards.
+                </p>
+              </div>
+              <button
+                onClick={handleStripePayment}
+                disabled={loading || currentPlanRank >= (planRank[selectedPlan] || 0)}
+                className="w-full bg-indigo-600 text-white py-3 rounded-xl font-medium hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Redirecting to Stripe...</>
+                ) : (
+                  <><Globe className="w-4 h-4" /> Continue to Stripe</>
                 )}
               </button>
             </div>
