@@ -11,6 +11,12 @@ import NotificationsBell from "@/components/dashboard/NotificationsBell";
 
 // Module-level guard — survives re-mount cycles triggered by update().
 let bannerHasRefreshed = false;
+// Once we've seen an authenticated session, keep rendering the layout chrome
+// even while a subsequent update() call re-fetches the session. Otherwise
+// every update() call would unmount children (because NextAuth flips status
+// back to "loading" during the refetch) and anything on the child page that
+// then re-fires update() — e.g. a timed retry — would loop.
+let dashboardHasAuthenticatedOnce = false;
 
 interface NotificationItem {
   id: string;
@@ -37,10 +43,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { data: session, status } = useSession();
   const pathname = usePathname();
 
-  if (status === "loading") {
+  if (session) dashboardHasAuthenticatedOnce = true;
+
+  // Only show the blocking spinner on the *first* load. Subsequent
+  // "loading" states are background refetches triggered by update(); keep
+  // the last-rendered session data visible so children don't unmount and
+  // loop back into update().
+  if (status === "loading" && !dashboardHasAuthenticatedOnce) {
     return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="w-8 h-8 border-2 border-rose-600 border-t-transparent rounded-full animate-spin" /></div>;
   }
-  if (!session) redirect("/login");
+  if (status === "unauthenticated") redirect("/login");
+  if (!session) {
+    // In-flight update() — session is null transiently but we already
+    // authenticated once. Render nothing (no spinner, no unmount); the
+    // next render after the refetch will have the fresh session.
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
