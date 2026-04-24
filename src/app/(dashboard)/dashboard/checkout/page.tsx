@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { CreditCard, Building2, Upload, CheckCircle, Loader2, Crown, AlertTriangle, Globe } from "lucide-react";
@@ -64,16 +64,27 @@ function CheckoutContent() {
   // upgraded BASIC -> STANDARD still sees BASIC as "Current Plan" because
   // NextAuth caches the plan in the JWT. Runs on mount for any visit, and
   // again a few seconds after a success redirect to catch a slow webhook.
+  //
+  // IMPORTANT: `update` from useSession is NOT referentially stable — it is
+  // re-created on every render. Using it as a useEffect dependency creates
+  // an infinite loop (call update -> session changes -> new update fn ->
+  // effect re-fires). We read the latest function via a ref and gate the
+  // mount call so the effect only runs once.
+  const updateRef = useRef(update);
+  updateRef.current = update;
+  const didMountRefreshRef = useRef(false);
   useEffect(() => {
-    update();
-  }, [update]);
+    if (didMountRefreshRef.current) return;
+    didMountRefreshRef.current = true;
+    updateRef.current();
+  }, []);
   useEffect(() => {
     if (flashStatus !== "success") return;
     const timers = [2000, 5000, 10000].map((ms) =>
-      window.setTimeout(() => update(), ms)
+      window.setTimeout(() => updateRef.current(), ms)
     );
     return () => timers.forEach((t) => window.clearTimeout(t));
-  }, [flashStatus, update]);
+  }, [flashStatus]);
 
   useEffect(() => {
     fetch("/api/settings/public")
