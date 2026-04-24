@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/db";
 import { getUpgradeAmount, isUpgrade } from "@/lib/plans";
 import { buildCheckoutHash, getPayHereConfig } from "@/lib/payhere";
-import { checkoutLimiter } from "@/lib/rate-limit";
+import { checkoutLimiter, firstForwardedIp } from "@/lib/rate-limit";
 import { getFlag } from "@/lib/settings-read";
 import type { Plan } from "@/generated/prisma/client";
 
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const ip = request.headers.get("x-forwarded-for") || "unknown";
+    const ip = firstForwardedIp(request.headers.get("x-forwarded-for"));
     const { success } = checkoutLimiter.check(10, `payhere:${session.user.id}:${ip}`);
     if (!success) {
       return NextResponse.json(

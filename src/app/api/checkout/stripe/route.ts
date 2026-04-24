@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/db";
 import { getUpgradeAmount, isUpgrade, PLAN_NAMES } from "@/lib/plans";
-import { checkoutLimiter } from "@/lib/rate-limit";
+import { checkoutLimiter, firstForwardedIp } from "@/lib/rate-limit";
 import { getFlag } from "@/lib/settings-read";
 import { getStripe, toStripeAmount } from "@/lib/stripe";
 import type { Plan } from "@/generated/prisma/client";
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const ip = request.headers.get("x-forwarded-for") || "unknown";
+    const ip = firstForwardedIp(request.headers.get("x-forwarded-for"));
     const { success } = checkoutLimiter.check(10, `stripe:${session.user.id}:${ip}`);
     if (!success) {
       return NextResponse.json(

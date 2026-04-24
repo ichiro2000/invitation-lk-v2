@@ -20,6 +20,10 @@ function CheckoutSuccessContent() {
   const [amount, setAmount] = useState(0);
   const [status, setStatus] = useState<string>("");
   const [error, setError] = useState("");
+  // True once we've run out of polling attempts — used to soften the copy
+  // so the user doesn't sit on "Payment Pending" indefinitely thinking the
+  // page will keep updating.
+  const [pollExhausted, setPollExhausted] = useState(false);
 
   useEffect(() => {
     if (!orderId) {
@@ -61,6 +65,9 @@ function CheckoutSuccessContent() {
         if (!s || s !== "PENDING") return;
         await new Promise((r) => setTimeout(r, 2000));
       }
+      // Ran out of attempts without the webhook flipping us to COMPLETED.
+      // Don't mislead the user that this page will keep updating.
+      if (!cancelled) setPollExhausted(true);
     })();
 
     return () => {
@@ -105,11 +112,19 @@ function CheckoutSuccessContent() {
               )}
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              {isPending ? "Payment Pending" : isFailed ? "Payment Failed" : "Payment Successful!"}
+              {isPending
+                ? pollExhausted
+                  ? "We're confirming your payment"
+                  : "Payment Pending"
+                : isFailed
+                ? "Payment Failed"
+                : "Payment Successful!"}
             </h2>
             <p className="text-gray-400 text-sm mb-6">
               {isPending
-                ? "We're still confirming your payment with the bank. This page will update shortly."
+                ? pollExhausted
+                  ? "Your payment was received — the bank just hasn't confirmed it yet. This usually lands within a minute. You can safely leave this page; your plan will activate automatically and your dashboard will reflect it on next load."
+                  : "We're still confirming your payment with the bank. This page will update shortly."
                 : isFailed
                 ? "The payment did not go through. Please try again."
                 : "Your plan has been upgraded successfully. Open your dashboard to see your new plan."}

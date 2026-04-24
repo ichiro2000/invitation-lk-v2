@@ -61,73 +61,89 @@ export async function PATCH(
     }
 
     if (action === "approve") {
-      // Update BankTransfer
-      const updatedTransfer = await prisma.bankTransfer.update({
-        where: { id },
-        data: {
-          status: "APPROVED",
-          reviewedBy: session.user.id,
-          reviewedAt: new Date(),
-          adminNotes: adminNotes || null,
-        },
-      });
-
-      // Update Order
-      await prisma.order.update({
-        where: { id: bankTransfer.orderId },
-        data: { paymentStatus: "COMPLETED" },
-      });
-
-      // Update User plan — only if the new plan outranks what the user
-      // already has. Prevents accidental downgrades when a user submits a
-      // lower-tier bank transfer after upgrading via another flow.
+      // Read current plan before the transaction so we can compute the
+      // downgrade-prevention check without holding the tx open on an
+      // otherwise blocking findUnique.
       const currentUser = await prisma.user.findUnique({
         where: { id: bankTransfer.order.userId },
-        select: { plan: true },
+        select: { plan: true, email: true, yourName: true },
       });
-      if (
+      const shouldUpgradePlan = !!(
         currentUser &&
         (PLAN_RANK[bankTransfer.order.plan] ?? 0) >
           (PLAN_RANK[currentUser.plan] ?? 0)
-      ) {
-        await prisma.user.update({
-          where: { id: bankTransfer.order.userId },
-          data: { plan: bankTransfer.order.plan },
+      );
+
+      // All state mutations run in a single transaction — if any step
+      // fails, BankTransfer stays PENDING_REVIEW and the admin can retry
+      // without ending up with a COMPLETED order whose user was never
+      // upgraded. Side-effect-y things (email, audit log) happen AFTER
+      // the tx commits so they can't hold a DB connection and so their
+      // failure doesn't roll the approval back.
+      const updatedTransfer = await prisma.$transaction(async (tx) => {
+        const updated = await tx.bankTransfer.update({
+          where: { id },
+          data: {
+            status: "APPROVED",
+            reviewedBy: session.user.id,
+            reviewedAt: new Date(),
+            adminNotes: adminNotes || null,
+          },
         });
-      }
 
-      // Update Invitation if exists
-      await prisma.invitation.updateMany({
-        where: { userId: bankTransfer.order.userId },
-        data: { isPaid: true },
+        await tx.order.update({
+          where: { id: bankTransfer.orderId },
+          data: { paymentStatus: "COMPLETED" },
+        });
+
+        if (shouldUpgradePlan) {
+          await tx.user.update({
+            where: { id: bankTransfer.order.userId },
+            data: { plan: bankTransfer.order.plan },
+          });
+        }
+
+        await tx.invitation.updateMany({
+          where: { userId: bankTransfer.order.userId },
+          data: { isPaid: true },
+        });
+
+        return updated;
       });
 
-      // Send confirmation email
-      const user = await prisma.user.findUnique({
-        where: { id: bankTransfer.order.userId },
-        select: { email: true, yourName: true },
-      });
-
-      if (user) {
+      // Side effects outside the transaction. Log — don't swallow —
+      // email failures so an off-line provider doesn't silently hide
+      // delivery problems from ops.
+      if (currentUser) {
         const planName = PLAN_NAMES[bankTransfer.order.plan];
-        // Use the order's recorded amount, not the plan sticker — upgrade-diff
-        // orders charge (target − current) and the email must reflect that.
         const amount = Number(bankTransfer.order.amount).toLocaleString();
-        await sendPaymentConfirmationEmail(
-          user.email,
-          user.yourName || "Customer",
-          planName,
-          amount,
-          "Bank Transfer",
-          bankTransfer.order.userId
-        );
+        try {
+          await sendPaymentConfirmationEmail(
+            currentUser.email,
+            currentUser.yourName || "Customer",
+            planName,
+            amount,
+            "Bank Transfer",
+            bankTransfer.order.userId
+          );
+        } catch (err) {
+          console.error("[bank-transfer] confirmation email failed", {
+            orderId: bankTransfer.orderId,
+            err: err instanceof Error ? err.message : String(err),
+          });
+        }
         sendAdminPaymentNotification({
-          userEmail: user.email,
-          userName: user.yourName || "—",
+          userEmail: currentUser.email,
+          userName: currentUser.yourName || "—",
           plan: planName,
           amount,
           method: "Bank Transfer",
-        }).catch(() => {});
+        }).catch((err) => {
+          console.error("[bank-transfer] admin notification failed", {
+            orderId: bankTransfer.orderId,
+            err: err instanceof Error ? err.message : String(err),
+          });
+        });
       }
 
       await logAdminAction({

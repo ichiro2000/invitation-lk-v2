@@ -68,6 +68,24 @@ export async function POST(request: Request) {
 
     const order = await prisma.order.findUnique({ where: { id: orderId } });
     if (!order) {
+      // If the payment already succeeded on Stripe's side but we can't find
+      // the row, fall through to a 500 so Stripe retries — it's usually a
+      // commit-vs-webhook timing race and the order will appear shortly.
+      // Unpaid / failed sessions with no local row are genuinely orphans
+      // and we ack 200 to stop retries.
+      const paid =
+        sessionObj.payment_status === "paid" ||
+        sessionObj.payment_status === "no_payment_required";
+      if (paid) {
+        console.error("[stripe-webhook] order not found for paid session — letting Stripe retry", {
+          orderId,
+          sessionId: sessionObj.id,
+        });
+        return NextResponse.json(
+          { error: "Order not found for paid session" },
+          { status: 500 }
+        );
+      }
       console.warn("[stripe-webhook] order not found", { orderId });
       return ack("order_not_found");
     }
@@ -83,9 +101,14 @@ export async function POST(request: Request) {
     // Defense in depth: validate the amount + currency Stripe reports match
     // what we charged. A compromised webhook secret or session-id swap would
     // otherwise let someone settle a PREMIUM order at the BASIC price.
+    // Reject on null/undefined too — a malformed event without amount_total
+    // should NOT be allowed to flow through to COMPLETED.
     const expectedMinor = Math.round(Number(order.amount) * 100);
-    if (typeof sessionObj.amount_total === "number" && sessionObj.amount_total !== expectedMinor) {
-      console.warn("[stripe-webhook] amount mismatch", {
+    if (
+      typeof sessionObj.amount_total !== "number" ||
+      sessionObj.amount_total !== expectedMinor
+    ) {
+      console.warn("[stripe-webhook] amount mismatch or missing", {
         orderId,
         expected: expectedMinor,
         got: sessionObj.amount_total,
@@ -101,23 +124,36 @@ export async function POST(request: Request) {
       return ack("currency_mismatch");
     }
 
-    // Derive next status. Stripe sets `payment_status` on the session:
-    //   paid           -> COMPLETED
-    //   unpaid         -> stays PENDING (async_payment_failed is separate)
-    //   no_payment_required -> COMPLETED (free promo)
+    // Explicit event-type -> status mapping. Previously the success branch
+    // only fired on `sessionObj.payment_status === "paid"`, which meant
+    // `async_payment_succeeded` was relying on Stripe's implicit promise
+    // that payment_status would have flipped by delivery time. Be explicit
+    // so a future Stripe behavior change can't leave us in PENDING.
     let nextStatus: "PENDING" | "COMPLETED" | "FAILED" = "PENDING";
     if (event.type === "checkout.session.async_payment_failed") {
       nextStatus = "FAILED";
-    } else if (sessionObj.payment_status === "paid" || sessionObj.payment_status === "no_payment_required") {
+    } else if (event.type === "checkout.session.async_payment_succeeded") {
+      nextStatus = "COMPLETED";
+    } else if (
+      sessionObj.payment_status === "paid" ||
+      sessionObj.payment_status === "no_payment_required"
+    ) {
       nextStatus = "COMPLETED";
     }
 
-    // Idempotency: don't re-run side effects if we already processed this.
-    if (order.paymentStatus === nextStatus) {
-      return NextResponse.json({ handled: true, deduped: true });
-    }
+    // Idempotency + side-effect gating both inside the transaction. The
+    // check-then-act pattern outside a tx allowed two concurrent deliveries
+    // of the same event to race past the guard and both upgrade the plan.
+    const result = await prisma.$transaction(async (tx) => {
+      const current = await tx.order.findUnique({
+        where: { id: orderId },
+        select: { paymentStatus: true, plan: true, userId: true },
+      });
+      if (!current) return { handled: false, reason: "order_vanished" as const };
+      if (current.paymentStatus === nextStatus) {
+        return { handled: true, deduped: true as const };
+      }
 
-    await prisma.$transaction(async (tx) => {
       await tx.order.update({
         where: { id: orderId },
         data: {
@@ -130,23 +166,30 @@ export async function POST(request: Request) {
 
       if (nextStatus === "COMPLETED") {
         const user = await tx.user.findUnique({
-          where: { id: order.userId },
+          where: { id: current.userId },
           select: { plan: true },
         });
         // Only upgrade — never downgrade — if a stale order settles for a
         // user who has since bought a higher tier.
         if (
           user &&
-          (PLAN_RANK[order.plan] ?? 0) > (PLAN_RANK[user.plan] ?? 0)
+          (PLAN_RANK[current.plan] ?? 0) > (PLAN_RANK[user.plan] ?? 0)
         ) {
           await tx.user.update({
-            where: { id: order.userId },
-            data: { plan: order.plan },
+            where: { id: current.userId },
+            data: { plan: current.plan },
           });
         }
       }
+      return { handled: true, status: nextStatus };
     });
 
+    if ("deduped" in result) {
+      return NextResponse.json({ handled: true, deduped: true });
+    }
+    if ("reason" in result && result.reason === "order_vanished") {
+      return ack("order_vanished");
+    }
     return NextResponse.json({ handled: true, status: nextStatus });
   } catch (error) {
     console.error("Stripe webhook error:", error);
