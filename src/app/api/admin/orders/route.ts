@@ -40,10 +40,12 @@ export async function GET(request: Request) {
         user: {
           select: { email: true, yourName: true, partnerName: true },
         },
+        // Deliberately omit receiptImage here — it's a multi-megabyte data
+        // URL per row and we don't need it until an admin clicks "View" on
+        // a specific receipt. See GET /api/admin/bank-transfers/[id]/receipt.
         bankTransfer: {
           select: {
             id: true,
-            receiptImage: true,
             status: true,
             adminNotes: true,
           },
@@ -90,7 +92,6 @@ export async function GET(request: Request) {
       bankTransfer: o.bankTransfer
         ? {
             id: o.bankTransfer.id,
-            receiptUrl: o.bankTransfer.receiptImage,
             status: o.bankTransfer.status,
             adminNotes: o.bankTransfer.adminNotes,
           }
