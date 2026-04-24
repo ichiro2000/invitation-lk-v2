@@ -73,6 +73,7 @@ export default function AdminSupportThreadPage(
   const [sending, setSending] = useState(false);
   const [replyError, setReplyError] = useState<string | null>(null);
   const [metaLoading, setMetaLoading] = useState<"status" | "priority" | null>(null);
+  const [metaError, setMetaError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -97,13 +98,21 @@ export default function AdminSupportThreadPage(
 
   const updateMeta = async (field: "status" | "priority", value: string) => {
     setMetaLoading(field);
+    setMetaError(null);
     try {
       const res = await fetch(`/api/admin/support/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ [field]: value }),
       });
-      if (res.ok) await load();
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setMetaError(body.error || `Failed to update ${field}`);
+        return;
+      }
+      await load();
+    } catch {
+      setMetaError(`Failed to update ${field}`);
     } finally {
       setMetaLoading(null);
     }
@@ -168,6 +177,11 @@ export default function AdminSupportThreadPage(
                 <p className="text-xs text-gray-400 mt-1">Opened {formatDate(ticket.createdAt)}</p>
               </div>
             </div>
+            {metaError && (
+              <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mt-2">
+                {metaError}
+              </p>
+            )}
             <div className="flex flex-wrap gap-2 mt-2">
               <div className="flex items-center gap-2">
                 <span className="text-xs text-gray-500">Status:</span>
@@ -175,6 +189,7 @@ export default function AdminSupportThreadPage(
                   value={ticket.status}
                   onChange={(e) => updateMeta("status", e.target.value)}
                   disabled={metaLoading === "status"}
+                  aria-label="Ticket status"
                   className={`px-2.5 py-1 rounded-full text-xs font-semibold border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-rose-500/20 ${statusBadge[ticket.status]}`}
                 >
                   {["OPEN", "PENDING", "RESOLVED", "CLOSED"].map((s) => (
@@ -188,6 +203,7 @@ export default function AdminSupportThreadPage(
                   value={ticket.priority}
                   onChange={(e) => updateMeta("priority", e.target.value)}
                   disabled={metaLoading === "priority"}
+                  aria-label="Ticket priority"
                   className={`px-2.5 py-1 rounded-full text-xs font-semibold border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-rose-500/20 ${priorityBadge[ticket.priority]}`}
                 >
                   {["LOW", "NORMAL", "HIGH", "URGENT"].map((p) => (

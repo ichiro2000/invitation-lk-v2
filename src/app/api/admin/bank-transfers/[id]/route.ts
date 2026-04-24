@@ -177,20 +177,26 @@ export async function PATCH(
 
       return NextResponse.json({ transfer: updatedTransfer });
     } else {
-      // Reject
-      const updatedTransfer = await prisma.bankTransfer.update({
-        where: { id },
-        data: {
-          status: "REJECTED",
-          reviewedBy: session.user.id,
-          reviewedAt: new Date(),
-          adminNotes: adminNotes || null,
-        },
-      });
+      // Reject — wrapped in a transaction so the order's paymentStatus and
+      // the BankTransfer status flip together. Without the tx, a mid-op
+      // failure could leave a REJECTED transfer attached to a PENDING order.
+      const updatedTransfer = await prisma.$transaction(async (tx) => {
+        const updated = await tx.bankTransfer.update({
+          where: { id },
+          data: {
+            status: "REJECTED",
+            reviewedBy: session.user.id,
+            reviewedAt: new Date(),
+            adminNotes: adminNotes || null,
+          },
+        });
 
-      await prisma.order.update({
-        where: { id: bankTransfer.orderId },
-        data: { paymentStatus: "FAILED" },
+        await tx.order.update({
+          where: { id: bankTransfer.orderId },
+          data: { paymentStatus: "FAILED" },
+        });
+
+        return updated;
       });
 
       await logAdminAction({

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/db";
 import type { PaymentStatus } from "@/generated/prisma/client";
 import { toCsv, csvResponseHeaders } from "@/lib/csv";
+import { displayName } from "@/lib/user-display";
 
 export async function GET(request: Request) {
   try {
@@ -34,6 +35,7 @@ export async function GET(request: Request) {
       ? { paymentStatus: status as PaymentStatus }
       : {};
 
+    const LIST_LIMIT = 500;
     const rawOrders = await prisma.order.findMany({
       where,
       include: {
@@ -52,7 +54,7 @@ export async function GET(request: Request) {
         },
       },
       orderBy: { createdAt: "desc" },
-      take: format === "csv" ? 10000 : undefined,
+      take: format === "csv" ? 10000 : LIST_LIMIT,
     });
 
     if (format === "csv") {
@@ -82,7 +84,7 @@ export async function GET(request: Request) {
 
     const orders = rawOrders.map((o) => ({
       id: o.id,
-      userName: `${o.user.yourName} & ${o.user.partnerName}`,
+      userName: displayName(o.user.yourName, o.user.partnerName, o.user.email),
       userEmail: o.user.email,
       plan: o.plan,
       amount: Number(o.amount),
@@ -98,7 +100,7 @@ export async function GET(request: Request) {
         : null,
     }));
 
-    return NextResponse.json({ orders });
+    return NextResponse.json({ orders, limit: LIST_LIMIT });
   } catch (error) {
     console.error("Admin orders error:", error);
     return NextResponse.json(

@@ -265,9 +265,11 @@ export default function AdminSettingsPage() {
                       {def.type === "bool" ? (
                         <div className="flex items-center gap-3">
                           <button
+                            id={`s-${def.key}`}
                             type="button"
                             role="switch"
                             aria-checked={cur === "true"}
+                            aria-label={def.label}
                             onClick={() => setForm((f) => ({ ...f, [def.key]: cur === "true" ? "false" : "true" }))}
                             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                               cur === "true" ? "bg-rose-600" : "bg-gray-200"
