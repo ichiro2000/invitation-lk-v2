@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/db";
-import { PLAN_AMOUNTS } from "@/lib/plans";
+import { getUpgradeAmount, isUpgrade } from "@/lib/plans";
 import { buildCheckoutHash, getPayHereConfig } from "@/lib/payhere";
 import { checkoutLimiter } from "@/lib/rate-limit";
 import { getFlag } from "@/lib/settings-read";
@@ -60,18 +60,33 @@ export async function POST(request: Request) {
       );
     }
 
+    // Charge the difference between the user's current plan and the target.
+    // Read from DB, not session, so a stale JWT can't reuse an old lower tier.
+    const currentUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { plan: true, yourName: true, partnerName: true, email: true },
+    });
+    if (!isUpgrade(currentUser?.plan, plan)) {
+      return NextResponse.json(
+        { error: "You're already on this plan or a higher one." },
+        { status: 400 }
+      );
+    }
+
     const config = getPayHereConfig();
-    const amount = PLAN_AMOUNTS[plan];
+    const amount = getUpgradeAmount(currentUser?.plan, plan);
     const currency = "LKR";
 
-    // Reuse a fresh PENDING order for this (user, plan) if one exists; avoids
-    // piling up orphan rows on double-clicks and retry loops.
+    // Reuse a fresh PENDING order for this (user, plan, amount); match on
+    // amount too so a stale full-price order doesn't collide with a new
+    // upgrade-diff order and produce a hash mismatch at PayHere.
     const existing = await prisma.order.findFirst({
       where: {
         userId: session.user.id,
         plan: plan as Plan,
         paymentMethod: "PAYHERE",
         paymentStatus: "PENDING",
+        amount,
         createdAt: { gte: new Date(Date.now() - PENDING_REUSE_WINDOW_MS) },
       },
       orderBy: { createdAt: "desc" },
@@ -101,12 +116,8 @@ export async function POST(request: Request) {
 
     // Use the stored names directly — session.user.name is a derived
     // "Partner A & Partner B" string that splits badly into first/last.
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { yourName: true, partnerName: true, email: true },
-    });
-    const firstName = firstToken(user?.yourName) || "Customer";
-    const lastName = firstToken(user?.partnerName) || "-";
+    const firstName = firstToken(currentUser?.yourName) || "Customer";
+    const lastName = firstToken(currentUser?.partnerName) || "-";
 
     return NextResponse.json({
       checkoutUrl: config.checkoutUrl,
@@ -122,7 +133,7 @@ export async function POST(request: Request) {
         amount: amount.toFixed(2),
         first_name: firstName,
         last_name: lastName,
-        email: user?.email || session.user.email || "",
+        email: currentUser?.email || session.user.email || "",
         phone: "",
         address: "-",
         city: "Colombo",
