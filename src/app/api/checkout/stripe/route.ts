@@ -132,8 +132,14 @@ export async function POST(request: Request) {
         userId: session.user.id,
         plan,
       },
-      success_url: `${appUrl}/dashboard/checkout?status=success&order_id=${order.id}`,
-      cancel_url: `${appUrl}/dashboard/checkout?status=canceled&order_id=${order.id}`,
+      // Dedicated success/cancel pages — matches the PayHere flow. Returning
+      // to the plan-selector with ?status=success showed the user a banner
+      // but also left the "Pay" button live, so a second click could start
+      // a duplicate order. The success page polls for webhook completion
+      // and shows the upgrade result; the cancel page explains what
+      // happened and offers a retry.
+      success_url: `${appUrl}/dashboard/checkout/success?order_id=${order.id}`,
+      cancel_url: `${appUrl}/dashboard/checkout/cancel?order_id=${order.id}`,
     });
 
     if (!checkoutSession.url) {

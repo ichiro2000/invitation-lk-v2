@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import {
   CreditCard,
   Building2,
@@ -682,9 +683,15 @@ function CheckoutContent() {
                       <h3 className="text-lg font-semibold text-gray-900 mb-1">
                         Receipt submitted
                       </h3>
-                      <p className="text-sm text-gray-500">
-                        We&apos;ll review your payment within 24 hours and activate your plan.
+                      <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">
+                        We&apos;ll review your payment within 24 hours and activate your plan. You&apos;ll get an email once it&apos;s approved.
                       </p>
+                      <Link
+                        href="/dashboard"
+                        className="inline-flex items-center justify-center gap-2 bg-rose-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-rose-700 transition-colors shadow-lg shadow-rose-600/20"
+                      >
+                        Go to dashboard
+                      </Link>
                     </div>
                   ) : (
                     <div className="space-y-5">

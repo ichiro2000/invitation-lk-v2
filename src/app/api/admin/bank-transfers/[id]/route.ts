@@ -97,10 +97,24 @@ export async function PATCH(
         });
 
         if (shouldUpgradePlan) {
-          await tx.user.update({
-            where: { id: bankTransfer.order.userId },
-            data: { plan: bankTransfer.order.plan },
-          });
+          // Guard against the user being deleted between the pre-tx read
+          // and this write — without this, Prisma throws P2025 and rolls
+          // back the whole approval, stranding the admin on a 500 and
+          // leaving the BankTransfer in PENDING_REVIEW. A missing user
+          // means there's nothing to upgrade; just continue.
+          try {
+            await tx.user.update({
+              where: { id: bankTransfer.order.userId },
+              data: { plan: bankTransfer.order.plan },
+            });
+          } catch (err) {
+            const code = (err as { code?: string })?.code;
+            if (code !== "P2025") throw err;
+            console.warn("[bank-transfer] user vanished before plan upgrade", {
+              orderId: bankTransfer.orderId,
+              userId: bankTransfer.order.userId,
+            });
+          }
         }
 
         await tx.invitation.updateMany({
