@@ -115,18 +115,21 @@ export async function POST(request: Request) {
     )
       nextStatus = "FAILED";
 
-    // Idempotency: if the order is already in the status the webhook is
-    // trying to set, don't re-run side effects (plan upgrade, future email
-    // sends). PayHere retries on any perceived failure.
-    if (order.paymentStatus === nextStatus) {
-      console.log("[payhere-notify] already processed", {
-        order_id,
-        paymentStatus: order.paymentStatus,
+    // Idempotency + side-effect gating both inside the transaction. The
+    // previous check-then-update pattern outside a tx could let two
+    // concurrent notify deliveries race past the status guard and apply
+    // side effects twice. Re-read inside the tx and only mutate if the
+    // stored status actually differs from the target.
+    const result = await prisma.$transaction(async (tx) => {
+      const current = await tx.order.findUnique({
+        where: { id: order_id },
+        select: { paymentStatus: true, plan: true, userId: true },
       });
-      return NextResponse.json({ handled: true, deduped: true });
-    }
+      if (!current) return { handled: false, reason: "order_vanished" as const };
+      if (current.paymentStatus === nextStatus) {
+        return { handled: true, deduped: true as const };
+      }
 
-    await prisma.$transaction(async (tx) => {
       await tx.order.update({
         where: { id: order_id },
         data: {
@@ -137,23 +140,29 @@ export async function POST(request: Request) {
 
       if (nextStatus === "COMPLETED") {
         const user = await tx.user.findUnique({
-          where: { id: order.userId },
+          where: { id: current.userId },
           select: { plan: true },
         });
-        // Only upgrade — never downgrade — if a stale order finally settles
-        // for a user who has since bought a higher tier.
         if (
           user &&
-          (PLAN_RANK[order.plan] ?? 0) > (PLAN_RANK[user.plan] ?? 0)
+          (PLAN_RANK[current.plan] ?? 0) > (PLAN_RANK[user.plan] ?? 0)
         ) {
           await tx.user.update({
-            where: { id: order.userId },
-            data: { plan: order.plan },
+            where: { id: current.userId },
+            data: { plan: current.plan },
           });
         }
       }
+      return { handled: true, status: nextStatus };
     });
 
+    if ("deduped" in result) {
+      console.log("[payhere-notify] already processed", { order_id });
+      return NextResponse.json({ handled: true, deduped: true });
+    }
+    if ("reason" in result && result.reason === "order_vanished") {
+      return ack("order_vanished");
+    }
     console.log("[payhere-notify] processed", { order_id, nextStatus });
     return NextResponse.json({ handled: true, status: nextStatus });
   } catch (error) {

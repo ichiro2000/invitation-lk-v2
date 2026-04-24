@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/db";
 import { getUpgradeAmount, isUpgrade } from "@/lib/plans";
-import { checkoutLimiter } from "@/lib/rate-limit";
+import { checkoutLimiter, firstForwardedIp } from "@/lib/rate-limit";
 import { getFlag } from "@/lib/settings-read";
 import type { Plan } from "@/generated/prisma/client";
 
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const ip = request.headers.get("x-forwarded-for") || "unknown";
+    const ip = firstForwardedIp(request.headers.get("x-forwarded-for"));
     const { success } = checkoutLimiter.check(
       5,
       `bank-transfer:${session.user.id}:${ip}`
@@ -55,19 +55,59 @@ export async function POST(request: Request) {
       );
     }
 
-    if (
-      !receiptImage.startsWith("data:image/jpeg;base64,") &&
-      !receiptImage.startsWith("data:image/png;base64,")
-    ) {
+    const claimedJpeg = receiptImage.startsWith("data:image/jpeg;base64,");
+    const claimedPng = receiptImage.startsWith("data:image/png;base64,");
+    if (!claimedJpeg && !claimedPng) {
       return NextResponse.json(
         { error: "Receipt must be a JPEG or PNG image" },
         { status: 400 }
       );
     }
 
+    // Base64 tops out near 1.37x the raw bytes; 7_000_000 encoded chars
+    // corresponds to a ~5MB raw image, which matches the client-side cap.
     if (receiptImage.length > 7_000_000) {
       return NextResponse.json(
         { error: "Receipt image must be less than 5MB" },
+        { status: 400 }
+      );
+    }
+
+    // Magic-byte sniff: the MIME prefix is user-controlled and trivially
+    // spoofable (attacker renames an .exe, prepends `data:image/png;base64,`
+    // and it'd pass the prefix check). Decode just the first few bytes
+    // and match the real format header so a disguised file is rejected
+    // before it ever lands in the DB where an admin might later view it.
+    const headerBase64 = receiptImage
+      .slice(receiptImage.indexOf(",") + 1, receiptImage.indexOf(",") + 17)
+      .trim();
+    let headerBytes: Buffer;
+    try {
+      headerBytes = Buffer.from(headerBase64, "base64");
+    } catch {
+      return NextResponse.json(
+        { error: "Receipt image is not valid base64" },
+        { status: 400 }
+      );
+    }
+    const isPngBytes =
+      headerBytes.length >= 8 &&
+      headerBytes[0] === 0x89 &&
+      headerBytes[1] === 0x50 &&
+      headerBytes[2] === 0x4e &&
+      headerBytes[3] === 0x47 &&
+      headerBytes[4] === 0x0d &&
+      headerBytes[5] === 0x0a &&
+      headerBytes[6] === 0x1a &&
+      headerBytes[7] === 0x0a;
+    const isJpegBytes =
+      headerBytes.length >= 3 &&
+      headerBytes[0] === 0xff &&
+      headerBytes[1] === 0xd8 &&
+      headerBytes[2] === 0xff;
+    if ((claimedPng && !isPngBytes) || (claimedJpeg && !isJpegBytes)) {
+      return NextResponse.json(
+        { error: "Receipt file does not match its claimed image format." },
         { status: 400 }
       );
     }

@@ -48,7 +48,10 @@ const plans: PlanDef[] = [
   },
 ];
 
-const planRank: Record<string, number> = { FREE: 0, BASIC: 1, STANDARD: 2, PREMIUM: 3, ADMIN: 4 };
+// ADMIN is a role, not a plan — session.user.plan is never "ADMIN", so the
+// old ADMIN: 4 entry was dead code. Keep aligned with PLAN_RANK in
+// src/lib/plans.ts so server and client ranking stay in lockstep.
+const planRank: Record<string, number> = { FREE: 0, BASIC: 1, STANDARD: 2, PREMIUM: 3 };
 
 // Module-level guard — survives re-mount cycles triggered by update(). See
 // VerifyEmailBanner in the (dashboard) layout for the same pattern.
