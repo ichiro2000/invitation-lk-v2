@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, Suspense } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { CreditCard, Building2, Upload, CheckCircle, Loader2, Crown, AlertTriangle, Globe } from "lucide-react";
@@ -12,6 +12,14 @@ const plans = [
 ];
 
 const planRank: Record<string, number> = { FREE: 0, BASIC: 1, STANDARD: 2, PREMIUM: 3, ADMIN: 4 };
+
+// Module-level guard — survives re-mount cycles triggered by update(). See
+// the matching pattern on VerifyEmailBanner in the (dashboard) layout: when
+// we call update(), session status flips to "loading" → the layout renders
+// a full-page spinner and unmounts this component → fresh remount resets
+// any useRef-based gate → effect fires again → loops forever. A module-
+// level flag is the only thing that survives the unmount/remount cycle.
+let checkoutHasRefreshed = false;
 
 // Price displayed at checkout for `targetPrice` given the user's current plan.
 // Mirrors getUpgradeAmount in src/lib/plans.ts — the API is the source of
@@ -62,28 +70,29 @@ function CheckoutContent() {
   // Refresh the session JWT so the plan cards and upgrade-price math reflect
   // the current DB plan after an upgrade. Without this, a user who just
   // upgraded BASIC -> STANDARD still sees BASIC as "Current Plan" because
-  // NextAuth caches the plan in the JWT. Runs on mount for any visit, and
-  // again a few seconds after a success redirect to catch a slow webhook.
+  // NextAuth caches the plan in the JWT. Runs once per page load on mount,
+  // and again a few seconds after a success redirect to catch a slow
+  // webhook.
   //
-  // IMPORTANT: `update` from useSession is NOT referentially stable — it is
-  // re-created on every render. Using it as a useEffect dependency creates
-  // an infinite loop (call update -> session changes -> new update fn ->
-  // effect re-fires). We read the latest function via a ref and gate the
-  // mount call so the effect only runs once.
-  const updateRef = useRef(update);
-  updateRef.current = update;
-  const didMountRefreshRef = useRef(false);
+  // `checkoutHasRefreshed` is a *module-level* flag rather than a useRef
+  // because the (dashboard) layout above us shows a full-screen spinner
+  // whenever session status is "loading", which unmounts/remounts this
+  // component each time update() fires — a useRef would reset on remount
+  // and loop. `update()` itself is also not referentially stable, so we
+  // can't depend on it either.
   useEffect(() => {
-    if (didMountRefreshRef.current) return;
-    didMountRefreshRef.current = true;
-    updateRef.current();
+    if (checkoutHasRefreshed) return;
+    checkoutHasRefreshed = true;
+    update().catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
     if (flashStatus !== "success") return;
     const timers = [2000, 5000, 10000].map((ms) =>
-      window.setTimeout(() => updateRef.current(), ms)
+      window.setTimeout(() => update().catch(() => {}), ms)
     );
     return () => timers.forEach((t) => window.clearTimeout(t));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [flashStatus]);
 
   useEffect(() => {
