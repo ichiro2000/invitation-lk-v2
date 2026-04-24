@@ -3,27 +3,60 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
-import { CreditCard, Building2, Upload, CheckCircle, Loader2, Crown, AlertTriangle, Globe } from "lucide-react";
+import {
+  CreditCard,
+  Building2,
+  Upload,
+  CheckCircle,
+  Loader2,
+  Crown,
+  AlertTriangle,
+  Globe,
+  Sparkles,
+  ShieldCheck,
+  ArrowRight,
+} from "lucide-react";
 
-const plans = [
-  { id: "BASIC", name: "Basic", price: 2500, features: ["1 Template", "Up to 100 Guests", "Digital Invitation"] },
-  { id: "STANDARD", name: "Standard", price: 5000, features: ["All Templates", "Up to 500 Guests", "Wedding Tools"] },
-  { id: "PREMIUM", name: "Premium", price: 10000, features: ["All Templates", "Unlimited Guests", "Priority Support"] },
+type PlanDef = {
+  id: "BASIC" | "STANDARD" | "PREMIUM";
+  name: string;
+  price: number;
+  tagline: string;
+  features: string[];
+};
+
+const plans: PlanDef[] = [
+  {
+    id: "BASIC",
+    name: "Basic",
+    price: 2500,
+    tagline: "For a simple digital invite",
+    features: ["1 Template", "Up to 100 Guests", "Digital Invitation"],
+  },
+  {
+    id: "STANDARD",
+    name: "Standard",
+    price: 5000,
+    tagline: "Our most popular choice",
+    features: ["All Templates", "Up to 500 Guests", "Wedding Tools"],
+  },
+  {
+    id: "PREMIUM",
+    name: "Premium",
+    price: 10000,
+    tagline: "Everything, unlimited",
+    features: ["All Templates", "Unlimited Guests", "Priority Support"],
+  },
 ];
 
 const planRank: Record<string, number> = { FREE: 0, BASIC: 1, STANDARD: 2, PREMIUM: 3, ADMIN: 4 };
 
 // Module-level guard — survives re-mount cycles triggered by update(). See
-// the matching pattern on VerifyEmailBanner in the (dashboard) layout: when
-// we call update(), session status flips to "loading" → the layout renders
-// a full-page spinner and unmounts this component → fresh remount resets
-// any useRef-based gate → effect fires again → loops forever. A module-
-// level flag is the only thing that survives the unmount/remount cycle.
+// VerifyEmailBanner in the (dashboard) layout for the same pattern.
 let checkoutHasRefreshed = false;
 
-// Price displayed at checkout for `targetPrice` given the user's current plan.
-// Mirrors getUpgradeAmount in src/lib/plans.ts — the API is the source of
-// truth, this just keeps the UI honest about what Stripe/PayHere will charge.
+// Price to charge for an upgrade from currentPlan → targetPlan. Mirrors
+// getUpgradeAmount in src/lib/plans.ts; the API is the source of truth.
 function upgradePrice(userPlan: string, targetPlanId: string): number {
   const currentPlanEntry = plans.find((p) => p.id === userPlan);
   const targetPlanEntry = plans.find((p) => p.id === targetPlanId);
@@ -32,16 +65,31 @@ function upgradePrice(userPlan: string, targetPlanId: string): number {
   return Math.max(0, targetPlanEntry.price - credit);
 }
 
+function titleCase(s: string) {
+  if (!s) return "";
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
 function CheckoutContent() {
-  // `update()` is NextAuth's client helper that fires the `jwt` callback with
-  // trigger="update" — which in our config re-reads `plan` from the DB. We
-  // use it to resync after a successful upgrade so the plan cards and the
-  // upgrade-price math reflect the current tier rather than the stale JWT.
   const { data: session, update } = useSession();
   const searchParams = useSearchParams();
-  const initialPlan = searchParams.get("plan")?.toUpperCase() || "BASIC";
 
-  const [selectedPlan, setSelectedPlan] = useState(initialPlan);
+  const userPlan = session?.user?.plan || "FREE";
+  const currentPlanRank = planRank[userPlan] || 0;
+  const userPlanEntry = plans.find((p) => p.id === userPlan) ?? null;
+  const availableUpgrades = plans.filter(
+    (p) => (planRank[p.id] || 0) > currentPlanRank
+  );
+  const hasUpgrades = availableUpgrades.length > 0;
+
+  const initialPlanFromUrl = searchParams.get("plan")?.toUpperCase();
+  const defaultPlanId =
+    (initialPlanFromUrl &&
+      availableUpgrades.find((p) => p.id === initialPlanFromUrl)?.id) ||
+    availableUpgrades[0]?.id ||
+    "BASIC";
+
+  const [selectedPlan, setSelectedPlan] = useState<string>(defaultPlanId);
   const [paymentMethod, setPaymentMethod] = useState<"card" | "bank" | "stripe">("card");
   const [loading, setLoading] = useState(false);
   const [receiptFile, setReceiptFile] = useState<string | null>(null);
@@ -50,16 +98,22 @@ function CheckoutContent() {
   const [bankSubmitted, setBankSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [flashStatus, setFlashStatus] = useState<"success" | "canceled" | null>(null);
-  // Feature flags read from /api/settings/public. Default to true — fail open
-  // so a temporarily unreachable settings endpoint never blocks all payments.
-  // The server-side guards in the checkout routes still reject disabled
-  // methods so nothing gets through that shouldn't.
+  // Feature flags read from /api/settings/public. Default open for PayHere +
+  // Bank (fail-open so the page isn't blocked by a transient settings
+  // failure); Stripe defaults off so a misconfigured tab doesn't flash up.
   const [payhereEnabled, setPayhereEnabled] = useState(true);
   const [bankEnabled, setBankEnabled] = useState(true);
-  // Stripe defaults off — we don't want to show a broken tab if the keys
-  // aren't configured. Only flips on when both the flag is live AND the
-  // public endpoint confirms it.
   const [stripeEnabled, setStripeEnabled] = useState(false);
+
+  // Re-select a valid upgrade target once the session loads. The initial
+  // state is seeded before we know the user's plan, so BASIC users landing
+  // with a default of BASIC need to be bumped to STANDARD silently.
+  useEffect(() => {
+    if (!hasUpgrades) return;
+    const stillValid = availableUpgrades.find((p) => p.id === selectedPlan);
+    if (!stillValid) setSelectedPlan(availableUpgrades[0].id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userPlan]);
 
   useEffect(() => {
     const status = searchParams.get("status");
@@ -67,19 +121,9 @@ function CheckoutContent() {
     if (status === "canceled") setFlashStatus("canceled");
   }, [searchParams]);
 
-  // Refresh the session JWT so the plan cards and upgrade-price math reflect
-  // the current DB plan after an upgrade. Without this, a user who just
-  // upgraded BASIC -> STANDARD still sees BASIC as "Current Plan" because
-  // NextAuth caches the plan in the JWT. Runs once per page load on mount,
-  // and again a few seconds after a success redirect to catch a slow
-  // webhook.
-  //
-  // `checkoutHasRefreshed` is a *module-level* flag rather than a useRef
-  // because the (dashboard) layout above us shows a full-screen spinner
-  // whenever session status is "loading", which unmounts/remounts this
-  // component each time update() fires — a useRef would reset on remount
-  // and loop. `update()` itself is also not referentially stable, so we
-  // can't depend on it either.
+  // Refresh the JWT plan once per page load (module-level flag — survives
+  // the unmount/remount that update() triggers via the layout's loading
+  // state). Extra retries after ?status=success catch a slow webhook.
   useEffect(() => {
     if (checkoutHasRefreshed) return;
     checkoutHasRefreshed = true;
@@ -106,9 +150,6 @@ function CheckoutContent() {
         setPayhereEnabled(ph);
         setBankEnabled(bk);
         setStripeEnabled(st);
-        // Ensure the selected tab is actually enabled. Default is "card"
-        // (PayHere) — if PayHere is off, fall through to the first enabled
-        // method so we don't render an orphan pane whose tab is hidden.
         const enabled = { card: ph, stripe: st, bank: bk } as const;
         setPaymentMethod((current) => {
           if (enabled[current]) return current;
@@ -121,13 +162,15 @@ function CheckoutContent() {
       .catch(() => {});
   }, []);
 
-  const userPlan = session?.user?.plan || "FREE";
-  const currentPlanRank = planRank[userPlan] || 0;
-  const selected = plans.find((p) => p.id === selectedPlan) || plans[0];
+  const selected = plans.find((p) => p.id === selectedPlan) ?? availableUpgrades[0] ?? plans[0];
   const selectedPayable = upgradePrice(userPlan, selected.id);
-  const selectedCredit = selected.price - selectedPayable;
+  const selectedCredit = (userPlanEntry?.price ?? 0);
+  const isUpgradingFromPaid = userPlanEntry !== null && selectedCredit > 0;
+  const isActivating = userPlanEntry === null; // FREE user first purchase
+  const canCheckout = selectedPayable > 0 && hasUpgrades;
 
   const handleStripePayment = async () => {
+    if (!canCheckout) return;
     setLoading(true);
     setError("");
     try {
@@ -145,8 +188,6 @@ function CheckoutContent() {
         setLoading(false);
         return;
       }
-      // Stripe hosts the payment form on its own domain — no host allow-list
-      // to validate here the way PayHere needs.
       window.location.href = data.checkoutUrl;
     } catch {
       setError("Something went wrong. Please try again.");
@@ -155,6 +196,7 @@ function CheckoutContent() {
   };
 
   const handleCardPayment = async () => {
+    if (!canCheckout) return;
     setLoading(true);
     setError("");
     try {
@@ -217,6 +259,7 @@ function CheckoutContent() {
   };
 
   const handleBankSubmit = async () => {
+    if (!canCheckout) return;
     if (!receiptFile) {
       setError("Please upload a receipt image");
       return;
@@ -242,75 +285,31 @@ function CheckoutContent() {
     }
   };
 
+  const payableLabel = `Rs. ${selectedPayable.toLocaleString()}`;
+
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-4xl mx-auto">
+      {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Upgrade Your Plan</h1>
-        <p className="text-gray-400 mt-1">Choose a plan and complete your payment.</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+          {isActivating ? "Choose your plan" : "Upgrade your plan"}
+        </h1>
+        <p className="text-gray-500 mt-1.5 text-sm">
+          {isActivating
+            ? "Pick the plan that fits your wedding and activate it in one click."
+            : "Move up a tier — pay only the difference, never the full price again."}
+        </p>
       </div>
 
-      {/* Plan Selector */}
-      <div className="grid sm:grid-cols-3 gap-4 mb-8">
-        {plans.map((plan) => {
-          const isCurrentOrHigher = currentPlanRank >= (planRank[plan.id] || 0);
-          const isSelected = selectedPlan === plan.id;
-          const payable = upgradePrice(userPlan, plan.id);
-          const hasCredit = !isCurrentOrHigher && payable < plan.price;
-          return (
-            <button
-              key={plan.id}
-              onClick={() => !isCurrentOrHigher && setSelectedPlan(plan.id)}
-              disabled={isCurrentOrHigher}
-              className={`relative rounded-2xl p-5 border-2 text-left transition-all ${
-                isSelected && !isCurrentOrHigher
-                  ? "border-rose-600 bg-rose-50/50 shadow-lg shadow-rose-600/10"
-                  : isCurrentOrHigher
-                  ? "border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed"
-                  : "border-gray-200 bg-white hover:border-rose-300 hover:shadow-md"
-              }`}
-            >
-              {isCurrentOrHigher && (
-                <span className="absolute top-3 right-3 bg-gray-200 text-gray-600 text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase">
-                  Current Plan
-                </span>
-              )}
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${isSelected && !isCurrentOrHigher ? "bg-rose-100 text-rose-600" : "bg-gray-100 text-gray-400"}`}>
-                <Crown className="w-5 h-5" />
-              </div>
-              <p className="font-semibold text-gray-900">{plan.name}</p>
-              <p className="text-xl font-bold text-gray-900 mt-1">
-                Rs. {payable.toLocaleString()}
-              </p>
-              {hasCredit && (
-                <p className="text-[11px] text-gray-400 mt-0.5">
-                  <span className="line-through">Rs. {plan.price.toLocaleString()}</span>
-                  <span className="ml-1.5 text-emerald-600">upgrade price</span>
-                </p>
-              )}
-              <ul className="mt-3 space-y-1">
-                {plan.features.map((f) => (
-                  <li key={f} className="text-xs text-gray-400 flex items-center gap-1.5">
-                    <CheckCircle className="w-3 h-3 text-green-400" /> {f}
-                  </li>
-                ))}
-              </ul>
-              {isSelected && !isCurrentOrHigher && (
-                <div className="absolute top-3 right-3 w-5 h-5 bg-rose-600 rounded-full flex items-center justify-center">
-                  <CheckCircle className="w-3 h-3 text-white" />
-                </div>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Post-redirect flash from Stripe return */}
+      {/* Post-redirect flash */}
       {flashStatus === "success" && (
         <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 flex items-start gap-3">
           <CheckCircle className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
           <div>
             <p className="text-sm font-semibold text-emerald-900">Payment received</p>
-            <p className="text-xs text-emerald-800 mt-0.5">Your plan will upgrade within a few seconds once the payment confirms. Refresh your dashboard if you don&apos;t see it yet.</p>
+            <p className="text-xs text-emerald-800 mt-0.5">
+              Your plan will upgrade within a few seconds once the payment confirms. Refresh your dashboard if you don&apos;t see it yet.
+            </p>
           </div>
         </div>
       )}
@@ -319,211 +318,423 @@ function CheckoutContent() {
           <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
           <div>
             <p className="text-sm font-semibold text-amber-900">Payment canceled</p>
-            <p className="text-xs text-amber-800 mt-0.5">No charge was made. You can try again or pick a different payment method.</p>
+            <p className="text-xs text-amber-800 mt-0.5">
+              No charge was made. You can try again or pick a different payment method.
+            </p>
           </div>
         </div>
       )}
 
-      {/* Payment Methods */}
-      <div className="bg-white rounded-3xl shadow-xl shadow-gray-100/50 border border-gray-100 overflow-hidden">
-        {!payhereEnabled && !bankEnabled && !stripeEnabled ? (
-          <div className="p-10 text-center">
-            <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
-              <AlertTriangle className="w-6 h-6 text-amber-600" />
-            </div>
-            <h3 className="text-base font-semibold text-gray-900 mb-1">Payments are temporarily paused</h3>
-            <p className="text-sm text-gray-500">
-              We&apos;re not taking new payments right now. Please try again shortly or contact support.
-            </p>
-          </div>
-        ) : (
-          <>
-            {/* Tabs */}
-            <div className="flex border-b border-gray-100">
-              {payhereEnabled && (
-                <button
-                  onClick={() => setPaymentMethod("card")}
-                  className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-medium transition-colors ${
-                    paymentMethod === "card" ? "text-rose-600 border-b-2 border-rose-600 bg-rose-50/30" : "text-gray-400 hover:text-gray-600"
-                  }`}
-                >
-                  <CreditCard className="w-4 h-4" /> Pay with Card
-                </button>
+      {/* Plan Selector */}
+      <div className="grid sm:grid-cols-3 gap-4 mb-8">
+        {plans.map((plan) => {
+          const planRankValue = planRank[plan.id] || 0;
+          const isCurrent = plan.id === userPlan;
+          const isLower = planRankValue < currentPlanRank;
+          const isUpgrade = planRankValue > currentPlanRank;
+          const isSelected = selectedPlan === plan.id && isUpgrade;
+          const payable = upgradePrice(userPlan, plan.id);
+          const showMostPopular = plan.id === "STANDARD" && isUpgrade;
+
+          return (
+            <button
+              key={plan.id}
+              type="button"
+              onClick={() => isUpgrade && setSelectedPlan(plan.id)}
+              disabled={!isUpgrade}
+              className={`relative rounded-2xl p-5 border text-left transition-all ${
+                isSelected
+                  ? "border-rose-600 bg-white ring-2 ring-rose-600/20 shadow-lg shadow-rose-600/10"
+                  : isUpgrade
+                  ? "border-gray-200 bg-white hover:border-rose-300 hover:shadow-md cursor-pointer"
+                  : isCurrent
+                  ? "border-emerald-200 bg-emerald-50/40 cursor-default"
+                  : "border-gray-200 bg-gray-50 opacity-70 cursor-not-allowed"
+              }`}
+            >
+              {/* Status pill — mutually exclusive */}
+              {isCurrent ? (
+                <span className="absolute top-3 right-3 inline-flex items-center gap-1 bg-emerald-100 text-emerald-700 text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wide">
+                  <CheckCircle className="w-3 h-3" /> Current
+                </span>
+              ) : isLower ? (
+                <span className="absolute top-3 right-3 bg-gray-200 text-gray-600 text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wide">
+                  Lower tier
+                </span>
+              ) : showMostPopular ? (
+                <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 bg-rose-600 text-white text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wide shadow-md shadow-rose-600/30">
+                  <Sparkles className="w-3 h-3" /> Most Popular
+                </span>
+              ) : null}
+
+              {isSelected && (
+                <div className="absolute top-3 right-3 w-5 h-5 bg-rose-600 rounded-full flex items-center justify-center">
+                  <CheckCircle className="w-3 h-3 text-white" />
+                </div>
               )}
-              {stripeEnabled && (
-                <button
-                  onClick={() => setPaymentMethod("stripe")}
-                  className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-medium transition-colors ${
-                    paymentMethod === "stripe" ? "text-rose-600 border-b-2 border-rose-600 bg-rose-50/30" : "text-gray-400 hover:text-gray-600"
-                  }`}
-                >
-                  <Globe className="w-4 h-4" /> International Card
-                </button>
+
+              <div
+                className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${
+                  isSelected
+                    ? "bg-rose-100 text-rose-600"
+                    : isCurrent
+                    ? "bg-emerald-100 text-emerald-600"
+                    : "bg-gray-100 text-gray-400"
+                }`}
+              >
+                <Crown className="w-5 h-5" />
+              </div>
+
+              <p className="font-semibold text-gray-900">{plan.name}</p>
+              <p className="text-xs text-gray-400 mt-0.5">{plan.tagline}</p>
+
+              {isUpgrade ? (
+                <>
+                  {isUpgradingFromPaid ? (
+                    <div className="mt-3">
+                      <p className="text-xs text-gray-400">You pay today</p>
+                      <p className="text-2xl font-bold text-gray-900 leading-tight">
+                        Rs. {payable.toLocaleString()}
+                      </p>
+                      <p className="text-[11px] text-gray-400 mt-0.5">
+                        <span className="line-through">Rs. {plan.price.toLocaleString()}</span>
+                        <span className="ml-1.5 text-emerald-600">
+                          − Rs. {(plan.price - payable).toLocaleString()} credit
+                        </span>
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="mt-3">
+                      <p className="text-2xl font-bold text-gray-900 leading-tight">
+                        Rs. {plan.price.toLocaleString()}
+                      </p>
+                      <p className="text-[11px] text-gray-400 mt-0.5">one-time</p>
+                    </div>
+                  )}
+                </>
+              ) : isCurrent ? (
+                <div className="mt-3">
+                  <p className="text-sm font-medium text-emerald-700">You&apos;re on this plan</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">
+                    Paid Rs. {plan.price.toLocaleString()}
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-3">
+                  <p className="text-sm font-medium text-gray-500">Included in your plan</p>
+                </div>
               )}
-              {bankEnabled && (
-                <button
-                  onClick={() => setPaymentMethod("bank")}
-                  className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-medium transition-colors ${
-                    paymentMethod === "bank" ? "text-rose-600 border-b-2 border-rose-600 bg-rose-50/30" : "text-gray-400 hover:text-gray-600"
-                  }`}
-                >
-                  <Building2 className="w-4 h-4" /> Bank Transfer
-                </button>
-              )}
-            </div>
 
-            <div className="p-8">
-              {error && <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-xl mb-6">{error}</div>}
-
-          {paymentMethod === "card" ? (
-            <div className="space-y-6">
-              <div className="bg-gray-50 rounded-2xl p-5">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-gray-500">Selected Plan</p>
-                  <p className="text-sm font-semibold text-gray-900">{selected.name}</p>
-                </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-gray-500">Amount</p>
-                  <p className="text-lg font-bold text-gray-900">Rs. {selectedPayable.toLocaleString()}</p>
-                </div>
-                {selectedCredit > 0 && (
-                  <p className="text-xs text-gray-400 mt-2 text-right">
-                    Rs. {selected.price.toLocaleString()} − Rs. {selectedCredit.toLocaleString()} credit from your {userPlan.charAt(0) + userPlan.slice(1).toLowerCase()} plan
-                  </p>
-                )}
-              </div>
-              <button
-                onClick={handleCardPayment}
-                disabled={loading || currentPlanRank >= (planRank[selectedPlan] || 0)}
-                className="w-full bg-rose-600 text-white py-3 rounded-xl font-medium hover:bg-rose-700 transition-colors shadow-lg shadow-rose-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {loading ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Redirecting to payment...</>
-                ) : (
-                  <><CreditCard className="w-4 h-4" /> Pay Now</>
-                )}
-              </button>
-            </div>
-          ) : paymentMethod === "stripe" ? (
-            <div className="space-y-6">
-              <div className="bg-gray-50 rounded-2xl p-5">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-gray-500">Selected Plan</p>
-                  <p className="text-sm font-semibold text-gray-900">{selected.name}</p>
-                </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-gray-500">Amount</p>
-                  <p className="text-lg font-bold text-gray-900">Rs. {selectedPayable.toLocaleString()}</p>
-                </div>
-                {selectedCredit > 0 && (
-                  <p className="text-xs text-gray-400 mt-2 text-right">
-                    Rs. {selected.price.toLocaleString()} − Rs. {selectedCredit.toLocaleString()} credit from your {userPlan.charAt(0) + userPlan.slice(1).toLowerCase()} plan
-                  </p>
-                )}
-                <p className="text-xs text-gray-400 mt-3">
-                  Pays via Stripe&apos;s secure checkout — accepts Visa, Mastercard, Amex from international cards.
-                </p>
-              </div>
-              <button
-                onClick={handleStripePayment}
-                disabled={loading || currentPlanRank >= (planRank[selectedPlan] || 0)}
-                className="w-full bg-indigo-600 text-white py-3 rounded-xl font-medium hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {loading ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Redirecting to Stripe...</>
-                ) : (
-                  <><Globe className="w-4 h-4" /> Continue to Stripe</>
-                )}
-              </button>
-            </div>
-          ) : bankSubmitted ? (
-            <div className="text-center py-8">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-8 h-8 text-green-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Receipt Submitted!</h3>
-              <p className="text-sm text-gray-400">We&apos;ll review your payment within 24 hours and activate your plan.</p>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {/* Bank Details */}
-              <div className="bg-blue-50 rounded-2xl p-5 border border-blue-100">
-                <p className="text-sm font-semibold text-blue-900 mb-3 flex items-center gap-2">
-                  <Building2 className="w-4 h-4" /> Bank Details
-                </p>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-blue-600">Bank</span>
-                    <span className="font-medium text-blue-900">Bank of Ceylon</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-blue-600">Account Name</span>
-                    <span className="font-medium text-blue-900">INVITATION.LK (PVT) LTD</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-blue-600">Account Number</span>
-                    <span className="font-medium text-blue-900">85XXXXXXXX</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-blue-600">Branch</span>
-                    <span className="font-medium text-blue-900">Colombo Main Branch</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Amount */}
-              <div className="bg-gray-50 rounded-2xl p-5">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-gray-500">Amount to Transfer</p>
-                  <p className="text-lg font-bold text-gray-900">Rs. {selectedPayable.toLocaleString()}</p>
-                </div>
-                {selectedCredit > 0 && (
-                  <p className="text-xs text-gray-400 mt-2 text-right">
-                    Rs. {selected.price.toLocaleString()} − Rs. {selectedCredit.toLocaleString()} credit from your {userPlan.charAt(0) + userPlan.slice(1).toLowerCase()} plan
-                  </p>
-                )}
-              </div>
-
-              {/* Receipt Upload */}
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">Receipt Image</label>
-                <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-2xl p-6 cursor-pointer hover:border-rose-300 hover:bg-rose-50/30 transition-colors">
-                  <Upload className="w-8 h-8 text-gray-300 mb-2" />
-                  <p className="text-sm text-gray-500">{receiptName || "Click to upload receipt"}</p>
-                  <p className="text-xs text-gray-300 mt-1">PNG, JPG up to 5MB</p>
-                  <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
-                </label>
-              </div>
-
-              {/* Bank Reference */}
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">Bank Reference (Optional)</label>
-                <input
-                  type="text"
-                  value={bankRef}
-                  onChange={(e) => setBankRef(e.target.value)}
-                  placeholder="e.g. Transaction ID or reference number"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 text-sm"
-                />
-              </div>
-
-              <button
-                onClick={handleBankSubmit}
-                disabled={loading || !receiptFile || currentPlanRank >= (planRank[selectedPlan] || 0)}
-                className="w-full bg-rose-600 text-white py-3 rounded-xl font-medium hover:bg-rose-700 transition-colors shadow-lg shadow-rose-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {loading ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
-                ) : (
-                  <><Upload className="w-4 h-4" /> Submit Receipt</>
-                )}
-              </button>
-            </div>
-          )}
-            </div>
-          </>
-        )}
+              <ul className="mt-4 space-y-1.5">
+                {plan.features.map((f) => (
+                  <li key={f} className="text-xs text-gray-500 flex items-center gap-1.5">
+                    <CheckCircle className="w-3 h-3 text-emerald-500 flex-shrink-0" /> {f}
+                  </li>
+                ))}
+              </ul>
+            </button>
+          );
+        })}
       </div>
+
+      {/* No upgrades available — PREMIUM user */}
+      {!hasUpgrades && (
+        <div className="rounded-3xl bg-white border border-gray-100 shadow-sm p-10 text-center">
+          <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+            <Crown className="w-6 h-6 text-emerald-600" />
+          </div>
+          <h3 className="text-base font-semibold text-gray-900 mb-1">
+            You&apos;re on the top plan
+          </h3>
+          <p className="text-sm text-gray-500 max-w-md mx-auto">
+            There&apos;s nothing higher than Premium — you already have everything unlocked.
+          </p>
+        </div>
+      )}
+
+      {/* Upgrade/Order Summary + Payment (only when there's something to pay) */}
+      {hasUpgrades && (
+        <>
+          {/* Summary */}
+          <div className="rounded-3xl bg-white border border-gray-100 shadow-sm p-6 sm:p-7 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+                {isActivating ? "Order summary" : "Upgrade summary"}
+              </h2>
+              {isUpgradingFromPaid && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2.5 py-1">
+                  <ShieldCheck className="w-3 h-3" /> You only pay the difference
+                </span>
+              )}
+            </div>
+
+            {isUpgradingFromPaid ? (
+              <dl className="divide-y divide-gray-100">
+                <div className="flex items-center justify-between py-3">
+                  <dt className="text-sm text-gray-500">Current plan</dt>
+                  <dd className="text-sm font-medium text-gray-900">
+                    {userPlanEntry?.name}
+                    <span className="text-gray-400 font-normal ml-2">
+                      (paid Rs. {userPlanEntry?.price.toLocaleString()})
+                    </span>
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between py-3">
+                  <dt className="text-sm text-gray-500">New plan</dt>
+                  <dd className="text-sm font-medium text-gray-900 flex items-center gap-1.5">
+                    <ArrowRight className="w-3.5 h-3.5 text-gray-400" /> {selected.name}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between py-3">
+                  <dt className="text-sm text-gray-500">Plan price</dt>
+                  <dd className="text-sm text-gray-700">Rs. {selected.price.toLocaleString()}</dd>
+                </div>
+                <div className="flex items-center justify-between py-3">
+                  <dt className="text-sm text-gray-500">
+                    Credit from your {titleCase(userPlan)} plan
+                  </dt>
+                  <dd className="text-sm text-emerald-700">
+                    − Rs. {selectedCredit.toLocaleString()}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between py-4">
+                  <dt className="text-base font-semibold text-gray-900">You pay today</dt>
+                  <dd className="text-2xl font-bold text-gray-900">{payableLabel}</dd>
+                </div>
+              </dl>
+            ) : (
+              <dl className="divide-y divide-gray-100">
+                <div className="flex items-center justify-between py-3">
+                  <dt className="text-sm text-gray-500">Plan</dt>
+                  <dd className="text-sm font-medium text-gray-900">{selected.name}</dd>
+                </div>
+                <div className="flex items-center justify-between py-4">
+                  <dt className="text-base font-semibold text-gray-900">Total</dt>
+                  <dd className="text-2xl font-bold text-gray-900">{payableLabel}</dd>
+                </div>
+              </dl>
+            )}
+          </div>
+
+          {/* Payment Methods */}
+          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+            {!payhereEnabled && !bankEnabled && !stripeEnabled ? (
+              <div className="p-10 text-center">
+                <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                  <AlertTriangle className="w-6 h-6 text-amber-600" />
+                </div>
+                <h3 className="text-base font-semibold text-gray-900 mb-1">
+                  Payments are temporarily paused
+                </h3>
+                <p className="text-sm text-gray-500">
+                  We&apos;re not taking new payments right now. Please try again shortly or contact support.
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Tabs */}
+                <div className="flex border-b border-gray-100">
+                  {payhereEnabled && (
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod("card")}
+                      className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-medium transition-colors ${
+                        paymentMethod === "card"
+                          ? "text-rose-600 border-b-2 border-rose-600 bg-rose-50/40"
+                          : "text-gray-400 hover:text-gray-600"
+                      }`}
+                    >
+                      <CreditCard className="w-4 h-4" /> Card (LKR)
+                    </button>
+                  )}
+                  {stripeEnabled && (
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod("stripe")}
+                      className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-medium transition-colors ${
+                        paymentMethod === "stripe"
+                          ? "text-rose-600 border-b-2 border-rose-600 bg-rose-50/40"
+                          : "text-gray-400 hover:text-gray-600"
+                      }`}
+                    >
+                      <Globe className="w-4 h-4" /> International Card
+                    </button>
+                  )}
+                  {bankEnabled && (
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod("bank")}
+                      className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-medium transition-colors ${
+                        paymentMethod === "bank"
+                          ? "text-rose-600 border-b-2 border-rose-600 bg-rose-50/40"
+                          : "text-gray-400 hover:text-gray-600"
+                      }`}
+                    >
+                      <Building2 className="w-4 h-4" /> Bank Transfer
+                    </button>
+                  )}
+                </div>
+
+                <div className="p-6 sm:p-8">
+                  {error && (
+                    <div className="bg-red-50 text-red-700 text-sm px-4 py-3 rounded-xl mb-6 border border-red-100">
+                      {error}
+                    </div>
+                  )}
+
+                  {paymentMethod === "card" ? (
+                    <div className="space-y-5">
+                      <p className="text-xs text-gray-500">
+                        Secure LKR card payment via PayHere. Supports Visa, Mastercard, and local debit cards.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleCardPayment}
+                        disabled={loading || !canCheckout}
+                        className="w-full bg-rose-600 text-white py-3.5 rounded-xl font-semibold hover:bg-rose-700 transition-colors shadow-lg shadow-rose-600/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      >
+                        {loading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" /> Redirecting to payment…
+                          </>
+                        ) : isActivating ? (
+                          <>
+                            <CreditCard className="w-4 h-4" /> Activate {selected.name} — {payableLabel}
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard className="w-4 h-4" /> Pay {payableLabel} &amp; upgrade
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  ) : paymentMethod === "stripe" ? (
+                    <div className="space-y-5">
+                      <p className="text-xs text-gray-500">
+                        Secure international card payment via Stripe. Accepts Visa, Mastercard, and Amex.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleStripePayment}
+                        disabled={loading || !canCheckout}
+                        className="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-semibold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-600/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      >
+                        {loading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" /> Redirecting to Stripe…
+                          </>
+                        ) : isActivating ? (
+                          <>
+                            <Globe className="w-4 h-4" /> Continue to Stripe — {payableLabel}
+                          </>
+                        ) : (
+                          <>
+                            <Globe className="w-4 h-4" /> Pay {payableLabel} &amp; upgrade
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  ) : bankSubmitted ? (
+                    <div className="text-center py-8">
+                      <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <CheckCircle className="w-8 h-8 text-emerald-600" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                        Receipt submitted
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        We&apos;ll review your payment within 24 hours and activate your plan.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-5">
+                      {/* Bank Details */}
+                      <div className="bg-blue-50/60 rounded-2xl p-5 border border-blue-100">
+                        <p className="text-sm font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                          <Building2 className="w-4 h-4" /> Bank details
+                        </p>
+                        <dl className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <dt className="text-blue-700/80">Bank</dt>
+                            <dd className="font-medium text-blue-900">Bank of Ceylon</dd>
+                          </div>
+                          <div className="flex justify-between">
+                            <dt className="text-blue-700/80">Account name</dt>
+                            <dd className="font-medium text-blue-900">INVITATION.LK (PVT) LTD</dd>
+                          </div>
+                          <div className="flex justify-between">
+                            <dt className="text-blue-700/80">Account number</dt>
+                            <dd className="font-medium text-blue-900">85XXXXXXXX</dd>
+                          </div>
+                          <div className="flex justify-between">
+                            <dt className="text-blue-700/80">Branch</dt>
+                            <dd className="font-medium text-blue-900">Colombo Main</dd>
+                          </div>
+                          <div className="flex justify-between pt-2 border-t border-blue-100 mt-2">
+                            <dt className="text-blue-700/80">Amount to transfer</dt>
+                            <dd className="font-semibold text-blue-900">{payableLabel}</dd>
+                          </div>
+                        </dl>
+                      </div>
+
+                      {/* Receipt Upload */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">
+                          Receipt image
+                        </label>
+                        <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-2xl p-6 cursor-pointer hover:border-rose-300 hover:bg-rose-50/30 transition-colors">
+                          <Upload className="w-8 h-8 text-gray-300 mb-2" />
+                          <p className="text-sm text-gray-500">
+                            {receiptName || "Click to upload receipt"}
+                          </p>
+                          <p className="text-xs text-gray-300 mt-1">PNG or JPG, up to 5MB</p>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileChange}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+
+                      {/* Bank Reference */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">
+                          Bank reference (optional)
+                        </label>
+                        <input
+                          type="text"
+                          value={bankRef}
+                          onChange={(e) => setBankRef(e.target.value)}
+                          placeholder="e.g. transaction ID or reference number"
+                          className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 text-sm"
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleBankSubmit}
+                        disabled={loading || !receiptFile || !canCheckout}
+                        className="w-full bg-rose-600 text-white py-3.5 rounded-xl font-semibold hover:bg-rose-700 transition-colors shadow-lg shadow-rose-600/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      >
+                        {loading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" /> Submitting…
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-4 h-4" /> Submit receipt — {payableLabel}
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
