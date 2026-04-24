@@ -11,7 +11,6 @@ import {
   Loader2,
   Crown,
   AlertTriangle,
-  Globe,
   Sparkles,
   ShieldCheck,
   ArrowRight,
@@ -550,7 +549,11 @@ function CheckoutContent() {
               </div>
             ) : (
               <>
-                {/* Tabs */}
+                {/* Tabs — neutral weight on non-selected so no option reads
+                    as disabled. Labels use plain language: "Card Payment"
+                    covers both local and international cards via Stripe;
+                    PayHere (if enabled) is kept as "Card (LKR)" to
+                    differentiate the two gateways. */}
                 <div className="flex border-b border-gray-100">
                   {payhereEnabled && (
                     <button
@@ -559,7 +562,7 @@ function CheckoutContent() {
                       className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-medium transition-colors ${
                         paymentMethod === "card"
                           ? "text-rose-600 border-b-2 border-rose-600 bg-rose-50/40"
-                          : "text-gray-400 hover:text-gray-600"
+                          : "text-gray-700 hover:text-rose-600"
                       }`}
                     >
                       <CreditCard className="w-4 h-4" /> Card (LKR)
@@ -572,10 +575,10 @@ function CheckoutContent() {
                       className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-medium transition-colors ${
                         paymentMethod === "stripe"
                           ? "text-rose-600 border-b-2 border-rose-600 bg-rose-50/40"
-                          : "text-gray-400 hover:text-gray-600"
+                          : "text-gray-700 hover:text-rose-600"
                       }`}
                     >
-                      <Globe className="w-4 h-4" /> International Card
+                      <CreditCard className="w-4 h-4" /> Card Payment
                     </button>
                   )}
                   {bankEnabled && (
@@ -585,7 +588,7 @@ function CheckoutContent() {
                       className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-medium transition-colors ${
                         paymentMethod === "bank"
                           ? "text-rose-600 border-b-2 border-rose-600 bg-rose-50/40"
-                          : "text-gray-400 hover:text-gray-600"
+                          : "text-gray-700 hover:text-rose-600"
                       }`}
                     >
                       <Building2 className="w-4 h-4" /> Bank Transfer
@@ -602,9 +605,17 @@ function CheckoutContent() {
 
                   {paymentMethod === "card" ? (
                     <div className="space-y-5">
-                      <p className="text-xs text-gray-500">
-                        Secure LKR card payment via PayHere. Supports Visa, Mastercard, and local debit cards.
-                      </p>
+                      <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+                        <p className="text-sm font-medium text-gray-900">
+                          Secure payment via PayHere
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Visa, Mastercard &amp; local debit cards supported. Settled in LKR.
+                        </p>
+                        <p className="text-[11px] text-gray-400 mt-2 flex items-center gap-1.5">
+                          <ShieldCheck className="w-3 h-3 text-emerald-600" /> Your payment is encrypted and processed by PayHere — we never see your card details.
+                        </p>
+                      </div>
                       <button
                         type="button"
                         onClick={handleCardPayment}
@@ -628,9 +639,17 @@ function CheckoutContent() {
                     </div>
                   ) : paymentMethod === "stripe" ? (
                     <div className="space-y-5">
-                      <p className="text-xs text-gray-500">
-                        Secure international card payment via Stripe. Accepts Visa, Mastercard, and Amex.
-                      </p>
+                      <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+                        <p className="text-sm font-medium text-gray-900">
+                          Secure payment via Stripe
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Visa, Mastercard &amp; Amex supported — works with both local Sri Lankan cards and international cards.
+                        </p>
+                        <p className="text-[11px] text-gray-400 mt-2 flex items-center gap-1.5">
+                          <ShieldCheck className="w-3 h-3 text-emerald-600" /> Your payment is encrypted and processed by Stripe — we never see your card details.
+                        </p>
+                      </div>
                       <button
                         type="button"
                         onClick={handleStripePayment}
@@ -643,11 +662,11 @@ function CheckoutContent() {
                           </>
                         ) : isActivating ? (
                           <>
-                            <Globe className="w-4 h-4" /> Pay {payableLabel} &amp; activate {selected.name}
+                            <CreditCard className="w-4 h-4" /> Pay {payableLabel} &amp; activate {selected.name}
                           </>
                         ) : (
                           <>
-                            <Globe className="w-4 h-4" /> Pay {payableLabel} &amp; upgrade to {selected.name}
+                            <CreditCard className="w-4 h-4" /> Pay {payableLabel} &amp; upgrade to {selected.name}
                           </>
                         )}
                       </button>
