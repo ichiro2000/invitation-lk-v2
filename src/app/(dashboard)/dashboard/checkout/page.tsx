@@ -287,16 +287,24 @@ function CheckoutContent() {
 
   const payableLabel = `Rs. ${selectedPayable.toLocaleString()}`;
 
+  const currentPlanLabel = isActivating ? "Free" : titleCase(userPlan);
+
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
       <div className="mb-8">
+        <div className="flex flex-wrap items-center gap-2 mb-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 text-gray-600 text-[11px] font-medium px-2.5 py-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+            Current plan: {currentPlanLabel}
+          </span>
+        </div>
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
-          {isActivating ? "Choose your plan" : "Upgrade your plan"}
+          {isActivating ? "Activate your plan" : "Upgrade your plan"}
         </h1>
         <p className="text-gray-500 mt-1.5 text-sm">
           {isActivating
-            ? "Pick the plan that fits your wedding and activate it in one click."
+            ? "You're on the Free plan. Pick a paid plan below to publish your invitation and unlock guest tools."
             : "Move up a tier — pay only the difference, never the full price again."}
         </p>
       </div>
@@ -505,11 +513,21 @@ function CheckoutContent() {
             ) : (
               <dl className="divide-y divide-gray-100">
                 <div className="flex items-center justify-between py-3">
-                  <dt className="text-sm text-gray-500">Plan</dt>
-                  <dd className="text-sm font-medium text-gray-900">{selected.name}</dd>
+                  <dt className="text-sm text-gray-500">Current plan</dt>
+                  <dd className="text-sm font-medium text-gray-900">Free</dd>
+                </div>
+                <div className="flex items-center justify-between py-3">
+                  <dt className="text-sm text-gray-500">Selected plan</dt>
+                  <dd className="text-sm font-medium text-gray-900 flex items-center gap-1.5">
+                    <ArrowRight className="w-3.5 h-3.5 text-gray-400" /> {selected.name}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between py-3">
+                  <dt className="text-sm text-gray-500">Plan price</dt>
+                  <dd className="text-sm text-gray-700">Rs. {selected.price.toLocaleString()}</dd>
                 </div>
                 <div className="flex items-center justify-between py-4">
-                  <dt className="text-base font-semibold text-gray-900">Total</dt>
+                  <dt className="text-base font-semibold text-gray-900">Total to pay</dt>
                   <dd className="text-2xl font-bold text-gray-900">{payableLabel}</dd>
                 </div>
               </dl>
@@ -599,11 +617,11 @@ function CheckoutContent() {
                           </>
                         ) : isActivating ? (
                           <>
-                            <CreditCard className="w-4 h-4" /> Activate {selected.name} — {payableLabel}
+                            <CreditCard className="w-4 h-4" /> Pay {payableLabel} &amp; activate {selected.name}
                           </>
                         ) : (
                           <>
-                            <CreditCard className="w-4 h-4" /> Pay {payableLabel} &amp; upgrade
+                            <CreditCard className="w-4 h-4" /> Pay {payableLabel} &amp; upgrade to {selected.name}
                           </>
                         )}
                       </button>
@@ -625,11 +643,11 @@ function CheckoutContent() {
                           </>
                         ) : isActivating ? (
                           <>
-                            <Globe className="w-4 h-4" /> Continue to Stripe — {payableLabel}
+                            <Globe className="w-4 h-4" /> Pay {payableLabel} &amp; activate {selected.name}
                           </>
                         ) : (
                           <>
-                            <Globe className="w-4 h-4" /> Pay {payableLabel} &amp; upgrade
+                            <Globe className="w-4 h-4" /> Pay {payableLabel} &amp; upgrade to {selected.name}
                           </>
                         )}
                       </button>
