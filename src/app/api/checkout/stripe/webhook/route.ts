@@ -19,7 +19,10 @@ function ack(reason: string, extra?: Record<string, unknown>) {
 // the bytes intact.
 export async function POST(request: Request) {
   try {
-    const secret = process.env.STRIPE_WEBHOOK_SECRET;
+    // Trim to survive a trailing newline or space pasted into the DO env var
+    // UI — otherwise Stripe's constructEvent rejects the signature with an
+    // opaque "whitespace in secret" warning that's hard to spot.
+    const secret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
     if (!secret) {
       console.error("[stripe-webhook] STRIPE_WEBHOOK_SECRET not set");
       return ack("webhook_secret_missing");

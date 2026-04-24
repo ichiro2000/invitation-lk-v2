@@ -18,9 +18,14 @@ function isSecretKeyShape(key: string | undefined): key is string {
   return !!key && (key.startsWith("sk_test_") || key.startsWith("sk_live_"));
 }
 
+// Trim to survive a trailing newline/space pasted into the DO env var UI.
+function readSecretKey(): string | undefined {
+  return process.env.STRIPE_SECRET_KEY?.trim();
+}
+
 export function getStripe(): Stripe | null {
   if (cachedClient !== undefined) return cachedClient;
-  const key = process.env.STRIPE_SECRET_KEY;
+  const key = readSecretKey();
   if (!isSecretKeyShape(key)) {
     cachedClient = null;
     return null;
@@ -30,17 +35,17 @@ export function getStripe(): Stripe | null {
 }
 
 export function isStripeConfigured(): boolean {
-  return isSecretKeyShape(process.env.STRIPE_SECRET_KEY);
+  return isSecretKeyShape(readSecretKey());
 }
 
 export function isStripeWebhookConfigured(): boolean {
-  return !!process.env.STRIPE_WEBHOOK_SECRET;
+  return !!process.env.STRIPE_WEBHOOK_SECRET?.trim();
 }
 
 // "sk_test_..." vs "sk_live_..." — surfaced in admin Settings so an admin
 // doesn't have to eyeball the raw key to tell which mode they're in.
 export function getStripeMode(): "test" | "live" | null {
-  const key = process.env.STRIPE_SECRET_KEY ?? "";
+  const key = readSecretKey() ?? "";
   if (key.startsWith("sk_test_")) return "test";
   if (key.startsWith("sk_live_")) return "live";
   return null;
