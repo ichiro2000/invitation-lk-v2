@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/db";
-import { PLAN_AMOUNTS, PLAN_NAMES } from "@/lib/plans";
+import { getUpgradeAmount, isUpgrade, PLAN_NAMES } from "@/lib/plans";
 import { checkoutLimiter } from "@/lib/rate-limit";
 import { getFlag } from "@/lib/settings-read";
 import { getStripe, toStripeAmount } from "@/lib/stripe";
@@ -64,10 +64,25 @@ export async function POST(request: Request) {
       );
     }
 
-    const amount = PLAN_AMOUNTS[plan];
+    // Charge the difference between the user's current plan and the target.
+    // Read the user's plan from the DB, not the session, so a stale JWT can't
+    // be used to pay the lower upgrade price after an admin already upgraded.
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { plan: true },
+    });
+    if (!isUpgrade(user?.plan, plan)) {
+      return NextResponse.json(
+        { error: "You're already on this plan or a higher one." },
+        { status: 400 }
+      );
+    }
+    const amount = getUpgradeAmount(user?.plan, plan);
     const currency = "LKR";
 
-    // Reuse a recent PENDING Stripe order if present.
+    // Reuse a recent PENDING Stripe order if present. Match on amount too
+    // so a stale PENDING order at the full sticker price doesn't collide with
+    // a new upgrade-diff order — the webhook amount guard would reject it.
     const cutoff = new Date(Date.now() - PENDING_REUSE_WINDOW_MS);
     let order = await prisma.order.findFirst({
       where: {
@@ -75,6 +90,7 @@ export async function POST(request: Request) {
         plan: plan as Plan,
         paymentMethod: "STRIPE",
         paymentStatus: "PENDING",
+        amount,
         createdAt: { gte: cutoff },
       },
       orderBy: { createdAt: "desc" },

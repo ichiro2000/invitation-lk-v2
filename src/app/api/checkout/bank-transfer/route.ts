@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/db";
-import { PLAN_AMOUNTS } from "@/lib/plans";
+import { getUpgradeAmount, isUpgrade } from "@/lib/plans";
 import { checkoutLimiter } from "@/lib/rate-limit";
 import { getFlag } from "@/lib/settings-read";
 import type { Plan } from "@/generated/prisma/client";
@@ -72,11 +72,25 @@ export async function POST(request: Request) {
       );
     }
 
+    // Charge the difference between the user's current plan and the target.
+    // DB-sourced to guard against stale JWTs.
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { plan: true },
+    });
+    if (!isUpgrade(user?.plan, plan)) {
+      return NextResponse.json(
+        { error: "You're already on this plan or a higher one." },
+        { status: 400 }
+      );
+    }
+    const amount = getUpgradeAmount(user?.plan, plan);
+
     const order = await prisma.order.create({
       data: {
         userId: session.user.id,
         plan: plan as Plan,
-        amount: PLAN_AMOUNTS[plan],
+        amount,
         paymentMethod: "BANK_TRANSFER",
         paymentStatus: "PENDING",
         bankTransfer: {

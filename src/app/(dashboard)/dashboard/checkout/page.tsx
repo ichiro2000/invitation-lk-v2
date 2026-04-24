@@ -13,6 +13,17 @@ const plans = [
 
 const planRank: Record<string, number> = { FREE: 0, BASIC: 1, STANDARD: 2, PREMIUM: 3, ADMIN: 4 };
 
+// Price displayed at checkout for `targetPrice` given the user's current plan.
+// Mirrors getUpgradeAmount in src/lib/plans.ts — the API is the source of
+// truth, this just keeps the UI honest about what Stripe/PayHere will charge.
+function upgradePrice(userPlan: string, targetPlanId: string): number {
+  const currentPlanEntry = plans.find((p) => p.id === userPlan);
+  const targetPlanEntry = plans.find((p) => p.id === targetPlanId);
+  if (!targetPlanEntry) return 0;
+  const credit = currentPlanEntry?.price ?? 0;
+  return Math.max(0, targetPlanEntry.price - credit);
+}
+
 function CheckoutContent() {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
@@ -73,6 +84,8 @@ function CheckoutContent() {
   const userPlan = session?.user?.plan || "FREE";
   const currentPlanRank = planRank[userPlan] || 0;
   const selected = plans.find((p) => p.id === selectedPlan) || plans[0];
+  const selectedPayable = upgradePrice(userPlan, selected.id);
+  const selectedCredit = selected.price - selectedPayable;
 
   const handleStripePayment = async () => {
     setLoading(true);
@@ -201,6 +214,8 @@ function CheckoutContent() {
         {plans.map((plan) => {
           const isCurrentOrHigher = currentPlanRank >= (planRank[plan.id] || 0);
           const isSelected = selectedPlan === plan.id;
+          const payable = upgradePrice(userPlan, plan.id);
+          const hasCredit = !isCurrentOrHigher && payable < plan.price;
           return (
             <button
               key={plan.id}
@@ -224,8 +239,14 @@ function CheckoutContent() {
               </div>
               <p className="font-semibold text-gray-900">{plan.name}</p>
               <p className="text-xl font-bold text-gray-900 mt-1">
-                Rs. {plan.price.toLocaleString()}
+                Rs. {payable.toLocaleString()}
               </p>
+              {hasCredit && (
+                <p className="text-[11px] text-gray-400 mt-0.5">
+                  <span className="line-through">Rs. {plan.price.toLocaleString()}</span>
+                  <span className="ml-1.5 text-emerald-600">upgrade price</span>
+                </p>
+              )}
               <ul className="mt-3 space-y-1">
                 {plan.features.map((f) => (
                   <li key={f} className="text-xs text-gray-400 flex items-center gap-1.5">
@@ -323,8 +344,13 @@ function CheckoutContent() {
                 </div>
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-gray-500">Amount</p>
-                  <p className="text-lg font-bold text-gray-900">Rs. {selected.price.toLocaleString()}</p>
+                  <p className="text-lg font-bold text-gray-900">Rs. {selectedPayable.toLocaleString()}</p>
                 </div>
+                {selectedCredit > 0 && (
+                  <p className="text-xs text-gray-400 mt-2 text-right">
+                    Rs. {selected.price.toLocaleString()} − Rs. {selectedCredit.toLocaleString()} credit from your {userPlan.charAt(0) + userPlan.slice(1).toLowerCase()} plan
+                  </p>
+                )}
               </div>
               <button
                 onClick={handleCardPayment}
@@ -347,8 +373,13 @@ function CheckoutContent() {
                 </div>
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-gray-500">Amount</p>
-                  <p className="text-lg font-bold text-gray-900">Rs. {selected.price.toLocaleString()}</p>
+                  <p className="text-lg font-bold text-gray-900">Rs. {selectedPayable.toLocaleString()}</p>
                 </div>
+                {selectedCredit > 0 && (
+                  <p className="text-xs text-gray-400 mt-2 text-right">
+                    Rs. {selected.price.toLocaleString()} − Rs. {selectedCredit.toLocaleString()} credit from your {userPlan.charAt(0) + userPlan.slice(1).toLowerCase()} plan
+                  </p>
+                )}
                 <p className="text-xs text-gray-400 mt-3">
                   Pays via Stripe&apos;s secure checkout — accepts Visa, Mastercard, Amex from international cards.
                 </p>
@@ -404,8 +435,13 @@ function CheckoutContent() {
               <div className="bg-gray-50 rounded-2xl p-5">
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-gray-500">Amount to Transfer</p>
-                  <p className="text-lg font-bold text-gray-900">Rs. {selected.price.toLocaleString()}</p>
+                  <p className="text-lg font-bold text-gray-900">Rs. {selectedPayable.toLocaleString()}</p>
                 </div>
+                {selectedCredit > 0 && (
+                  <p className="text-xs text-gray-400 mt-2 text-right">
+                    Rs. {selected.price.toLocaleString()} − Rs. {selectedCredit.toLocaleString()} credit from your {userPlan.charAt(0) + userPlan.slice(1).toLowerCase()} plan
+                  </p>
+                )}
               </div>
 
               {/* Receipt Upload */}

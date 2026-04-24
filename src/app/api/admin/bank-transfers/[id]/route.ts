@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/db";
-import { PLAN_NAMES, PLAN_AMOUNTS, PLAN_RANK } from "@/lib/plans";
+import { PLAN_NAMES, PLAN_RANK } from "@/lib/plans";
 import { sendPaymentConfirmationEmail, sendAdminPaymentNotification } from "@/lib/resend";
 import { logAdminAction } from "@/lib/audit-log";
 
@@ -110,7 +110,9 @@ export async function PATCH(
 
       if (user) {
         const planName = PLAN_NAMES[bankTransfer.order.plan];
-        const amount = PLAN_AMOUNTS[bankTransfer.order.plan].toLocaleString();
+        // Use the order's recorded amount, not the plan sticker — upgrade-diff
+        // orders charge (target − current) and the email must reflect that.
+        const amount = Number(bankTransfer.order.amount).toLocaleString();
         await sendPaymentConfirmationEmail(
           user.email,
           user.yourName || "Customer",
