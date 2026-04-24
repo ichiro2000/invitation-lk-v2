@@ -136,8 +136,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ checkoutUrl: checkoutSession.url });
   } catch (error) {
     console.error("Stripe checkout error:", error);
+    // In non-production, include the underlying Stripe/runtime message so the
+    // cause (e.g. unsupported currency, bad key) is visible in the UI. Prod
+    // keeps the generic message so we don't leak internals to end users.
+    const isDev = process.env.NODE_ENV !== "production";
+    const detail =
+      isDev && error instanceof Error ? error.message : undefined;
     return NextResponse.json(
-      { error: "Failed to start payment" },
+      { error: "Failed to start payment", detail },
       { status: 500 }
     );
   }
