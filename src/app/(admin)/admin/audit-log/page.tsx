@@ -125,6 +125,7 @@ export default function AdminAuditLogPage() {
     try {
       const params = new URLSearchParams();
       if (actionFilter) params.set("action", actionFilter);
+      if (search.trim()) params.set("search", search.trim());
       const qs = params.toString();
       const res = await fetch(`/api/admin/audit-log${qs ? `?${qs}` : ""}`);
       const data = await res.json();
@@ -134,23 +135,16 @@ export default function AdminAuditLogPage() {
     } finally {
       setLoading(false);
     }
-  }, [actionFilter]);
+  }, [actionFilter, search]);
 
   useEffect(() => {
-    fetchEntries();
+    const t = setTimeout(() => {
+      fetchEntries();
+    }, 300);
+    return () => clearTimeout(t);
   }, [fetchEntries]);
 
-  const filtered = search.trim()
-    ? entries.filter((e) => {
-        const needle = search.toLowerCase();
-        return (
-          e.actor?.email?.toLowerCase().includes(needle) ||
-          e.actor?.yourName?.toLowerCase().includes(needle) ||
-          e.targetId?.toLowerCase().includes(needle) ||
-          JSON.stringify(e.metadata ?? {}).toLowerCase().includes(needle)
-        );
-      })
-    : entries;
+  const filtered = entries;
 
   return (
     <div>
@@ -167,7 +161,7 @@ export default function AdminAuditLogPage() {
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Search actor, target id, or metadata..."
+            placeholder="Search actor email/name, target id, or IP..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"

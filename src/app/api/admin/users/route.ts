@@ -34,6 +34,7 @@ export async function GET(request: Request) {
         }
       : {};
 
+    const LIST_LIMIT = 500;
     const users = await prisma.user.findMany({
       where,
       select: {
@@ -50,7 +51,7 @@ export async function GET(request: Request) {
         createdAt: true,
       },
       orderBy: { createdAt: "desc" },
-      take: format === "csv" ? 10000 : undefined,
+      take: format === "csv" ? 10000 : LIST_LIMIT,
     });
 
     if (format === "csv") {
@@ -77,7 +78,7 @@ export async function GET(request: Request) {
       });
     }
 
-    return NextResponse.json({ users });
+    return NextResponse.json({ users, limit: LIST_LIMIT });
   } catch (error) {
     console.error("Admin users error:", error);
     return NextResponse.json(

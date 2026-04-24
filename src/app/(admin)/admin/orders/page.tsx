@@ -77,8 +77,10 @@ export default function AdminOrdersPage() {
   const [viewImageLoading, setViewImageLoading] = useState(false);
   const [viewImageError, setViewImageError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [rejectTransferId, setRejectTransferId] = useState<string | null>(null);
   const [rejectNotes, setRejectNotes] = useState("");
+  const [listLimit, setListLimit] = useState<number | null>(null);
 
   // Fetch a single receipt only when the admin clicks View. The list
   // endpoint no longer returns receiptImage, so pulling the data URL
@@ -117,6 +119,7 @@ export default function AdminOrdersPage() {
       const res = await fetch(`/api/admin/orders${statusParam}`);
       const data = await res.json();
       setOrders(data.orders || []);
+      setListLimit(typeof data.limit === "number" ? data.limit : null);
     } catch {
       console.error("Failed to fetch orders");
     } finally {
@@ -134,17 +137,23 @@ export default function AdminOrdersPage() {
     adminNotes?: string,
   ) => {
     setActionLoading(transferId);
+    setActionError(null);
     try {
-      await fetch(`/api/admin/bank-transfers/${transferId}`, {
+      const res = await fetch(`/api/admin/bank-transfers/${transferId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action, adminNotes }),
       });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setActionError(body.error || `Failed to ${action} transfer`);
+        return;
+      }
       setRejectTransferId(null);
       setRejectNotes("");
       await fetchOrders();
     } catch {
-      console.error("Failed to update transfer");
+      setActionError(`Failed to ${action} transfer`);
     } finally {
       setActionLoading(null);
     }
@@ -181,6 +190,20 @@ export default function AdminOrdersPage() {
         </button>
       </div>
 
+      {actionError && (
+        <div className="mb-4 flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+          <XCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+          <p className="text-xs text-red-800 flex-1">{actionError}</p>
+          <button
+            onClick={() => setActionError(null)}
+            className="text-red-400 hover:text-red-600"
+            aria-label="Dismiss error"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="flex gap-2 mb-6">
         {statusTabs.map((tab) => (
@@ -210,6 +233,11 @@ export default function AdminOrdersPage() {
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          {listLimit !== null && orders.length >= listLimit && (
+            <div className="px-5 py-2 text-xs text-gray-500 bg-amber-50 border-b border-amber-100">
+              Showing the {listLimit} most recent — filter by status to narrow.
+            </div>
+          )}
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>

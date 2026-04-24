@@ -46,6 +46,8 @@ export default function AdminUsersPage() {
   const [suspendLoading, setSuspendLoading] = useState(false);
   const [suspendError, setSuspendError] = useState<string | null>(null);
   const [unsuspendLoading, setUnsuspendLoading] = useState<string | null>(null);
+  const [rowError, setRowError] = useState<string | null>(null);
+  const [listLimit, setListLimit] = useState<number | null>(null);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -54,6 +56,7 @@ export default function AdminUsersPage() {
       const res = await fetch(`/api/admin/users${searchParam}`);
       const data = await res.json();
       setUsers(data.users || []);
+      setListLimit(typeof data.limit === "number" ? data.limit : null);
     } catch {
       console.error("Failed to fetch users");
     } finally {
@@ -92,17 +95,23 @@ export default function AdminUsersPage() {
 
   const handlePlanChange = async (userId: string, newPlan: string) => {
     setPlanLoading(userId);
+    setRowError(null);
     try {
-      await fetch(`/api/admin/users/${userId}`, {
+      const res = await fetch(`/api/admin/users/${userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plan: newPlan }),
       });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setRowError(body.error || "Failed to update plan");
+        return;
+      }
       setUsers((prev) =>
         prev.map((u) => (u.id === userId ? { ...u, plan: newPlan } : u))
       );
     } catch {
-      console.error("Failed to update user plan");
+      setRowError("Failed to update plan");
     } finally {
       setPlanLoading(null);
     }
@@ -158,12 +167,19 @@ export default function AdminUsersPage() {
 
   const handleUnsuspend = async (user: User) => {
     setUnsuspendLoading(user.id);
+    setRowError(null);
     try {
       const res = await fetch(`/api/admin/users/${user.id}/unsuspend`, { method: "POST" });
-      if (!res.ok) return;
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setRowError(body.error || "Failed to unsuspend");
+        return;
+      }
       setUsers((prev) =>
         prev.map((u) => (u.id === user.id ? { ...u, suspendedAt: null, suspendedReason: null } : u))
       );
+    } catch {
+      setRowError("Failed to unsuspend");
     } finally {
       setUnsuspendLoading(null);
     }
@@ -196,6 +212,20 @@ export default function AdminUsersPage() {
         />
       </div>
 
+      {rowError && (
+        <div className="mb-4 flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+          <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+          <p className="text-xs text-red-800 flex-1">{rowError}</p>
+          <button
+            onClick={() => setRowError(null)}
+            className="text-red-400 hover:text-red-600"
+            aria-label="Dismiss error"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Table */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
@@ -208,6 +238,11 @@ export default function AdminUsersPage() {
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          {listLimit !== null && users.length >= listLimit && (
+            <div className="px-5 py-2 text-xs text-gray-500 bg-amber-50 border-b border-amber-100">
+              Showing the {listLimit} most recent — narrow the search to see older users.
+            </div>
+          )}
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -241,6 +276,7 @@ export default function AdminUsersPage() {
                           value={user.plan}
                           onChange={(e) => handlePlanChange(user.id, e.target.value)}
                           disabled={planLoading === user.id}
+                          aria-label={`Subscription plan for ${user.email}`}
                           className={`px-2.5 py-1 rounded-full text-xs font-semibold border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-rose-500/20 ${planBadge[user.plan] || "bg-gray-100 text-gray-600"}`}
                         >
                           {plans.map((p) => (

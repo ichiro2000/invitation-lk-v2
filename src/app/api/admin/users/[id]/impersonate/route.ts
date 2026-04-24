@@ -25,10 +25,13 @@ export async function POST(
 
     const me = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { role: true, email: true },
+      select: { role: true, email: true, suspendedAt: true },
     });
     if (me?.role !== "ADMIN") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    if (me.suspendedAt) {
+      return NextResponse.json({ error: "Account suspended" }, { status: 403 });
     }
 
     if (session.user.impersonatedBy) {
@@ -112,7 +115,7 @@ export async function POST(
         emailVerified: target.emailVerified
           ? target.emailVerified.toISOString()
           : null,
-        suspended: false,
+        suspended: !!target.suspendedAt,
         impersonatedBy: session.user.id,
         twoFactorEnabled: false,
         iat: now,

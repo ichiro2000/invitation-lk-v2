@@ -14,9 +14,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Suspended users: admins can still reach /admin (nonsense case — admins
-  // can't suspend themselves), everyone else is forced to /suspended.
-  if (token.suspended && token.role !== "ADMIN") {
+  // Suspended users are forced to /suspended. Suspension applies to admins
+  // too — a user can be suspended while CUSTOMER and later promoted back to
+  // ADMIN, so we cannot assume role=ADMIN means not-suspended.
+  if (token.suspended) {
     if (request.nextUrl.pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Account suspended" }, { status: 403 });
     }

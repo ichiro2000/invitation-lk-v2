@@ -41,6 +41,7 @@ export async function GET(request: Request) {
     const targetType = searchParams.get("targetType") ?? "";
     const targetId = searchParams.get("targetId") ?? "";
     const action = searchParams.get("action") ?? "";
+    const search = searchParams.get("search")?.trim() ?? "";
     const limit = Math.min(parseInt(searchParams.get("limit") ?? "100", 10) || 100, 500);
 
     const filters: Record<string, unknown>[] = [];
@@ -48,6 +49,16 @@ export async function GET(request: Request) {
     if (targetType) filters.push({ targetType });
     if (targetId) filters.push({ targetId });
     if (action && VALID_ACTIONS.has(action)) filters.push({ action });
+    if (search) {
+      filters.push({
+        OR: [
+          { targetId: { contains: search, mode: "insensitive" as const } },
+          { ipAddress: { contains: search, mode: "insensitive" as const } },
+          { actor: { email: { contains: search, mode: "insensitive" as const } } },
+          { actor: { yourName: { contains: search, mode: "insensitive" as const } } },
+        ],
+      });
+    }
 
     const where = filters.length > 0 ? { AND: filters } : {};
 
