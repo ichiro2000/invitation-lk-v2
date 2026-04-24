@@ -25,7 +25,11 @@ function upgradePrice(userPlan: string, targetPlanId: string): number {
 }
 
 function CheckoutContent() {
-  const { data: session } = useSession();
+  // `update()` is NextAuth's client helper that fires the `jwt` callback with
+  // trigger="update" — which in our config re-reads `plan` from the DB. We
+  // use it to resync after a successful upgrade so the plan cards and the
+  // upgrade-price math reflect the current tier rather than the stale JWT.
+  const { data: session, update } = useSession();
   const searchParams = useSearchParams();
   const initialPlan = searchParams.get("plan")?.toUpperCase() || "BASIC";
 
@@ -54,6 +58,22 @@ function CheckoutContent() {
     if (status === "success") setFlashStatus("success");
     if (status === "canceled") setFlashStatus("canceled");
   }, [searchParams]);
+
+  // Refresh the session JWT so the plan cards and upgrade-price math reflect
+  // the current DB plan after an upgrade. Without this, a user who just
+  // upgraded BASIC -> STANDARD still sees BASIC as "Current Plan" because
+  // NextAuth caches the plan in the JWT. Runs on mount for any visit, and
+  // again a few seconds after a success redirect to catch a slow webhook.
+  useEffect(() => {
+    update();
+  }, [update]);
+  useEffect(() => {
+    if (flashStatus !== "success") return;
+    const timers = [2000, 5000, 10000].map((ms) =>
+      window.setTimeout(() => update(), ms)
+    );
+    return () => timers.forEach((t) => window.clearTimeout(t));
+  }, [flashStatus, update]);
 
   useEffect(() => {
     fetch("/api/settings/public")
