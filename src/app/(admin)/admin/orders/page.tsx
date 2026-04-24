@@ -8,7 +8,6 @@ import {
 
 interface OrderBankTransfer {
   id: string;
-  receiptUrl: string;
   status: string;
   adminNotes: string | null;
 }
@@ -75,9 +74,41 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewImage, setViewImage] = useState<string | null>(null);
+  const [viewImageLoading, setViewImageLoading] = useState(false);
+  const [viewImageError, setViewImageError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [rejectTransferId, setRejectTransferId] = useState<string | null>(null);
   const [rejectNotes, setRejectNotes] = useState("");
+
+  // Fetch a single receipt only when the admin clicks View. The list
+  // endpoint no longer returns receiptImage, so pulling the data URL
+  // on-demand keeps the orders page fast even with lots of rows.
+  const openReceipt = useCallback(async (bankTransferId: string) => {
+    setViewImage(null);
+    setViewImageError(null);
+    setViewImageLoading(true);
+    try {
+      const res = await fetch(
+        `/api/admin/bank-transfers/${bankTransferId}/receipt`
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.receiptImage) {
+        setViewImageError(data.error || "Couldn't load receipt");
+        return;
+      }
+      setViewImage(data.receiptImage);
+    } catch {
+      setViewImageError("Couldn't load receipt");
+    } finally {
+      setViewImageLoading(false);
+    }
+  }, []);
+
+  const closeReceipt = useCallback(() => {
+    setViewImage(null);
+    setViewImageLoading(false);
+    setViewImageError(null);
+  }, []);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -236,7 +267,7 @@ export default function AdminOrdersPage() {
                       <td className="px-5 py-4">
                         {bt ? (
                           <button
-                            onClick={() => setViewImage(bt.receiptUrl)}
+                            onClick={() => openReceipt(bt.id)}
                             className="flex items-center gap-1.5 text-rose-600 hover:text-rose-700 text-xs font-medium"
                           >
                             <Eye className="w-3.5 h-3.5" /> View
@@ -281,19 +312,29 @@ export default function AdminOrdersPage() {
       )}
 
       {/* Image Modal */}
-      {viewImage && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setViewImage(null)}>
+      {(viewImage || viewImageLoading || viewImageError) && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={closeReceipt}>
           <div className="bg-white rounded-2xl p-4 max-w-lg w-full max-h-[80vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <p className="font-semibold text-gray-900 flex items-center gap-2">
                 <ImageIcon className="w-4 h-4" /> Receipt Image
               </p>
-              <button onClick={() => setViewImage(null)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={closeReceipt} className="text-gray-400 hover:text-gray-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={viewImage} alt="Receipt" className="w-full rounded-xl" />
+            {viewImageLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="w-6 h-6 text-rose-600 animate-spin" />
+              </div>
+            ) : viewImageError ? (
+              <p className="text-sm text-red-600 py-8 text-center">
+                {viewImageError}
+              </p>
+            ) : viewImage ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img src={viewImage} alt="Receipt" className="w-full rounded-xl" />
+            ) : null}
           </div>
         </div>
       )}
