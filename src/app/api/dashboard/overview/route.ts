@@ -92,8 +92,11 @@ export async function GET() {
       }),
       // Top 5 guests still awaiting an RSVP — most recently added first so the
       // freshest invites bubble up. Used by the "Awaiting responses" panel.
+      // Awaiting = PENDING ∪ MAYBE — both are "needs nudging" from the
+      // bride/groom's POV, and the UI's awaiting count combines them. Keep
+      // these in lockstep or the count and the visible list disagree.
       prisma.guest.findMany({
-        where: { userId, rsvpStatus: "PENDING" },
+        where: { userId, rsvpStatus: { in: ["PENDING", "MAYBE"] } },
         orderBy: { createdAt: "desc" },
         take: 5,
         select: { id: true, name: true, category: true, createdAt: true, inviteSent: true },

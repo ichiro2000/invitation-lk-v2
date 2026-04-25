@@ -52,15 +52,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const [sidebarInfo, setSidebarInfo] = useState<SidebarInfo | null>(null);
 
+  // Fetch the sidebar countdown once per authenticated user. Depend on the
+  // *id* string, not the session object — useSession returns a new object
+  // reference on every NextAuth poll/refetch, which would otherwise re-fire
+  // this fetch every few minutes for no benefit.
+  const userId = session?.user?.id;
   useEffect(() => {
-    if (!session) return;
-    let alive = true;
-    fetch("/api/dashboard/sidebar")
+    if (!userId) return;
+    const ctrl = new AbortController();
+    fetch("/api/dashboard/sidebar", { signal: ctrl.signal })
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (alive && d?.invitation) setSidebarInfo(d.invitation); })
-      .catch(() => {});
-    return () => { alive = false; };
-  }, [session]);
+      .then((d) => { if (d?.invitation) setSidebarInfo(d.invitation); })
+      .catch(() => {}); // Aborted or network blip — keep last good value.
+    return () => ctrl.abort();
+  }, [userId]);
 
   if (session) dashboardHasAuthenticatedOnce = true;
 
