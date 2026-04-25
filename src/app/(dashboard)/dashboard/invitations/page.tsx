@@ -3,7 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Calendar, MapPin, Pencil, ExternalLink, Copy, Check, Palette, FileText, Loader2, Plus, Trash2, X } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { Calendar, MapPin, Pencil, ExternalLink, Copy, Check, Palette, FileText, Loader2, Plus, Trash2, X, Globe, EyeOff, Lock } from "lucide-react";
 import { normalizeSlug } from "@/lib/slug";
 
 interface Invitation {
@@ -22,11 +23,14 @@ interface Invitation {
 
 export default function MyInvitationsPage() {
   const router = useRouter();
+  const { data: session } = useSession();
+  const isFreePlan = (session?.user?.plan ?? "FREE") === "FREE";
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [publishingId, setPublishingId] = useState<string | null>(null);
   const [editingSlugId, setEditingSlugId] = useState<string | null>(null);
   const [slugDraft, setSlugDraft] = useState("");
   const [slugError, setSlugError] = useState<string | null>(null);
@@ -111,6 +115,27 @@ export default function MyInvitationsPage() {
       alert("Network error — please try again");
     } finally {
       setCreating(false);
+    }
+  };
+
+  const togglePublish = async (id: string, next: boolean) => {
+    setPublishingId(id);
+    try {
+      const res = await fetch(`/api/invitations/${id}/publish`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isPublished: next }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.error || "Failed to update status");
+        return;
+      }
+      setInvitations((prev) => prev.map((i) => (i.id === id ? { ...i, isPublished: next } : i)));
+    } catch {
+      alert("Network error — please try again");
+    } finally {
+      setPublishingId(null);
     }
   };
 
@@ -317,6 +342,35 @@ export default function MyInvitationsPage() {
                   >
                     <ExternalLink className="w-3.5 h-3.5" /> Open Invitation
                   </a>
+                  {invitation.isPublished ? (
+                    <button
+                      type="button"
+                      onClick={() => togglePublish(invitation.id, false)}
+                      disabled={publishingId === invitation.id}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 hover:border-amber-300 hover:bg-amber-50 text-gray-700 hover:text-amber-700 disabled:opacity-50 text-sm font-medium transition-colors"
+                    >
+                      {publishingId === invitation.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <EyeOff className="w-3.5 h-3.5" />}
+                      Unpublish
+                    </button>
+                  ) : isFreePlan ? (
+                    <Link
+                      href="/dashboard/checkout"
+                      title="Upgrade to a paid plan to publish your invitation"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-rose-200 hover:border-rose-400 hover:bg-rose-50 text-rose-600 hover:text-rose-700 text-sm font-medium transition-colors"
+                    >
+                      <Lock className="w-3.5 h-3.5" /> Upgrade to Publish
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => togglePublish(invitation.id, true)}
+                      disabled={publishingId === invitation.id}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-green-600 hover:bg-green-700 text-white disabled:opacity-60 text-sm font-medium shadow-lg shadow-green-600/20 transition-colors"
+                    >
+                      {publishingId === invitation.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Globe className="w-3.5 h-3.5" />}
+                      Publish
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => deleteOne(invitation.id, `${invitation.groomName} & ${invitation.brideName}`)}
