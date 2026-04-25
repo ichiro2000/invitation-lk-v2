@@ -5,7 +5,7 @@ import { useSession, signOut } from "next-auth/react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Heart, LayoutDashboard, Pencil, Users, UserPlus, ListTodo, DollarSign, Store, LogOut, CreditCard, ShieldCheck, FileText, LayoutGrid, Mail, Loader2, Check, LifeBuoy } from "lucide-react";
+import { Heart, LayoutDashboard, Pencil, Users, UserPlus, ListTodo, DollarSign, Store, LogOut, CreditCard, ShieldCheck, FileText, LayoutGrid, Mail, Loader2, Check, LifeBuoy, Eye } from "lucide-react";
 import ImpersonationBanner from "@/components/ImpersonationBanner";
 import NotificationsBell from "@/components/dashboard/NotificationsBell";
 
@@ -27,6 +27,14 @@ interface NotificationItem {
   href: string;
 }
 
+interface SidebarInfo {
+  weddingDate: string;
+  venue: string;
+  slug: string;
+  isPublished: boolean;
+  daysUntil: number;
+}
+
 const sidebarLinks = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/dashboard/invitations", label: "My Invitations", icon: FileText },
@@ -42,6 +50,17 @@ const sidebarLinks = [
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
+  const [sidebarInfo, setSidebarInfo] = useState<SidebarInfo | null>(null);
+
+  useEffect(() => {
+    if (!session) return;
+    let alive = true;
+    fetch("/api/dashboard/sidebar")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (alive && d?.invitation) setSidebarInfo(d.invitation); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [session]);
 
   if (session) dashboardHasAuthenticatedOnce = true;
 
@@ -63,14 +82,32 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <aside className="w-64 bg-white border-r border-gray-100 flex flex-col fixed inset-y-0 left-0 z-30 hidden lg:flex">
-        <div className="p-6 border-b border-gray-100">
+        <div className="px-6 pt-6 pb-4">
           <Link href="/" className="flex items-center gap-2">
             <Heart className="w-6 h-6 text-rose-600 fill-rose-600" />
             <span className="text-lg font-bold text-gray-900">INVITATION<span className="text-rose-600">.LK</span></span>
           </Link>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        {/* Countdown card — top of sidebar (mirrors reference IA). */}
+        {sidebarInfo && (
+          <div className="mx-4 mb-4 rounded-2xl bg-rose-50 px-4 py-3 flex items-center gap-3">
+            <span className="text-3xl font-bold text-rose-700 tabular-nums leading-none">
+              {sidebarInfo.daysUntil >= 0 ? sidebarInfo.daysUntil : 0}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] uppercase tracking-wider text-rose-500 font-semibold">
+                {sidebarInfo.daysUntil >= 0 ? "Days until" : "Wedding day"}
+              </p>
+              <p className="text-xs text-gray-700 leading-tight mt-0.5 truncate">
+                {formatWeddingDate(sidebarInfo.weddingDate)}
+                {sidebarInfo.venue ? ` · ${sidebarInfo.venue}` : ""}
+              </p>
+            </div>
+          </div>
+        )}
+
+        <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
           {/* Invitation */}
           <p className="text-[10px] text-gray-400 uppercase tracking-wider px-4 pt-2 pb-1">Invitation</p>
           {sidebarLinks.slice(0, 3).map((link) => (
@@ -143,7 +180,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       <main className="flex-1 lg:ml-64">
         <ImpersonationBanner />
-        <DashboardHeader />
+        <DashboardHeader sidebarInfo={sidebarInfo} />
         <div className="px-6 sm:px-8 pb-8 max-w-7xl mx-auto">
           {!session.user?.emailVerified && <VerifyEmailBanner />}
           {children}
@@ -153,7 +190,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   );
 }
 
-function DashboardHeader() {
+// Render an ISO date as "Aug 30, 2026" (the format used in the reference
+// countdown card). UTC-anchored so a wedding stored as 2026-08-30 stays on
+// Aug 30 regardless of viewer timezone.
+function formatWeddingDate(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+function DashboardHeader({ sidebarInfo }: { sidebarInfo: SidebarInfo | null }) {
   const [count, setCount] = useState(0);
   const [items, setItems] = useState<NotificationItem[]>([]);
 
@@ -181,6 +231,16 @@ function DashboardHeader() {
   return (
     <header className="sticky top-0 z-20 bg-gray-50/80 backdrop-blur border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 h-16 flex items-center justify-end gap-3">
+        {sidebarInfo?.isPublished && (
+          <Link
+            href={`/i/${sidebarInfo.slug}`}
+            target="_blank"
+            rel="noopener"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 bg-white hover:border-rose-200 hover:text-rose-600 text-sm font-medium text-gray-600 transition-colors"
+          >
+            <Eye className="w-4 h-4" /> Preview invitation
+          </Link>
+        )}
         <NotificationsBell count={count} items={items} />
       </div>
     </header>

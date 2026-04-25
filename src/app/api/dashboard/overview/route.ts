@@ -6,9 +6,10 @@ import { displayName } from "@/lib/user-display";
 
 // The dashboard overview page makes one call to this endpoint and gets back
 // everything it renders: user chrome, 4 stat totals, 14-day daily series for
-// the 3 sparklines, getting-started checkmarks, and the notifications list.
-// Keeping it in one request keeps the dashboard load fast and avoids the
-// flicker of multiple separate loaders.
+// the 3 sparklines, getting-started checkmarks, RSVP breakdown, awaiting
+// guests, wedding date/venue, and the notifications list. Keeping it in one
+// request keeps the dashboard load fast and avoids the flicker of multiple
+// separate loaders.
 
 const DAYS = 14;
 
@@ -43,11 +44,12 @@ export async function GET() {
       user,
       invitation,
       guestTotal,
-      acceptedTotal,
+      rsvpGroup,
       guestSeriesRows,
       acceptedSeriesRows,
       pendingTicketCount,
       pendingTickets,
+      awaitingGuests,
     ] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
@@ -55,10 +57,24 @@ export async function GET() {
       }),
       prisma.invitation.findFirst({
         where: { userId },
-        select: { id: true, slug: true, templateSlug: true, isPublished: true, config: true },
+        select: {
+          id: true,
+          slug: true,
+          templateSlug: true,
+          isPublished: true,
+          config: true,
+          weddingDate: true,
+          venue: true,
+          groomName: true,
+          brideName: true,
+        },
       }),
       prisma.guest.count({ where: { userId } }),
-      prisma.guest.count({ where: { userId, rsvpStatus: "ACCEPTED" } }),
+      prisma.guest.groupBy({
+        by: ["rsvpStatus"],
+        where: { userId },
+        _count: { _all: true },
+      }),
       prisma.guest.findMany({
         where: { userId, createdAt: { gte: windowStart } },
         select: { createdAt: true },
@@ -74,11 +90,27 @@ export async function GET() {
         take: 5,
         select: { id: true, subject: true, priority: true, updatedAt: true },
       }),
+      // Top 5 guests still awaiting an RSVP — most recently added first so the
+      // freshest invites bubble up. Used by the "Awaiting responses" panel.
+      prisma.guest.findMany({
+        where: { userId, rsvpStatus: "PENDING" },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+        select: { id: true, name: true, category: true, createdAt: true, inviteSent: true },
+      }),
     ]);
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
+
+    // Tally RSVPs by status into a flat shape the UI can render directly.
+    const rsvpCounts = { accepted: 0, declined: 0, pending: 0, maybe: 0 };
+    for (const row of rsvpGroup) {
+      const key = row.rsvpStatus.toLowerCase() as keyof typeof rsvpCounts;
+      if (key in rsvpCounts) rsvpCounts[key] = row._count._all;
+    }
+    const acceptedTotal = rsvpCounts.accepted;
 
     // Second wave: page views only if the user has an invitation row yet.
     // New accounts auto-create an invitation at signup, so this is normally
@@ -107,20 +139,62 @@ export async function GET() {
       windowStart
     );
 
+    // Days-until calc: floor of (weddingDate - today) in days. Negative when
+    // the date has passed; the UI renders that as "Wedding day was N days
+    // ago" instead of a countdown.
+    const today = startOfDayUTC(now);
+    const weddingDate = invitation?.weddingDate ?? null;
+    const daysUntil = weddingDate
+      ? Math.round((startOfDayUTC(weddingDate).getTime() - today.getTime()) / 86_400_000)
+      : null;
+
+    // Last 7 days vs prior 7 days delta for page views — matches the "+23%
+    // last 7 days" chip in the stat card. We already have a 14-day series so
+    // it's a plain split.
+    const recent7 = pageViewSeries.slice(-7).reduce((a, b) => a + b, 0);
+    const prior7 = pageViewSeries.slice(0, 7).reduce((a, b) => a + b, 0);
+
     return NextResponse.json({
       user: {
         name: displayName(user.yourName, user.partnerName, user.email),
         plan: user.plan,
       },
       invitation: invitation
-        ? { slug: invitation.slug, isPublished: invitation.isPublished }
+        ? {
+            slug: invitation.slug,
+            isPublished: invitation.isPublished,
+            weddingDate: invitation.weddingDate.toISOString(),
+            venue: invitation.venue,
+            groomName: invitation.groomName,
+            brideName: invitation.brideName,
+            daysUntil,
+          }
         : null,
       stats: {
-        guests: { total: guestTotal, series: guestSeries },
-        rsvps: { total: acceptedTotal, series: acceptedSeries },
-        pageViews: { total: pageViewsTotal, series: pageViewSeries },
+        guests: { total: guestTotal, series: guestSeries, addedRecent: guestSeries.slice(-7).reduce((a, b) => a + b, 0) },
+        rsvps: {
+          total: acceptedTotal,
+          series: acceptedSeries,
+          accepted: rsvpCounts.accepted,
+          declined: rsvpCounts.declined,
+          pending: rsvpCounts.pending,
+          maybe: rsvpCounts.maybe,
+        },
+        pageViews: {
+          total: pageViewsTotal,
+          series: pageViewSeries,
+          recent7,
+          prior7,
+        },
         template: invitation?.templateSlug ?? null,
       },
+      awaitingGuests: awaitingGuests.map((g) => ({
+        id: g.id,
+        name: g.name,
+        category: g.category,
+        addedAt: g.createdAt.toISOString(),
+        inviteSent: g.inviteSent,
+      })),
       gettingStarted: {
         // "royal-elegance" is the default slug the signup flow sets; anything
         // else means the user picked a template deliberately.
