@@ -40,6 +40,8 @@ export default function TableArrangementPage() {
 
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
+      // Hydrating from localStorage on mount — SSR cannot access it, so setState here is intentional.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (raw) setTables(JSON.parse(raw));
     } catch {}
     setHydrated(true);
@@ -315,6 +317,10 @@ export default function TableArrangementPage() {
                       )}
                     </div>
 
+                    <div className="px-4 pt-3">
+                      <SeatDots capacity={t.capacity} seated={seated} />
+                    </div>
+
                     <div className="p-3 min-h-[80px]">
                       {t.guestIds.length === 0 ? (
                         <p className="text-xs text-gray-300 text-center py-4">
@@ -352,10 +358,47 @@ export default function TableArrangementPage() {
                   </div>
                 );
               })}
+              <button
+                onClick={addTable}
+                className="rounded-2xl border-2 border-dashed border-gray-200 hover:border-rose-300 hover:bg-rose-50/40 transition-colors min-h-[180px] flex flex-col items-center justify-center text-gray-400 hover:text-rose-500"
+              >
+                <Plus className="w-6 h-6 mb-1" />
+                <span className="text-sm font-medium">Add another table</span>
+              </button>
             </div>
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function SeatDots({ capacity, seated }: { capacity: number; seated: number }) {
+  const max = 14;
+  const visible = Math.min(capacity, max);
+  const overflow = capacity - visible;
+  const dots = Array.from({ length: visible }, (_, i) => i);
+  return (
+    <div className="flex flex-wrap items-center gap-1">
+      {dots.map((i) => {
+        const filled = i < seated;
+        return (
+          <div
+            key={i}
+            className={`w-6 h-6 rounded-md text-[10px] font-semibold flex items-center justify-center ${
+              filled
+                ? "bg-rose-600 text-white"
+                : "bg-rose-50 text-rose-300 border border-rose-100"
+            }`}
+            aria-label={filled ? "Seated" : "Empty seat"}
+          >
+            {i + 1}
+          </div>
+        );
+      })}
+      {overflow > 0 && (
+        <span className="text-[10px] text-gray-400 ml-1">+{overflow}</span>
+      )}
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import {
   Store, Plus, Trash2, Phone, Download, X,
   MapPin, Camera, Video, Music2, Cake, Car, Shirt, Palette,
-  Flower2, UtensilsCrossed, Gift, User,
+  Flower2, UtensilsCrossed, Gift,
 } from "lucide-react";
 
 type Status = "Contacted" | "Quote" | "Booked";
@@ -162,7 +162,7 @@ export default function VendorsPage() {
     <div>
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Vendor <span className="italic font-serif text-rose-700">list</span></h1>
+          <h1 className="text-2xl font-bold text-gray-900">Vendor List</h1>
           <p className="text-sm text-gray-500 mt-1">
             {vendors.length} {vendors.length === 1 ? "vendor" : "vendors"}
             {bookedCount > 0 && <> · {bookedCount} booked</>}

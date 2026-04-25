@@ -1,7 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { DollarSign, Plus, Trash2, Download, Calendar, AlertCircle, Edit3, X, Sparkles } from "lucide-react";
+import {
+  DollarSign, Plus, Trash2, Download, Calendar, AlertCircle, Edit3, X, Sparkles,
+  MapPin, UtensilsCrossed, Camera, Video, Flower2, Music2, Cake as CakeIcon, Car,
+  Palette, Shirt, Mail, Plane, Gift, Tag,
+} from "lucide-react";
 
 type Status = "PENDING" | "PARTIAL" | "PAID";
 
@@ -87,6 +91,24 @@ const statusColors: Record<Status, string> = {
   PAID: "bg-green-100 text-green-700",
 };
 const statusLabel: Record<Status, string> = { PENDING: "Pending", PARTIAL: "Partial", PAID: "Paid" };
+
+const categoryIcons: Record<string, typeof DollarSign> = {
+  Venue: MapPin,
+  Catering: UtensilsCrossed,
+  Photography: Camera,
+  Videography: Video,
+  Decoration: Sparkles,
+  Attire: Shirt,
+  Music: Music2,
+  Cake: CakeIcon,
+  Flowers: Flower2,
+  Transport: Car,
+  Makeup: Palette,
+  Invitations: Mail,
+  Honeymoon: Plane,
+  "Rings & Gifts": Gift,
+  Other: Tag,
+};
 
 export default function BudgetPage() {
   const [totalBudget, setTotalBudget] = useState(0);
@@ -223,8 +245,6 @@ export default function BudgetPage() {
   const remainingBudget = totalBudget - totalCommitted;
   const owed = Math.max(0, totalCommitted - totalDeposit);
   const overBudget = totalBudget > 0 && remainingBudget < 0;
-  const usedPct = totalBudget > 0 ? Math.min(100, (totalCommitted / totalBudget) * 100) : 0;
-
   const visibleItems = filterCategory === "All" ? items : items.filter(i => i.category === filterCategory);
 
   const byCategory = categories
@@ -232,10 +252,18 @@ export default function BudgetPage() {
       const catItems = items.filter(i => i.category === cat.name);
       const est = catItems.reduce((s, i) => s + i.estimated, 0);
       const act = catItems.reduce((s, i) => s + (i.actual || 0), 0);
+      const dep = catItems.reduce((s, i) => s + (i.deposit || 0), 0);
       const suggested = totalBudget * (cat.pct / 100);
-      return { ...cat, estimated: est, actual: act, suggested, count: catItems.length };
+      return { ...cat, estimated: est, actual: act, deposit: dep, suggested, count: catItems.length };
     })
     .filter(c => c.count > 0 || (totalBudget > 0 && c.pct > 0));
+
+  const jumpToCategory = (name: string) => {
+    setFilterCategory(name);
+    if (typeof document !== "undefined") {
+      document.getElementById("budget-items")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
 
   const upcoming = items
     .filter(i => i.status !== "PAID" && i.dueDate)
@@ -296,17 +324,30 @@ export default function BudgetPage() {
             </div>
           )}
         </div>
-        {totalBudget > 0 && (
-          <div className="mt-4">
-            <div className="flex justify-between text-xs text-gray-500 mb-1">
-              <span>Allocated {Math.round(usedPct)}%</span>
-              <span>{fmt(totalCommitted)} of {fmt(totalBudget)}</span>
+        {totalBudget > 0 && (() => {
+          const denom = overBudget ? totalCommitted : totalBudget;
+          const paidPct = denom > 0 ? (totalDeposit / denom) * 100 : 0;
+          const committedUnpaidPct = denom > 0 ? (Math.max(0, totalCommitted - totalDeposit) / denom) * 100 : 0;
+          const unallocatedPct = Math.max(0, 100 - paidPct - committedUnpaidPct);
+          return (
+            <div className="mt-4">
+              <div className="flex flex-wrap items-center gap-3 text-[11px] text-gray-600 mb-2">
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Paid <span className="text-gray-400">{fmt(totalDeposit)}</span></span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose-500" /> Committed <span className="text-gray-400">{fmt(Math.max(0, totalCommitted - totalDeposit))}</span></span>
+                <span className="flex items-center gap-1.5">
+                  <span className={`w-2 h-2 rounded-full ${overBudget ? "bg-red-300" : "bg-gray-300"}`} />
+                  {overBudget ? "Over budget" : "Unallocated"}
+                  <span className="text-gray-400">{fmt(overBudget ? totalCommitted - totalBudget : Math.max(0, totalBudget - totalCommitted))}</span>
+                </span>
+              </div>
+              <div className="w-full bg-white/60 rounded-full h-2 overflow-hidden flex">
+                <div className="h-full bg-emerald-500 transition-all" style={{ width: `${paidPct}%` }} />
+                <div className="h-full bg-rose-500 transition-all" style={{ width: `${committedUnpaidPct}%` }} />
+                <div className={`h-full transition-all ${overBudget ? "bg-red-300" : "bg-gray-200"}`} style={{ width: `${unallocatedPct}%` }} />
+              </div>
             </div>
-            <div className="w-full bg-white/60 rounded-full h-2 overflow-hidden">
-              <div className={`h-full rounded-full transition-all ${overBudget ? "bg-red-500" : usedPct > 90 ? "bg-amber-500" : "bg-rose-500"}`} style={{ width: `${usedPct}%` }} />
-            </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
 
       {/* Summary cards */}
@@ -324,77 +365,101 @@ export default function BudgetPage() {
         </div>
       )}
 
-      {/* Two-column: upcoming + category breakdown */}
-      {(upcoming.length > 0 || byCategory.length > 0) && (
-        <div className="grid lg:grid-cols-2 gap-4 mb-6">
-          {upcoming.length > 0 && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-rose-500" /> Upcoming payments
-              </h3>
-              <div className="space-y-2">
-                {upcoming.map(({ item, days }) => {
-                  const owedNow = Math.max(0, (item.actual || item.estimated) - item.deposit);
-                  const urgency = days <= 7 ? "bg-red-100 text-red-700" : days <= 30 ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-500";
-                  return (
-                    <div key={item.id} className="flex items-center justify-between gap-3 text-sm py-1">
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-gray-900 truncate">{item.name}</p>
-                        <p className="text-xs text-gray-400">{item.category}{item.vendor ? ` · ${item.vendor}` : ""}</p>
-                      </div>
-                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full ${urgency}`}>
-                          {days === 0 ? "Today" : days === 1 ? "Tomorrow" : `in ${days}d`}
+      {/* By category — richer rollup with click-to-filter */}
+      {byCategory.length > 0 && (
+        <div className="mb-6">
+          <div className="flex items-baseline justify-between mb-3 px-1">
+            <h2 className="text-sm font-semibold text-gray-900">By category</h2>
+            <p className="text-[11px] text-gray-400">Tap a row to view its items</p>
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50 overflow-hidden">
+            {byCategory.map(cat => {
+              const spent = cat.actual || cat.estimated;
+              const cap = Math.max(cat.suggested, spent, 1);
+              const overCat = cat.suggested > 0 && spent > cat.suggested;
+              const paidPct = spent > 0 ? Math.min(100, Math.round((cat.deposit / spent) * 100)) : 0;
+              const Icon = categoryIcons[cat.name] ?? Tag;
+              const isUnpaid = cat.count > 0 && cat.deposit === 0;
+              const isFullyPaid = cat.count > 0 && spent > 0 && cat.deposit >= spent;
+              const badgeClass = isFullyPaid
+                ? "bg-emerald-100 text-emerald-700"
+                : isUnpaid
+                ? "bg-gray-100 text-gray-500"
+                : "bg-amber-100 text-amber-700";
+              const badgeLabel = isFullyPaid ? "Paid" : isUnpaid ? "Unpaid" : `${paidPct}% paid`;
+              return (
+                <button
+                  key={cat.name}
+                  onClick={() => cat.count > 0 && jumpToCategory(cat.name)}
+                  disabled={cat.count === 0}
+                  className="w-full flex items-center gap-4 p-4 text-left hover:bg-gray-50 disabled:hover:bg-transparent disabled:cursor-default transition-colors"
+                >
+                  <div className="w-10 h-10 shrink-0 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600">
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline justify-between gap-2 mb-1">
+                      <p className="font-medium text-gray-900 truncate">
+                        {cat.name}
+                        <span className="text-gray-400 font-normal ml-1.5 text-xs">
+                          {cat.count > 0 ? `${cat.count} ${cat.count === 1 ? "item" : "items"}` : "—"}
                         </span>
-                        <span className="text-gray-900 font-medium text-xs">{fmt(owedNow)}</span>
-                      </div>
+                      </p>
+                      <p className="text-sm text-gray-900 font-medium whitespace-nowrap">
+                        {fmt(spent)}
+                        {totalBudget > 0 && cat.suggested > 0 && (
+                          <span className="text-gray-400 font-normal ml-1 text-xs">/ {fmt(cat.suggested)}</span>
+                        )}
+                      </p>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {byCategory.length > 0 && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">Category breakdown</h3>
-              <div className="space-y-3">
-                {byCategory.map(cat => {
-                  const spent = cat.actual || cat.estimated;
-                  const cap = Math.max(cat.suggested, spent, 1);
-                  const overCat = cat.suggested > 0 && spent > cat.suggested;
-                  return (
-                    <div key={cat.name}>
-                      <div className="flex items-center justify-between text-xs mb-1">
-                        <span className="text-gray-700 font-medium">
-                          {cat.name}
-                          {cat.pct > 0 && <span className="text-gray-400 font-normal ml-1">· {cat.pct}%</span>}
-                        </span>
-                        <span className="text-gray-900 font-medium">
-                          {fmt(spent)}
-                          {totalBudget > 0 && cat.suggested > 0 && (
-                            <span className="text-gray-400 font-normal ml-1">/ {fmt(cat.suggested)}</span>
-                          )}
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                         <div
                           className={`h-full rounded-full transition-all ${overCat ? "bg-red-400" : "bg-rose-500"}`}
                           style={{ width: `${Math.min(100, (spent / cap) * 100)}%` }}
                         />
                       </div>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${badgeClass}`}>{badgeLabel}</span>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {upcoming.length > 0 && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-6">
+          <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-rose-500" /> Upcoming payments
+          </h3>
+          <div className="grid sm:grid-cols-2 gap-x-6 gap-y-2">
+            {upcoming.map(({ item, days }) => {
+              const owedNow = Math.max(0, (item.actual || item.estimated) - item.deposit);
+              const urgency = days <= 7 ? "bg-red-100 text-red-700" : days <= 30 ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-500";
+              return (
+                <div key={item.id} className="flex items-center justify-between gap-3 text-sm py-1">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-gray-900 truncate">{item.name}</p>
+                    <p className="text-xs text-gray-400">{item.category}{item.vendor ? ` · ${item.vendor}` : ""}</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${urgency}`}>
+                      {days === 0 ? "Today" : days === 1 ? "Tomorrow" : `in ${days}d`}
+                    </span>
+                    <span className="text-gray-900 font-medium text-xs">{fmt(owedNow)}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
       {/* Filter */}
       {items.length > 0 && (
-        <div className="flex items-center gap-2 mb-3 overflow-x-auto pb-1">
+        <div id="budget-items" className="flex items-center gap-2 mb-3 overflow-x-auto pb-1 scroll-mt-6">
           <button
             onClick={() => setFilterCategory("All")}
             className={`text-xs px-3 py-1.5 rounded-full whitespace-nowrap ${filterCategory === "All" ? "bg-rose-600 text-white" : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"}`}
