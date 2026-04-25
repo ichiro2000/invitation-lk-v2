@@ -5,6 +5,16 @@ import { signIn, getSession } from "next-auth/react";
 import Link from "next/link";
 import { Heart, Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 
+// Only allow same-origin paths so a crafted ?callbackUrl=//evil.com or
+// ?callbackUrl=https://evil.com link can't turn the login page into an
+// open-redirect phishing vector.
+function safeCallbackUrl(raw: string | null): string | null {
+  if (!raw) return null;
+  if (!raw.startsWith("/")) return null;
+  if (raw.startsWith("//") || raw.startsWith("/\\")) return null;
+  return raw;
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,7 +33,8 @@ export default function LoginPage() {
       setLoading(false);
     } else if (result?.ok) {
       const session = await getSession();
-      window.location.href = session?.user?.role === "ADMIN" ? "/admin" : "/dashboard";
+      const fallback = session?.user?.role === "ADMIN" ? "/admin" : "/dashboard";
+      window.location.href = safeCallbackUrl(new URLSearchParams(window.location.search).get("callbackUrl")) ?? fallback;
     }
   };
 
