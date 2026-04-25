@@ -128,6 +128,12 @@ export default function MyInvitationsPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
+        if (res.status === 403 && data?.upgrade) {
+          if (confirm(`${data.error}\n\nGo to upgrade page now?`)) {
+            router.push("/dashboard/checkout");
+          }
+          return;
+        }
         alert(data.error || "Failed to update status");
         return;
       }

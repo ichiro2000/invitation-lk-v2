@@ -20,6 +20,14 @@ export const PLAN_RANK: Record<string, number> = {
   PREMIUM: 3,
 };
 
+// How many invitations a plan can have published at once. Drafts are unlimited.
+export const PLAN_PUBLISH_LIMIT: Record<string, number> = {
+  FREE: 0,
+  BASIC: 1,
+  STANDARD: 2,
+  PREMIUM: 3,
+};
+
 // Pay-the-difference when upgrading. If the target tier is the same or lower
 // than the user's current tier, return 0 — callers should gate on that and
 // reject the order rather than charging. New (FREE) users pay the full sticker.

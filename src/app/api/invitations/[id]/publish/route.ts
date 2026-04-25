@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/db";
+import { PLAN_NAMES, PLAN_PUBLISH_LIMIT } from "@/lib/plans";
 
 export async function PATCH(req: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
@@ -32,7 +33,24 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     });
     if (!owner || owner.plan === "FREE") {
       return NextResponse.json(
-        { error: "Upgrade to a paid plan to publish your invitation" },
+        { error: "Upgrade to a paid plan to publish your invitation", upgrade: true },
+        { status: 403 }
+      );
+    }
+
+    const limit = PLAN_PUBLISH_LIMIT[owner.plan] ?? 0;
+    // Exclude the current invitation so re-publishing an already-live one is a
+    // no-op rather than a double-count.
+    const alreadyPublished = await prisma.invitation.count({
+      where: { userId: session.user.id, isPublished: true, NOT: { id } },
+    });
+    if (alreadyPublished >= limit) {
+      const planName = PLAN_NAMES[owner.plan] ?? owner.plan;
+      return NextResponse.json(
+        {
+          error: `Your ${planName} can publish up to ${limit} invitation${limit === 1 ? "" : "s"}. Upgrade to publish more.`,
+          upgrade: true,
+        },
         { status: 403 }
       );
     }
