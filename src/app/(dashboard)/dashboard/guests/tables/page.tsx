@@ -141,8 +141,8 @@ export default function TableArrangementPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-8">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-gray-900">Table Arrangement</h1>
           <p className="text-gray-400 mt-1">
             {tables.length} tables &middot; {totalSeated}/{totalGuests} guests seated &middot; {totalCapacity} seats total
@@ -150,7 +150,7 @@ export default function TableArrangementPage() {
         </div>
         <button
           onClick={addTable}
-          className="inline-flex items-center gap-2 bg-rose-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-rose-700 transition-colors shadow-lg shadow-rose-600/20"
+          className="inline-flex items-center justify-center gap-2 bg-rose-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-rose-700 transition-colors shadow-lg shadow-rose-600/20 whitespace-nowrap self-start sm:self-auto flex-shrink-0"
         >
           <Plus className="w-4 h-4" /> Add Table
         </button>
