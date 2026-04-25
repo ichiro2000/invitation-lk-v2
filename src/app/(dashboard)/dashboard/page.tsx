@@ -83,14 +83,24 @@ export default function DashboardPage() {
   const completedSteps = steps.filter((s) => s.done).length;
   const progressPct = Math.round((completedSteps / steps.length) * 100);
 
-  // Page-views delta vs prior 7-day window. Computed in the API; rendered as
-  // "+23%" or "—" for the first week when there's no prior window data.
-  const pvDelta = stats.pageViews.prior7 > 0
-    ? Math.round(((stats.pageViews.recent7 - stats.pageViews.prior7) / stats.pageViews.prior7) * 100)
-    : null;
+  // Page-views delta vs prior 7-day window. Suppress the chip only when both
+  // windows are empty (genuinely no signal) — when prior=0 but recent>0 we
+  // show "+∞%" as just "new", and when recent=0 but prior>0 we still show
+  // the −100% drop so the user notices the cliff.
+  const { recent7, prior7 } = stats.pageViews;
+  const pvDelta: number | null =
+    prior7 === 0 && recent7 === 0
+      ? null
+      : prior7 === 0
+        ? null // "new" — first-week activity, no comparison possible
+        : Math.round(((recent7 - prior7) / prior7) * 100);
 
-  const totalRsvpResponses = stats.rsvps.accepted + stats.rsvps.declined + stats.rsvps.maybe;
+  // A "definitive" response is ACCEPTED or DECLINED — MAYBE is treated as
+  // still-pending so it can be nudged. Both this StatCard and the donut
+  // below must use the same formula or the two %s on screen disagree.
+  const totalRsvpResponses = stats.rsvps.accepted + stats.rsvps.declined;
   const responseRate = stats.guests.total > 0 ? Math.round((totalRsvpResponses / stats.guests.total) * 100) : 0;
+  const awaitingTotal = stats.rsvps.pending + stats.rsvps.maybe;
 
   const inviteUrl = invitation
     ? `${typeof window !== "undefined" ? window.location.origin : ""}/i/${invitation.slug}`
@@ -124,6 +134,8 @@ export default function DashboardPage() {
             <button
               type="button"
               onClick={copyLink}
+              aria-live="polite"
+              aria-label={copied ? "Invitation link copied to clipboard" : "Copy invitation link"}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white hover:border-rose-200 hover:text-rose-600 text-sm font-medium text-gray-700 transition-colors"
             >
               {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
@@ -188,10 +200,10 @@ export default function DashboardPage() {
         <ResponsesCard
           accepted={stats.rsvps.accepted}
           declined={stats.rsvps.declined}
-          pending={stats.rsvps.pending + stats.rsvps.maybe}
+          pending={awaitingTotal}
           totalGuests={stats.guests.total}
         />
-        <AwaitingCard guests={awaitingGuests} pendingTotal={stats.rsvps.pending + stats.rsvps.maybe} />
+        <AwaitingCard guests={awaitingGuests} pendingTotal={awaitingTotal} />
       </div>
 
       {/* Quick actions */}
@@ -219,7 +231,7 @@ export default function DashboardPage() {
         <QuickAction
           href="/dashboard/guests"
           label="Manage guests"
-          desc={`${stats.guests.total} invited · ${stats.rsvps.pending + stats.rsvps.maybe} pending RSVP`}
+          desc={`${stats.guests.total} invited · ${awaitingTotal} pending RSVP`}
           icon={Users}
           tone="violet"
           cta="Open guest list"
@@ -351,7 +363,7 @@ function HeroCard({
               <Heart className="w-3 h-3 fill-white" /> {planLabel} · {statusLabel}
             </span>
             {invitation?.slug && (
-              <span className="text-xs text-rose-100 font-mono truncate">
+              <span className="text-xs text-white/85 font-mono truncate">
                 invitation.lk/{invitation.slug}
               </span>
             )}
@@ -363,7 +375,7 @@ function HeroCard({
               <>Your invitation is <em className="font-serif italic font-semibold">almost ready</em> to publish.</>
             )}
           </h2>
-          <p className="text-sm text-rose-100 mt-2 max-w-lg">
+          <p className="text-sm text-white/90 mt-2 max-w-lg">
             {isLive
               ? `${pageViews.toLocaleString()} page view${pageViews === 1 ? "" : "s"} in the last 7 days. Copy the link below to share.`
               : "Finish the steps below to publish your invitation and start collecting RSVPs."}
@@ -374,6 +386,8 @@ function HeroCard({
               <button
                 type="button"
                 onClick={copyLink}
+                aria-live="polite"
+                aria-label={copied ? "Invitation link copied to clipboard" : "Copy invitation link"}
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-rose-700 hover:bg-rose-50 text-sm font-semibold shadow-sm transition-colors"
               >
                 {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
@@ -391,7 +405,7 @@ function HeroCard({
               </Link>
             )}
             <Link
-              href={isPaid ? "/dashboard/checkout" : "/dashboard/checkout"}
+              href={isPaid ? "/dashboard/profile" : "/dashboard/checkout"}
               className="inline-flex items-center gap-1 text-sm font-medium text-white/90 hover:text-white px-2 py-2.5"
             >
               {isPaid ? "View plan" : "Upgrade plan"} <ArrowRight className="w-4 h-4" />
@@ -412,8 +426,8 @@ function HeroCard({
 }
 
 function MiniInvitationPreview({ invitation }: { invitation: OverviewResponse["invitation"] }) {
-  const groom = invitation?.groomName?.trim() || "Bride";
-  const bride = invitation?.brideName?.trim() || "Groom";
+  const groom = invitation?.groomName?.trim() || "Groom";
+  const bride = invitation?.brideName?.trim() || "Bride";
   const dateLabel = invitation
     ? new Date(invitation.weddingDate).toLocaleDateString("en-US", {
         month: "short",
@@ -604,7 +618,12 @@ function ResponsesCard({
       <div className="grid sm:grid-cols-[auto_1fr] items-center gap-6 mt-5">
         {/* Donut */}
         <div className="relative w-32 h-32 flex-shrink-0 mx-auto sm:mx-0">
-          <svg viewBox="0 0 100 100" className="-rotate-90 w-full h-full">
+          <svg
+            viewBox="0 0 100 100"
+            className="-rotate-90 w-full h-full"
+            role="img"
+            aria-label={`${responseRate}% response rate. ${accepted} attending, ${declined} declined, ${pending} awaiting of ${totalGuests} invited.`}
+          >
             <circle cx="50" cy="50" r={r} fill="none" stroke="#f1f5f9" strokeWidth="10" />
             {accepted > 0 && (
               <circle
@@ -631,7 +650,7 @@ function ResponsesCard({
               />
             )}
           </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+          <div aria-hidden className="absolute inset-0 flex flex-col items-center justify-center text-center">
             <span className="text-2xl font-bold text-gray-900 tabular-nums">{responseRate}%</span>
             <span className="text-[10px] text-gray-400 uppercase tracking-wider mt-0.5">Response rate</span>
           </div>
