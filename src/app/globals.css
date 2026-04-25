@@ -111,10 +111,27 @@ body {
 }
 
 /* ── Scrollbar ── */
-::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+
+/* ── Tables inside horizontal scroll containers ── */
+/* Force cells to stay on a single line so the parent .overflow-x-auto
+   can scroll cleanly on small viewports instead of cells wrapping into
+   awkward multi-line columns. Page-level tables that explicitly want
+   wrapping should opt out by overriding `whitespace`. */
+.overflow-x-auto > table th,
+.overflow-x-auto > table td {
+  white-space: nowrap;
+}
+
+/* ── Mobile-safe images & media ── */
+/* Belt-and-braces guard so a stray fixed-width image or iframe never
+   causes the page to scroll horizontally on a 375px viewport. */
+img, video, iframe {
+  max-width: 100%;
+}
 
 /* ── Button base ── */
 .btn-primary {

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -7,6 +8,7 @@ import { usePathname } from "next/navigation";
 import {
   Heart, LayoutDashboard, Users, FileText,
   Palette, LogOut, ShieldCheck, UserPlus, BarChart3, LifeBuoy, AlertTriangle, Settings, Send,
+  Menu, X,
 } from "lucide-react";
 
 const adminLinks = [
@@ -28,6 +30,20 @@ const adminLinks = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Close drawer on route change.
+  useEffect(() => { setMobileOpen(false); }, [pathname]);
+
+  // Lock body scroll while the mobile drawer is open + close on Escape.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setMobileOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => { document.body.style.overflow = prev; window.removeEventListener("keydown", onKey); };
+  }, [mobileOpen]);
 
   if (status === "loading") {
     return (
@@ -41,19 +57,44 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-100 flex flex-col fixed inset-y-0 left-0 z-30 hidden lg:flex">
-        <div className="p-6 border-b border-gray-100">
-          <Link href="/admin" className="flex items-center gap-2">
-            <Heart className="w-6 h-6 text-rose-600 fill-rose-600" />
-            <span className="text-lg font-bold text-gray-900">
-              INVITATION<span className="text-rose-600">.LK</span>
-            </span>
-          </Link>
-          <div className="flex items-center gap-1.5 mt-2">
-            <ShieldCheck className="w-3.5 h-3.5 text-rose-600" />
-            <span className="text-[10px] text-rose-600 font-semibold uppercase tracking-wider">Admin Panel</span>
+      {/* Mobile backdrop */}
+      <button
+        type="button"
+        aria-label="Close navigation"
+        onClick={() => setMobileOpen(false)}
+        className={`lg:hidden fixed inset-0 z-30 bg-black/40 backdrop-blur-sm transition-opacity ${
+          mobileOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
+      />
+
+      {/* Sidebar — fixed drawer on mobile, fixed sidebar on desktop */}
+      <aside
+        className={`w-72 sm:w-64 bg-white border-r border-gray-100 flex flex-col fixed inset-y-0 left-0 z-40 transform transition-transform duration-200 ease-out lg:translate-x-0 ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
+        aria-label="Admin navigation"
+      >
+        <div className="p-6 border-b border-gray-100 flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <Link href="/admin" className="flex items-center gap-2">
+              <Heart className="w-6 h-6 text-rose-600 fill-rose-600 flex-shrink-0" />
+              <span className="text-lg font-bold text-gray-900 truncate">
+                INVITATION<span className="text-rose-600">.LK</span>
+              </span>
+            </Link>
+            <div className="flex items-center gap-1.5 mt-2">
+              <ShieldCheck className="w-3.5 h-3.5 text-rose-600" />
+              <span className="text-[10px] text-rose-600 font-semibold uppercase tracking-wider">Admin Panel</span>
+            </div>
           </div>
+          <button
+            type="button"
+            aria-label="Close navigation"
+            onClick={() => setMobileOpen(false)}
+            className="lg:hidden -mt-1 -mr-1 inline-flex items-center justify-center min-w-11 min-h-11 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
@@ -104,16 +145,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 lg:ml-64">
+      <main className="flex-1 lg:ml-64 min-w-0">
         {/* Mobile Header */}
-        <div className="lg:hidden bg-white border-b border-gray-100 p-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Heart className="w-5 h-5 text-rose-600 fill-rose-600" />
-            <span className="font-bold text-gray-900">Admin</span>
+        <div className="lg:hidden sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-gray-100 px-4 h-14 flex items-center justify-between gap-3">
+          <button
+            type="button"
+            aria-label="Open navigation"
+            aria-expanded={mobileOpen}
+            onClick={() => setMobileOpen(true)}
+            className="-ml-2 inline-flex items-center justify-center min-w-11 min-h-11 rounded-lg text-gray-700 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          <div className="flex items-center gap-2 min-w-0">
+            <Heart className="w-5 h-5 text-rose-600 fill-rose-600 flex-shrink-0" />
+            <span className="font-bold text-gray-900 truncate">Admin</span>
           </div>
+          <div className="w-9" aria-hidden="true" />
         </div>
 
-        <div className="p-6 lg:p-8 max-w-7xl mx-auto">
+        <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
           {children}
         </div>
       </main>

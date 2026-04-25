@@ -93,17 +93,17 @@ export default function DashboardSupportPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8 gap-3">
-        <div className="flex items-center gap-3">
-          <LifeBuoy className="w-6 h-6 text-rose-600" />
-          <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-3">
+        <div className="flex items-start sm:items-center gap-3 min-w-0">
+          <LifeBuoy className="w-6 h-6 text-rose-600 flex-shrink-0 mt-1 sm:mt-0" />
+          <div className="min-w-0">
             <h1 className="text-2xl font-bold text-gray-900">Support</h1>
             <p className="text-gray-400 mt-1">Open a ticket and we&apos;ll get back to you.</p>
           </div>
         </div>
         <button
           onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-medium transition-colors"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-medium transition-colors whitespace-nowrap self-start sm:self-auto flex-shrink-0"
         >
           <Plus className="w-4 h-4" /> New ticket
         </button>

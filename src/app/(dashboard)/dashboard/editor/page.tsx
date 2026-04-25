@@ -312,7 +312,7 @@ export default function EditorPage() {
   const selectedTemplate = TEMPLATE_REGISTRY.find((t) => t.slug === templateSlug);
 
   return (
-    <div className="-m-6 lg:-m-8 h-[calc(100vh-0px)] flex flex-col">
+    <div className="-mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8 h-[calc(100vh-0px)] flex flex-col">
       {/* Mobile Tabs */}
       <div className="lg:hidden flex border-b border-gray-100 bg-white">
         <button onClick={() => setMobileTab("editor")}

@@ -5,7 +5,7 @@ import { useSession, signOut } from "next-auth/react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Heart, LayoutDashboard, Pencil, Users, UserPlus, ListTodo, DollarSign, Store, LogOut, CreditCard, ShieldCheck, FileText, LayoutGrid, Mail, Loader2, Check, LifeBuoy, Eye } from "lucide-react";
+import { Heart, LayoutDashboard, Pencil, Users, UserPlus, ListTodo, DollarSign, Store, LogOut, CreditCard, ShieldCheck, FileText, LayoutGrid, Mail, Loader2, Check, LifeBuoy, Eye, Menu, X } from "lucide-react";
 import ImpersonationBanner from "@/components/ImpersonationBanner";
 import NotificationsBell from "@/components/dashboard/NotificationsBell";
 
@@ -51,6 +51,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const [sidebarInfo, setSidebarInfo] = useState<SidebarInfo | null>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Close drawer whenever the route changes.
+  useEffect(() => { setMobileOpen(false); }, [pathname]);
+
+  // Lock body scroll while the mobile drawer is open + close on Escape.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setMobileOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => { document.body.style.overflow = prev; window.removeEventListener("keydown", onKey); };
+  }, [mobileOpen]);
 
   // Fetch the sidebar countdown once per authenticated user. Depend on the
   // *id* string, not the session object — useSession returns a new object
@@ -86,12 +100,35 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <aside className="w-64 bg-white border-r border-gray-100 flex flex-col fixed inset-y-0 left-0 z-30 hidden lg:flex">
-        <div className="px-6 pt-6 pb-4">
-          <Link href="/" className="flex items-center gap-2">
-            <Heart className="w-6 h-6 text-rose-600 fill-rose-600" />
-            <span className="text-lg font-bold text-gray-900">INVITATION<span className="text-rose-600">.LK</span></span>
+      {/* Mobile backdrop */}
+      <button
+        type="button"
+        aria-label="Close navigation"
+        onClick={() => setMobileOpen(false)}
+        className={`lg:hidden fixed inset-0 z-30 bg-black/40 backdrop-blur-sm transition-opacity ${
+          mobileOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
+      />
+
+      <aside
+        className={`w-72 sm:w-64 bg-white border-r border-gray-100 flex flex-col fixed inset-y-0 left-0 z-40 transform transition-transform duration-200 ease-out lg:translate-x-0 ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
+        aria-label="Dashboard navigation"
+      >
+        <div className="px-6 pt-6 pb-4 flex items-start justify-between gap-2">
+          <Link href="/" className="flex items-center gap-2 min-w-0">
+            <Heart className="w-6 h-6 text-rose-600 fill-rose-600 flex-shrink-0" />
+            <span className="text-lg font-bold text-gray-900 truncate">INVITATION<span className="text-rose-600">.LK</span></span>
           </Link>
+          <button
+            type="button"
+            aria-label="Close navigation"
+            onClick={() => setMobileOpen(false)}
+            className="lg:hidden -mt-1 -mr-2 inline-flex items-center justify-center min-w-11 min-h-11 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Countdown card — top of sidebar (mirrors reference IA). */}
@@ -183,10 +220,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
 
-      <main className="flex-1 lg:ml-64">
+      <main className="flex-1 lg:ml-64 min-w-0">
         <ImpersonationBanner />
-        <DashboardHeader sidebarInfo={sidebarInfo} />
-        <div className="px-6 sm:px-8 pb-8 max-w-7xl mx-auto">
+        <DashboardHeader sidebarInfo={sidebarInfo} onOpenMenu={() => setMobileOpen(true)} mobileOpen={mobileOpen} />
+        <div className="px-4 sm:px-6 lg:px-8 pb-8 max-w-7xl mx-auto">
           {!session.user?.emailVerified && <VerifyEmailBanner />}
           {children}
         </div>
@@ -208,7 +245,7 @@ function formatWeddingDate(iso: string): string {
   });
 }
 
-function DashboardHeader({ sidebarInfo }: { sidebarInfo: SidebarInfo | null }) {
+function DashboardHeader({ sidebarInfo, onOpenMenu, mobileOpen }: { sidebarInfo: SidebarInfo | null; onOpenMenu: () => void; mobileOpen: boolean }) {
   const [count, setCount] = useState(0);
   const [items, setItems] = useState<NotificationItem[]>([]);
 
@@ -235,7 +272,21 @@ function DashboardHeader({ sidebarInfo }: { sidebarInfo: SidebarInfo | null }) {
 
   return (
     <header className="sticky top-0 z-20 bg-gray-50/80 backdrop-blur border-b border-gray-100">
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 h-16 flex items-center justify-end gap-3">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center gap-3">
+        <button
+          type="button"
+          aria-label="Open navigation"
+          aria-expanded={mobileOpen}
+          onClick={onOpenMenu}
+          className="lg:hidden -ml-2 inline-flex items-center justify-center min-w-11 min-h-11 rounded-lg text-gray-700 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+        <Link href="/dashboard" className="lg:hidden flex items-center gap-2 min-w-0">
+          <Heart className="w-5 h-5 text-rose-600 fill-rose-600 flex-shrink-0" />
+          <span className="font-bold text-gray-900 truncate">INVITATION<span className="text-rose-600">.LK</span></span>
+        </Link>
+        <div className="flex-1" />
         {sidebarInfo?.isPublished && (
           <Link
             href={`/i/${sidebarInfo.slug}`}
