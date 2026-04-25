@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   Heart, Users, Eye, Palette, ArrowRight, Calendar,
   Loader2, CheckCircle2, ExternalLink, Copy, Check,
-  UserPlus, ListTodo, DollarSign, Mail,
+  UserPlus, ListTodo, DollarSign, Mail, Pencil,
 } from "lucide-react";
 import Sparkline from "@/components/dashboard/Sparkline";
 
@@ -156,8 +156,6 @@ export default function DashboardPage() {
         invitation={invitation}
         pageViews={stats.pageViews.recent7}
         isPaid={isPaid}
-        copyLink={copyLink}
-        copied={copied}
         inviteUrl={inviteUrl}
       />
 
@@ -329,15 +327,11 @@ function HeroCard({
   invitation,
   pageViews,
   isPaid,
-  copyLink,
-  copied,
   inviteUrl,
 }: {
   invitation: OverviewResponse["invitation"];
   pageViews: number;
   isPaid: boolean;
-  copyLink: () => void;
-  copied: boolean;
   inviteUrl: string;
 }) {
   const isLive = !!invitation?.isPublished;
@@ -362,9 +356,9 @@ function HeroCard({
             <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-wider px-2.5 py-1 rounded-full bg-white/15 backdrop-blur">
               <Heart className="w-3 h-3 fill-white" /> {planLabel} · {statusLabel}
             </span>
-            {invitation?.slug && (
-              <span className="text-xs text-white/85 font-mono truncate">
-                invitation.lk/{invitation.slug}
+            {(invitation?.groomName || invitation?.brideName) && (
+              <span className="text-sm text-white/90 font-serif italic truncate">
+                {invitation?.groomName?.trim() || "Groom"} & {invitation?.brideName?.trim() || "Bride"}
               </span>
             )}
           </div>
@@ -377,23 +371,17 @@ function HeroCard({
           </h2>
           <p className="text-sm text-white/90 mt-2 max-w-lg">
             {isLive
-              ? `${pageViews.toLocaleString()} page view${pageViews === 1 ? "" : "s"} in the last 7 days. Copy the link below to share.`
+              ? `${pageViews.toLocaleString()} page view${pageViews === 1 ? "" : "s"} in the last 7 days. Open your invitation or keep editing the details.`
               : "Finish the steps below to publish your invitation and start collecting RSVPs."}
           </p>
 
           <div className="flex flex-wrap items-center gap-2.5 mt-6">
-            {invitation?.slug && (
-              <button
-                type="button"
-                onClick={copyLink}
-                aria-live="polite"
-                aria-label={copied ? "Invitation link copied to clipboard" : "Copy invitation link"}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-rose-700 hover:bg-rose-50 text-sm font-semibold shadow-sm transition-colors"
-              >
-                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                {copied ? "Link copied" : "Copy link"}
-              </button>
-            )}
+            <Link
+              href="/dashboard/editor"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-rose-700 hover:bg-rose-50 text-sm font-semibold shadow-sm transition-colors"
+            >
+              <Pencil className="w-4 h-4" /> Edit invitation
+            </Link>
             {invitation?.slug && isLive && (
               <Link
                 href={`/i/${invitation.slug}`}
