@@ -217,9 +217,6 @@ export default function MyInvitationsPage() {
                     ) : (
                       <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-600">Draft</span>
                     )}
-                    {!invitation.isPaid && (
-                      <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-500">Unpaid</span>
-                    )}
                   </div>
                 </div>
 
